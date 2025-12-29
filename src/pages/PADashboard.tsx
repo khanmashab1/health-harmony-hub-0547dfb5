@@ -51,6 +51,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { VitalsEntryDialog } from "@/components/pa/VitalsEntryDialog";
+import { exportPaymentHistoryCSV, exportPaymentHistoryPDF } from "@/lib/exportUtils";
 
 export default function PADashboard() {
   const { user, profile, loading } = useRequireAuth(["pa"]);
@@ -76,6 +78,10 @@ export default function PADashboard() {
   const [historyStatusFilter, setHistoryStatusFilter] = useState<string>("all");
   const [historyDateRange, setHistoryDateRange] = useState<string>("all");
   const [historySearchTerm, setHistorySearchTerm] = useState("");
+  
+  // Vitals dialog state
+  const [vitalsDialogOpen, setVitalsDialogOpen] = useState(false);
+  const [selectedVitalsAppointment, setSelectedVitalsAppointment] = useState<any>(null);
 
   // Fetch PA assignments
   const { data: assignments } = useQuery({
@@ -578,6 +584,10 @@ export default function PADashboard() {
                   <Calendar className="w-4 h-4 mr-2" />
                   Appointments
                 </TabsTrigger>
+                <TabsTrigger value="vitals" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Vitals Entry
+                </TabsTrigger>
                 <TabsTrigger value="slots" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
                   <CalendarX className="w-4 h-4 mr-2" />
                   Blocked Slots
@@ -662,11 +672,35 @@ export default function PADashboard() {
               <TabsContent value="history">
                 <Card variant="glass" className="border-white/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
-                    <CardTitle className="flex items-center gap-2">
-                      <History className="w-5 h-5 text-green-600" />
-                      Payment History
-                    </CardTitle>
-                    <CardDescription>Recent payment confirmations and rejections with notes</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <History className="w-5 h-5 text-green-600" />
+                          Payment History
+                        </CardTitle>
+                        <CardDescription>Recent payment confirmations and rejections with notes</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => paymentHistory && exportPaymentHistoryCSV(paymentHistory)}
+                          disabled={!paymentHistory || paymentHistory.length === 0}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          CSV
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => paymentHistory && exportPaymentHistoryPDF(paymentHistory)}
+                          disabled={!paymentHistory || paymentHistory.length === 0}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          PDF
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-6">
                     {/* Filters */}
@@ -907,6 +941,88 @@ export default function PADashboard() {
                 </Card>
               </TabsContent>
 
+              {/* Vitals Entry Tab */}
+              <TabsContent value="vitals">
+                <Card variant="glass" className="border-white/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-pink-50/50 to-transparent">
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-pink-600" />
+                      Patient Vitals Entry
+                    </CardTitle>
+                    <CardDescription>Record vitals for patients before their consultation</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {(() => {
+                      const todayAppts = appointments?.filter(
+                        (a) => a.appointment_date === format(new Date(), "yyyy-MM-dd") && 
+                               a.status === "Upcoming" &&
+                               (a.payment_status === "Confirmed" || a.payment_method === "Cash")
+                      ) || [];
+                      
+                      if (todayAppts.length === 0) {
+                        return (
+                          <div className="text-center py-16">
+                            <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                            <p className="text-muted-foreground">No patients waiting for vitals today</p>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="space-y-3">
+                          {todayAppts.map((apt) => {
+                            const hasVitals = apt.vitals_bp || apt.vitals_heart_rate || apt.vitals_temperature || apt.vitals_weight;
+                            return (
+                              <motion.div 
+                                key={apt.id}
+                                whileHover={{ scale: 1.01 }}
+                                className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                    hasVitals 
+                                      ? "bg-gradient-to-br from-green-100 to-green-200" 
+                                      : "bg-gradient-to-br from-yellow-100 to-yellow-200"
+                                  }`}>
+                                    <span className="font-bold text-foreground">#{apt.token_number}</span>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">{apt.patient_full_name}</p>
+                                    <div className="flex gap-2 mt-1 flex-wrap">
+                                      {hasVitals ? (
+                                        <>
+                                          {apt.vitals_bp && <Badge variant="outline" className="text-xs">BP: {apt.vitals_bp}</Badge>}
+                                          {apt.vitals_heart_rate && <Badge variant="outline" className="text-xs">HR: {apt.vitals_heart_rate}</Badge>}
+                                          {apt.vitals_temperature && <Badge variant="outline" className="text-xs">Temp: {apt.vitals_temperature}°F</Badge>}
+                                          {apt.vitals_weight && <Badge variant="outline" className="text-xs">Wt: {apt.vitals_weight}kg</Badge>}
+                                        </>
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground">No vitals recorded</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant={hasVitals ? "outline" : "default"}
+                                  onClick={() => {
+                                    setSelectedVitalsAppointment(apt);
+                                    setVitalsDialogOpen(true);
+                                  }}
+                                >
+                                  <Activity className="w-4 h-4 mr-2" />
+                                  {hasVitals ? "Update" : "Record"} Vitals
+                                </Button>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {/* Blocked Slots */}
               <TabsContent value="slots">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -1115,6 +1231,15 @@ export default function PADashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Vitals Entry Dialog */}
+      {selectedVitalsAppointment && (
+        <VitalsEntryDialog
+          open={vitalsDialogOpen}
+          onOpenChange={setVitalsDialogOpen}
+          appointment={selectedVitalsAppointment}
+        />
+      )}
     </Layout>
   );
 }

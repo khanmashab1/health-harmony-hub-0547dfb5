@@ -19,7 +19,10 @@ import {
   Mail,
   BarChart3,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Palette,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -298,10 +301,20 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground font-medium">Manage your platform</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/admin/email-templates")} className="hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300">
+                <Palette className="w-4 h-4 mr-2" />
+                Email Templates
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/admin/symptom-checker")} className="hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300">
+                <Database className="w-4 h-4 mr-2" />
+                Symptom Checker
+              </Button>
+              <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </motion.div>
 
           {/* Stats */}
