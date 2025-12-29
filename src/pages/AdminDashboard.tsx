@@ -59,6 +59,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { useNavigate } from "react-router-dom";
 import { EmailLogsPanel } from "@/components/admin/EmailLogsPanel";
+import { AnalyticsPanel } from "@/components/admin/AnalyticsPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -302,8 +303,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+              <TabsTrigger value="analytics" className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                Analytics
+              </TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="doctors">Doctors</TabsTrigger>
               <TabsTrigger value="pas">PAs</TabsTrigger>
@@ -313,6 +318,11 @@ export default function AdminDashboard() {
                 Emails
               </TabsTrigger>
             </TabsList>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics">
+              <AnalyticsPanel />
+            </TabsContent>
 
             {/* Users Tab */}
             <TabsContent value="users">
