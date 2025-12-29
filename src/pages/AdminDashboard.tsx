@@ -75,6 +75,9 @@ export default function AdminDashboard() {
   const [createPAOpen, setCreatePAOpen] = useState(false);
   const [assignPAOpen, setAssignPAOpen] = useState(false);
   const [userSearch, setUserSearch] = useState("");
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorSpecialtyFilter, setDoctorSpecialtyFilter] = useState<string>("all");
+  const [doctorCityFilter, setDoctorCityFilter] = useState<string>("all");
 
   // Fetch stats
   const { data: stats } = useQuery({
@@ -111,16 +114,52 @@ export default function AdminDashboard() {
 
   // Fetch doctors
   const { data: doctors, isLoading: loadingDoctors } = useQuery({
-    queryKey: ["admin-doctors"],
+    queryKey: ["admin-doctors", doctorSearch, doctorSpecialtyFilter, doctorCityFilter],
     queryFn: async () => {
-      const { data: doctorData, error } = await supabase.from("doctors").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("doctors").select("*").order("created_at", { ascending: false });
+      
+      // Apply specialty filter
+      if (doctorSpecialtyFilter && doctorSpecialtyFilter !== "all") {
+        query = query.eq("specialty", doctorSpecialtyFilter);
+      }
+      
+      // Apply city filter
+      if (doctorCityFilter && doctorCityFilter !== "all") {
+        query = query.eq("city", doctorCityFilter);
+      }
+      
+      const { data: doctorData, error } = await query;
       if (error) throw error;
+      
       const userIds = doctorData?.map(d => d.user_id) || [];
       if (userIds.length > 0) {
         const { data: profiles } = await supabase.from("profiles").select("id, name, phone, status").in("id", userIds);
-        return doctorData?.map(doc => ({ ...doc, profile: profiles?.find(p => p.id === doc.user_id) }));
+        let results = doctorData?.map(doc => ({ ...doc, profile: profiles?.find(p => p.id === doc.user_id) }));
+        
+        // Apply name search (client-side since we need to join with profiles)
+        if (doctorSearch) {
+          const searchLower = doctorSearch.toLowerCase();
+          results = results?.filter(doc => 
+            doc.profile?.name?.toLowerCase().includes(searchLower) ||
+            doc.specialty.toLowerCase().includes(searchLower) ||
+            doc.city?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        return results;
       }
       return doctorData;
+    },
+  });
+
+  // Get unique cities from doctors for filter dropdown
+  const { data: doctorCities } = useQuery({
+    queryKey: ["admin-doctor-cities"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("doctors").select("city").not("city", "is", null);
+      if (error) throw error;
+      const cities = [...new Set(data?.map(d => d.city).filter(Boolean))];
+      return cities.sort();
     },
   });
 
@@ -355,12 +394,75 @@ export default function AdminDashboard() {
               <TabsContent value="doctors">
                 <Card variant="glass" className="border-white/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2"><Stethoscope className="w-5 h-5 text-green-600" />Doctor Management</CardTitle>
-                      <Dialog open={createDoctorOpen} onOpenChange={setCreateDoctorOpen}>
-                        <DialogTrigger asChild><Button variant="hero"><Plus className="w-4 h-4 mr-2" />Add Doctor</Button></DialogTrigger>
-                        <DialogContent className="max-w-lg"><CreateDoctorForm onSuccess={() => { setCreateDoctorOpen(false); queryClient.invalidateQueries({ queryKey: ["admin-doctors"] }); }} /></DialogContent>
-                      </Dialog>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Stethoscope className="w-5 h-5 text-green-600" />
+                          Doctor Management
+                          {doctors && <Badge variant="secondary" className="ml-2">{doctors.length}</Badge>}
+                        </CardTitle>
+                        <Dialog open={createDoctorOpen} onOpenChange={setCreateDoctorOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="hero"><Plus className="w-4 h-4 mr-2" />Add Doctor</Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <CreateDoctorForm onSuccess={() => { 
+                              setCreateDoctorOpen(false); 
+                              queryClient.invalidateQueries({ queryKey: ["admin-doctors"] }); 
+                            }} />
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
+                      {/* Search and Filters */}
+                      <div className="flex flex-col md:flex-row gap-3">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search by name, specialty, or city..."
+                            value={doctorSearch}
+                            onChange={(e) => setDoctorSearch(e.target.value)}
+                            className="pl-9 border-border/50"
+                          />
+                        </div>
+                        <Select value={doctorSpecialtyFilter} onValueChange={setDoctorSpecialtyFilter}>
+                          <SelectTrigger className="w-full md:w-48 border-border/50">
+                            <SelectValue placeholder="All Specialties" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Specialties</SelectItem>
+                            {SPECIALTIES.map((s) => (
+                              <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={doctorCityFilter} onValueChange={setDoctorCityFilter}>
+                          <SelectTrigger className="w-full md:w-40 border-border/50">
+                            <SelectValue placeholder="All Cities" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Cities</SelectItem>
+                            {doctorCities?.map((city) => (
+                              <SelectItem key={city} value={city as string}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {(doctorSearch || doctorSpecialtyFilter !== "all" || doctorCityFilter !== "all") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setDoctorSearch("");
+                              setDoctorSpecialtyFilter("all");
+                              setDoctorCityFilter("all");
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -381,7 +483,13 @@ export default function AdminDashboard() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-center py-8 text-muted-foreground">No doctors found</p>
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">
+                          {doctorSearch || doctorSpecialtyFilter !== "all" || doctorCityFilter !== "all"
+                            ? "No doctors match your search criteria"
+                            : "No doctors found"}
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
