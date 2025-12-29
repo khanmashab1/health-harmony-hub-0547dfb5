@@ -417,6 +417,28 @@ export default function PADashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
+                              {/* Payment Status Indicator */}
+                              {apt.payment_method === "Online" && (
+                                <Badge 
+                                  variant={apt.payment_status === "Confirmed" ? "default" : "outline"}
+                                  className={
+                                    apt.payment_status === "Confirmed" 
+                                      ? "bg-green-100 text-green-700 border-green-200" 
+                                      : apt.payment_status === "Pending"
+                                      ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                                      : "bg-muted text-muted-foreground"
+                                  }
+                                >
+                                  <CreditCard className="w-3 h-3 mr-1" />
+                                  {apt.payment_status}
+                                </Badge>
+                              )}
+                              {apt.payment_method === "Cash" && (
+                                <Badge variant="outline" className="bg-muted/50 text-muted-foreground">
+                                  <CreditCard className="w-3 h-3 mr-1" />
+                                  Cash
+                                </Badge>
+                              )}
                               <Badge className={
                                 apt.status === "Completed" ? "status-completed" :
                                 apt.status === "Upcoming" ? "status-upcoming" :
@@ -540,12 +562,28 @@ export default function PADashboard() {
 
       {/* Receipt Dialog */}
       <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Payment Receipt</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Payment Receipt
+            </DialogTitle>
           </DialogHeader>
-          <div className="p-4 rounded-xl bg-muted/50 text-center">
-            <p className="text-muted-foreground">Receipt preview would appear here</p>
+          <div className="rounded-xl bg-muted/30 overflow-hidden">
+            {selectedReceipt && (
+              <img 
+                src={supabase.storage.from("receipts").getPublicUrl(selectedReceipt).data.publicUrl}
+                alt="Payment Receipt"
+                className="w-full h-auto max-h-[70vh] object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            )}
+            <div className="hidden p-8 text-center">
+              <p className="text-muted-foreground">Unable to load receipt image</p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
