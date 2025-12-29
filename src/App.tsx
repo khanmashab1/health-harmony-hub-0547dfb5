@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Booking from "./pages/Booking";
 import TokenPrint from "./pages/TokenPrint";
 import PrescriptionPrint from "./pages/PrescriptionPrint";
+import MedicalHistoryPrint from "./pages/MedicalHistoryPrint";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PADashboard from "./pages/PADashboard";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/symptoms" element={<SymptomsChecker />} />
             <Route path="/token/:appointmentId" element={<TokenPrint />} />
             <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
+            <Route path="/print/history" element={<MedicalHistoryPrint />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
