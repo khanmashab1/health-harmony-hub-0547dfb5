@@ -12,6 +12,44 @@ interface EmailRequest {
   subject: string;
   html: string;
   text?: string;
+  recipientName?: string;
+}
+
+// Helper to compute recipient name with fallback
+function getRecipientName(recipientName?: string, email?: string): string {
+  if (recipientName && recipientName.trim()) {
+    return recipientName.trim();
+  }
+  if (email) {
+    const prefix = email.split("@")[0];
+    // Capitalize first letter
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return "Patient";
+}
+
+// Helper to generate plain text from HTML
+function htmlToPlainText(html: string): string {
+  return html
+    // Remove style tags and content
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    // Replace common HTML entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    // Replace <br> and </p> with newlines
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    // Remove all remaining HTML tags
+    .replace(/<[^>]+>/g, '')
+    // Clean up whitespace
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
+    .trim();
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -29,13 +67,24 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email service not configured");
     }
 
-    const { to, subject, html, text }: EmailRequest = await req.json();
+    const { to, subject, html, text, recipientName }: EmailRequest = await req.json();
 
     if (!to || !subject || !html) {
       throw new Error("Missing required fields: to, subject, html");
     }
 
-    console.log(`Sending email to: ${to}, subject: ${subject}`);
+    // Fix recipient name in HTML if needed
+    const actualRecipientName = getRecipientName(recipientName, to);
+    
+    // Replace empty "Dear ," greetings with proper name
+    let fixedHtml = html
+      .replace(/Dear\s*,/gi, `Dear ${actualRecipientName},`)
+      .replace(/Dear\s+,/gi, `Dear ${actualRecipientName},`);
+
+    // Generate plain text fallback
+    const plainText = text || htmlToPlainText(fixedHtml);
+
+    console.log(`Sending email to: ${to}, subject: ${subject}, recipient: ${actualRecipientName}`);
 
     const client = new SMTPClient({
       connection: {
@@ -53,8 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
       from: gmailUser,
       to: to,
       subject: subject,
-      content: text || "Please view this email in an HTML-compatible client.",
-      html: html,
+      content: plainText,
+      html: fixedHtml,
     });
 
     await client.close();
