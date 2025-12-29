@@ -162,12 +162,25 @@ export default function Booking() {
       }).select().single();
 
       if (error) throw error;
+
+      // Send confirmation email via edge function
+      if (patientEmail) {
+        try {
+          await supabase.functions.invoke("send-appointment-notification", {
+            body: { appointmentId: data.id, type: "confirmation" },
+          });
+        } catch (emailError) {
+          console.error("Failed to send confirmation email:", emailError);
+          // Don't fail the booking if email fails
+        }
+      }
+
       return { appointment: data, tokenNumber };
     },
     onSuccess: (data) => {
       toast({
         title: "Appointment Booked!",
-        description: `Your token number is ${data.tokenNumber}`,
+        description: `Your token number is ${data.tokenNumber}. A confirmation email has been sent.`,
       });
       navigate(`/token/${data.appointment.id}`);
     },
