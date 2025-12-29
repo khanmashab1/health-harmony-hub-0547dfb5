@@ -68,9 +68,20 @@ export default function Booking() {
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to book an appointment",
+      });
+      navigate("/auth?redirect=/booking");
+    }
+  }, [user, loading, navigate, toast]);
 
   useEffect(() => {
     if (profile) {
@@ -81,6 +92,22 @@ export default function Booking() {
       setPatientEmail(user.email || "");
     }
   }, [profile, user]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   // Fetch doctors based on filters
   const { data: doctors, isLoading: loadingDoctors } = useQuery({

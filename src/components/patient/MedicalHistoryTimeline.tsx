@@ -16,7 +16,8 @@ import {
   Clock,
   Download,
   Share2,
-  Loader2
+  Loader2,
+  Printer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -306,6 +307,16 @@ export function MedicalHistoryTimeline() {
           )}
           Share
         </Button>
+        <Link to="/print/history">
+          <Button
+            variant="outline"
+            disabled={!appointments?.length}
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print View
+          </Button>
+        </Link>
       </div>
 
       {/* Summary */}

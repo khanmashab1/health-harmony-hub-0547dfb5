@@ -144,14 +144,20 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex mesh-gradient">
+    <div className="min-h-screen flex bg-background">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-bg items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand items-center justify-center p-12 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 right-20 w-64 h-64 rounded-full border-2 border-white/30" />
+          <div className="absolute bottom-40 left-10 w-40 h-40 rounded-full border border-white/20" />
+        </div>
+
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-primary-foreground max-w-md"
+          className="text-white max-w-md relative z-10"
         >
           <Link to="/" className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur">
@@ -160,10 +166,10 @@ export default function Auth() {
             <span className="text-2xl font-bold">MediCare+</span>
           </Link>
           
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-4xl font-bold mb-4 leading-tight">
             Your Health Journey Starts Here
           </h1>
-          <p className="text-primary-foreground/80 text-lg">
+          <p className="text-white/80 text-lg leading-relaxed">
             Access top doctors, manage appointments, and track your health - all in one secure platform.
           </p>
 
@@ -181,10 +187,10 @@ export default function Auth() {
                 transition={{ delay: 0.2 + i * 0.1 }}
                 className="flex items-center gap-3"
               >
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-xs">✓</span>
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                  ✓
                 </div>
-                <span className="text-primary-foreground/90">{feature}</span>
+                <span className="text-white/90">{feature}</span>
               </motion.div>
             ))}
           </div>
@@ -192,7 +198,7 @@ export default function Auth() {
       </div>
 
       {/* Right Panel - Forms */}
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -201,27 +207,27 @@ export default function Auth() {
         >
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Link>
 
-          <Card variant="elevated" className="border-0">
-            <CardHeader className="text-center">
+          <Card variant="elevated" className="border-0 shadow-xl">
+            <CardHeader className="text-center pb-2">
               <div className="lg:hidden flex justify-center mb-4">
-                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-primary-foreground" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center">
+                  <Stethoscope className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-2xl font-bold">
                 {mode === "signup" 
                   ? "Create an Account" 
                   : mode === "reset" 
                   ? "Reset Password"
                   : "Welcome Back"}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 {mode === "signup"
                   ? "Join MediCare+ to start booking appointments"
                   : mode === "reset"
@@ -229,7 +235,7 @@ export default function Auth() {
                   : "Sign in to access your health dashboard"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {mode === "signup" ? (
                 <Form {...signupForm}>
                   <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
@@ -242,7 +248,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input placeholder="John Doe" className="pl-10" {...field} />
+                              <Input placeholder="John Doe" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -258,7 +264,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input placeholder="you@example.com" className="pl-10" {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -274,7 +280,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                              <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -290,14 +296,14 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                              <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading}>
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -321,14 +327,14 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input placeholder="you@example.com" className="pl-10" {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading}>
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -355,7 +361,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input placeholder="you@example.com" className="pl-10" {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -372,7 +378,7 @@ export default function Auth() {
                             <button
                               type="button"
                               onClick={() => setMode("reset")}
-                              className="text-xs text-primary hover:underline"
+                              className="text-xs text-primary hover:underline font-medium"
                             >
                               Forgot password?
                             </button>
@@ -380,14 +386,14 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                              <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading}>
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
