@@ -74,7 +74,7 @@ export function Header() {
                 Book Appointment
               </Button>
             </Link>
-            <Link to="/symptoms-checker">
+            <Link to="/symptoms">
               <Button variant="ghost" className="gap-2">
                 <Activity className="w-4 h-4" />
                 Symptoms Checker
@@ -136,7 +136,7 @@ export function Header() {
                   Book Appointment
                 </Button>
               </Link>
-              <Link to="/symptoms-checker" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/symptoms" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
                   <Activity className="w-4 h-4" />
                   Symptoms Checker

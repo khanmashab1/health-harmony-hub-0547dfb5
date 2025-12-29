@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Hash } from "lucide-react";
+import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Hash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ReceiptUpload } from "@/components/booking/ReceiptUpload";
 
 export default function TokenPrint() {
   const { appointmentId } = useParams();
+  const [showReceiptUpload, setShowReceiptUpload] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: appointment, isLoading } = useQuery({
     queryKey: ["appointment", appointmentId],
@@ -195,6 +199,28 @@ export default function TokenPrint() {
                   {appointment.status}
                 </span>
               </div>
+
+              {/* Receipt Upload for Online Payment */}
+              {appointment.payment_method === "Online" && !appointment.receipt_path && (
+                <div className="p-4 border-t no-print">
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={() => setShowReceiptUpload(true)}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Payment Receipt
+                  </Button>
+                </div>
+              )}
+
+              {appointment.receipt_path && (
+                <div className="p-4 border-t bg-green-50 dark:bg-green-900/20">
+                  <p className="text-sm text-green-700 dark:text-green-300 text-center">
+                    ✓ Receipt uploaded - Awaiting verification
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -204,6 +230,27 @@ export default function TokenPrint() {
             </div>
           </Card>
         </motion.div>
+
+        {/* Receipt Upload Modal */}
+        {showReceiptUpload && appointmentId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 no-print">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md"
+            >
+              <ReceiptUpload
+                appointmentId={appointmentId}
+                doctorFee={appointment.doctor?.fee || 0}
+                onSuccess={() => {
+                  setShowReceiptUpload(false);
+                  queryClient.invalidateQueries({ queryKey: ["appointment", appointmentId] });
+                }}
+                onCancel={() => setShowReceiptUpload(false)}
+              />
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );
