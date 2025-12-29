@@ -155,7 +155,7 @@ export function useAuth() {
 }
 
 export function useRequireAuth(allowedRoles?: UserRole[]) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -175,5 +175,5 @@ export function useRequireAuth(allowedRoles?: UserRole[]) {
     }
   }, [user, profile, loading, navigate, allowedRoles]);
 
-  return { user, profile, loading };
+  return { user, profile, loading, refreshProfile };
 }
