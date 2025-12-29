@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, Upload, 
-  ChevronRight, Clock, MapPin, Loader2, LogOut
+  ChevronRight, Clock, MapPin, Loader2, LogOut, Edit, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,14 +12,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Layout } from "@/components/layout/Layout";
 import { useRequireAuth, useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileEditForm } from "@/components/patient/ProfileEditForm";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PatientDashboard() {
-  const { user, profile, loading } = useRequireAuth(["patient"]);
+  const { user, profile, loading, refreshProfile } = useRequireAuth(["patient"]);
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", user?.id],
@@ -185,44 +189,74 @@ export default function PatientDashboard() {
 
             <TabsContent value="profile">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Profile Information</CardTitle>
+                  {!isEditingProfile && (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p className="font-medium">{profile?.name || "-"}</p>
+                  {isEditingProfile && profile ? (
+                    <ProfileEditForm
+                      profile={profile}
+                      onSuccess={() => {
+                        setIsEditingProfile(false);
+                        refreshProfile();
+                      }}
+                      onCancel={() => setIsEditingProfile(false)}
+                    />
+                  ) : (
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Avatar */}
+                      <div className="flex flex-col items-center gap-3">
+                        <Avatar className="w-24 h-24">
+                          <AvatarImage src={profile?.avatar_path || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-2xl">
+                            {profile?.name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
-                        <p className="font-medium">{profile?.phone || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Age</p>
-                        <p className="font-medium">{profile?.age || "-"}</p>
+                      
+                      {/* Info Grid */}
+                      <div className="flex-1 grid md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Full Name</p>
+                            <p className="font-medium">{profile?.name || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Phone</p>
+                            <p className="font-medium">{profile?.phone || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Age</p>
+                            <p className="font-medium">{profile?.age || "-"}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Gender</p>
+                            <p className="font-medium">{profile?.gender || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Blood Type</p>
+                            <p className="font-medium">{profile?.blood_type || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Location</p>
+                            <p className="font-medium">
+                              {profile?.city && profile?.province 
+                                ? `${profile.city}, ${profile.province}` 
+                                : "-"}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Gender</p>
-                        <p className="font-medium">{profile?.gender || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Blood Type</p>
-                        <p className="font-medium">{profile?.blood_type || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Location</p>
-                        <p className="font-medium">
-                          {profile?.city && profile?.province 
-                            ? `${profile.city}, ${profile.province}` 
-                            : "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
