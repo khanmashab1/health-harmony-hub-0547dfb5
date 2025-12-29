@@ -17,7 +17,9 @@ import PADashboard from "./pages/PADashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSymptomChecker from "./pages/AdminSymptomChecker";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
+import AdminReviews from "./pages/AdminReviews";
 import SymptomsChecker from "./pages/SymptomsChecker";
+import Reviews from "./pages/Reviews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,8 +42,9 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
               <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+              <Route path="/admin/reviews" element={<AdminReviews />} />
               <Route path="/symptoms" element={<SymptomsChecker />} />
-              <Route path="/token/:appointmentId" element={<TokenPrint />} />
+              <Route path="/reviews" element={<Reviews />} />
               <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
               <Route path="/print/history" element={<MedicalHistoryPrint />} />
               <Route path="*" element={<NotFound />} />
