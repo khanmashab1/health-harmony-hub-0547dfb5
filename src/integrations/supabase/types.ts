@@ -286,6 +286,48 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          body_template: string
+          clinic_logo_url: string | null
+          clinic_name: string | null
+          created_at: string
+          footer_text: string | null
+          header_text: string | null
+          id: string
+          primary_color: string | null
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body_template: string
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          primary_color?: string | null
+          subject: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          body_template?: string
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
+          created_at?: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          primary_color?: string | null
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       health_metrics: {
         Row: {
           created_at: string
@@ -498,6 +540,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      symptom_knowledge: {
+        Row: {
+          advice: string
+          created_at: string
+          description: string
+          id: string
+          red_flags: string | null
+          severity: string
+          source: string | null
+          symptom: string
+          when_to_seek_help: string | null
+        }
+        Insert: {
+          advice: string
+          created_at?: string
+          description: string
+          id?: string
+          red_flags?: string | null
+          severity: string
+          source?: string | null
+          symptom: string
+          when_to_seek_help?: string | null
+        }
+        Update: {
+          advice?: string
+          created_at?: string
+          description?: string
+          id?: string
+          red_flags?: string | null
+          severity?: string
+          source?: string | null
+          symptom?: string
+          when_to_seek_help?: string | null
+        }
+        Relationships: []
       }
       symptom_submissions: {
         Row: {
