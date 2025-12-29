@@ -61,9 +61,17 @@ export function ReceiptUpload({ appointmentId, doctorFee, onSuccess, onCancel }:
 
     setIsUploading(true);
     try {
+      // Get current user ID for RLS compliance
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to upload receipts");
+        return;
+      }
+
       const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${appointmentId}-${Date.now()}.${fileExt}`;
-      const filePath = `${appointmentId}/${fileName}`;
+      // Use user ID as folder name to comply with RLS policy
+      const filePath = `${user.id}/${fileName}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage

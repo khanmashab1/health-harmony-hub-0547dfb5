@@ -17,7 +17,9 @@ import {
   TrendingUp,
   LogOut,
   Mail,
-  BarChart3
+  BarChart3,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +80,8 @@ export default function AdminDashboard() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [doctorSpecialtyFilter, setDoctorSpecialtyFilter] = useState<string>("all");
   const [doctorCityFilter, setDoctorCityFilter] = useState<string>("all");
+  const [doctorPage, setDoctorPage] = useState(1);
+  const doctorsPerPage = 10;
 
   // Fetch stats
   const { data: stats } = useQuery({
@@ -455,6 +459,7 @@ export default function AdminDashboard() {
                               setDoctorSearch("");
                               setDoctorSpecialtyFilter("all");
                               setDoctorCityFilter("all");
+                              setDoctorPage(1);
                             }}
                             className="text-muted-foreground hover:text-foreground"
                           >
@@ -471,17 +476,75 @@ export default function AdminDashboard() {
                         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
                       </div>
                     ) : doctors && doctors.length > 0 ? (
-                      <div className="grid gap-4">
-                        {doctors.map((doc: any) => (
-                          <DoctorCard
-                            key={doc.user_id}
-                            doctor={doc}
-                            onEdit={() => queryClient.invalidateQueries({ queryKey: ["admin-doctors"] })}
-                            onDelete={(userId) => deleteDoctor.mutate(userId)}
-                            isDeleting={deleteDoctor.isPending}
-                          />
-                        ))}
-                      </div>
+                      <>
+                        <div className="grid gap-4">
+                          {doctors
+                            .slice((doctorPage - 1) * doctorsPerPage, doctorPage * doctorsPerPage)
+                            .map((doc: any) => (
+                              <DoctorCard
+                                key={doc.user_id}
+                                doctor={doc}
+                                onEdit={() => queryClient.invalidateQueries({ queryKey: ["admin-doctors"] })}
+                                onDelete={(userId) => deleteDoctor.mutate(userId)}
+                                isDeleting={deleteDoctor.isPending}
+                              />
+                            ))}
+                        </div>
+                        
+                        {/* Pagination */}
+                        {doctors.length > doctorsPerPage && (
+                          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
+                            <p className="text-sm text-muted-foreground">
+                              Showing {((doctorPage - 1) * doctorsPerPage) + 1} to {Math.min(doctorPage * doctorsPerPage, doctors.length)} of {doctors.length} doctors
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDoctorPage(p => Math.max(1, p - 1))}
+                                disabled={doctorPage === 1}
+                              >
+                                <ChevronLeft className="w-4 h-4 mr-1" />
+                                Previous
+                              </Button>
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.ceil(doctors.length / doctorsPerPage) }, (_, i) => i + 1)
+                                  .filter(page => {
+                                    const totalPages = Math.ceil(doctors.length / doctorsPerPage);
+                                    if (totalPages <= 5) return true;
+                                    if (page === 1 || page === totalPages) return true;
+                                    if (Math.abs(page - doctorPage) <= 1) return true;
+                                    return false;
+                                  })
+                                  .map((page, idx, arr) => (
+                                    <span key={page} className="flex items-center">
+                                      {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                        <span className="px-2 text-muted-foreground">...</span>
+                                      )}
+                                      <Button
+                                        variant={doctorPage === page ? "default" : "ghost"}
+                                        size="sm"
+                                        className="w-8 h-8 p-0"
+                                        onClick={() => setDoctorPage(page)}
+                                      >
+                                        {page}
+                                      </Button>
+                                    </span>
+                                  ))}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDoctorPage(p => Math.min(Math.ceil(doctors.length / doctorsPerPage), p + 1))}
+                                disabled={doctorPage >= Math.ceil(doctors.length / doctorsPerPage)}
+                              >
+                                Next
+                                <ChevronRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-8">
                         <p className="text-muted-foreground">
