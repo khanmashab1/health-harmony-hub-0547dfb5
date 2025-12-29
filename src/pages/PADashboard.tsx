@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
@@ -12,7 +12,9 @@ import {
   LogOut,
   Eye,
   Trash2,
-  Users
+  Users,
+  History,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +56,8 @@ export default function PADashboard() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [paymentNote, setPaymentNote] = useState("");
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
 
   // Fetch PA assignments
   const { data: assignments } = useQuery({
@@ -139,6 +143,83 @@ export default function PADashboard() {
     },
     enabled: assignedDoctorIds.length > 0,
   });
+
+  // Fetch payment history (confirmed/rejected payments)
+  const { data: paymentHistory } = useQuery({
+    queryKey: ["pa-payment-history", assignedDoctorIds],
+    queryFn: async () => {
+      if (assignedDoctorIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("*")
+        .in("doctor_user_id", assignedDoctorIds)
+        .eq("payment_method", "Online")
+        .in("payment_status", ["Confirmed", "NA"])
+        .not("doctor_comments", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    enabled: assignedDoctorIds.length > 0,
+  });
+
+  // Real-time subscription for new payments
+  useEffect(() => {
+    if (assignedDoctorIds.length === 0) return;
+
+    const channel = supabase
+      .channel('pa-payments-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        (payload) => {
+          const newRecord = payload.new as any;
+          // Check if this appointment is for one of our assigned doctors
+          if (newRecord && assignedDoctorIds.includes(newRecord.doctor_user_id)) {
+            // Show toast for new pending payments
+            if (payload.eventType === 'INSERT' || 
+                (payload.eventType === 'UPDATE' && newRecord.payment_status === 'Pending' && newRecord.payment_method === 'Online')) {
+              toast({
+                title: "New Payment Pending",
+                description: `${newRecord.patient_full_name} uploaded a receipt`,
+              });
+            }
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+            queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
+            queryClient.invalidateQueries({ queryKey: ["pa-payment-history"] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [assignedDoctorIds, queryClient, toast]);
+
+  // Load receipt with signed URL (receipts bucket is private)
+  const loadReceipt = async (receiptPath: string) => {
+    setLoadingReceipt(true);
+    setSelectedReceipt(receiptPath);
+    try {
+      const { data, error } = await supabase.storage
+        .from("receipts")
+        .createSignedUrl(receiptPath, 300); // 5 minutes expiry
+      if (error) throw error;
+      setReceiptUrl(data.signedUrl);
+    } catch (error) {
+      console.error("Failed to load receipt:", error);
+      setReceiptUrl(null);
+    } finally {
+      setLoadingReceipt(false);
+    }
+  };
 
   // Send payment email notification
   const sendPaymentEmail = async (appointment: any, status: "confirmed" | "rejected", note?: string) => {
@@ -429,10 +510,19 @@ export default function PADashboard() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="payments" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm">
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap">
                 <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
                   <CreditCard className="w-4 h-4 mr-2" />
                   Payments
+                  {pendingPayments && pendingPayments.length > 0 && (
+                    <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {pendingPayments.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <History className="w-4 h-4 mr-2" />
+                  Payment History
                 </TabsTrigger>
                 <TabsTrigger value="appointments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -481,7 +571,7 @@ export default function PADashboard() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => setSelectedReceipt(payment.receipt_path)}
+                                  onClick={() => loadReceipt(payment.receipt_path!)}
                                   className="hover:bg-brand-50"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -518,7 +608,79 @@ export default function PADashboard() {
                 </Card>
               </TabsContent>
 
-              {/* Appointments */}
+              {/* Payment History */}
+              <TabsContent value="history">
+                <Card variant="glass" className="border-white/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="w-5 h-5 text-green-600" />
+                      Payment History
+                    </CardTitle>
+                    <CardDescription>Recent payment confirmations and rejections with notes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {paymentHistory && paymentHistory.length > 0 ? (
+                      <div className="space-y-4">
+                        {paymentHistory.map((payment) => {
+                          const isConfirmed = payment.status !== "Cancelled";
+                          const note = payment.doctor_comments?.replace(/^Payment (confirmed|rejected): /, "") || "";
+                          return (
+                            <motion.div 
+                              key={payment.id} 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="p-4 rounded-xl border border-border/50 bg-white/50"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                    isConfirmed 
+                                      ? "bg-gradient-to-br from-green-100 to-green-200" 
+                                      : "bg-gradient-to-br from-red-100 to-red-200"
+                                  }`}>
+                                    {isConfirmed ? (
+                                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                    ) : (
+                                      <XCircle className="w-5 h-5 text-red-600" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">{payment.patient_full_name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={isConfirmed ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
+                                    {isConfirmed ? "Confirmed" : "Rejected"}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(payment.updated_at), "MMM d, h:mm a")}
+                                  </span>
+                                </div>
+                              </div>
+                              {note && (
+                                <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/30">
+                                  <p className="text-sm text-muted-foreground">
+                                    <span className="font-medium text-foreground">Note:</span> {note}
+                                  </p>
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <History className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">No payment history yet</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="appointments">
                 <Card variant="glass" className="border-white/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent">
@@ -692,7 +854,7 @@ export default function PADashboard() {
       </div>
 
       {/* Receipt Dialog */}
-      <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+      <Dialog open={!!selectedReceipt} onOpenChange={() => { setSelectedReceipt(null); setReceiptUrl(null); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -700,21 +862,25 @@ export default function PADashboard() {
               Payment Receipt
             </DialogTitle>
           </DialogHeader>
-          <div className="rounded-xl bg-muted/30 overflow-hidden">
-            {selectedReceipt && (
+          <div className="rounded-xl bg-muted/30 overflow-hidden min-h-[200px] flex items-center justify-center">
+            {loadingReceipt ? (
+              <div className="p-8 text-center">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-muted-foreground">Loading receipt...</p>
+              </div>
+            ) : receiptUrl ? (
               <img 
-                src={supabase.storage.from("receipts").getPublicUrl(selectedReceipt).data.publicUrl}
+                src={receiptUrl}
                 alt="Payment Receipt"
                 className="w-full h-auto max-h-[70vh] object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                }}
+                onError={() => setReceiptUrl(null)}
               />
+            ) : (
+              <div className="p-8 text-center">
+                <XCircle className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Unable to load receipt image</p>
+              </div>
             )}
-            <div className="hidden p-8 text-center">
-              <p className="text-muted-foreground">Unable to load receipt image</p>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
