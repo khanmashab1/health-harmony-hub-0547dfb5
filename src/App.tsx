@@ -15,6 +15,8 @@ import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PADashboard from "./pages/PADashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminSymptomChecker from "./pages/AdminSymptomChecker";
+import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import SymptomsChecker from "./pages/SymptomsChecker";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +38,8 @@ const App = () => (
               <Route path="/doctor" element={<DoctorDashboard />} />
               <Route path="/pa" element={<PADashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
+              <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
               <Route path="/symptoms" element={<SymptomsChecker />} />
               <Route path="/token/:appointmentId" element={<TokenPrint />} />
               <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
