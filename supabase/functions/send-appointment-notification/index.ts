@@ -14,6 +14,44 @@ interface NotificationRequest {
   resend?: boolean;
 }
 
+// Helper to compute recipient name with fallback
+function getRecipientName(
+  profileName?: string | null,
+  appointmentName?: string | null,
+  email?: string | null
+): string {
+  if (profileName && profileName.trim()) {
+    return profileName.trim();
+  }
+  if (appointmentName && appointmentName.trim()) {
+    return appointmentName.trim();
+  }
+  if (email) {
+    const prefix = email.split("@")[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return "Patient";
+}
+
+// Helper to generate plain text from HTML
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
+    .trim();
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,7 +104,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const doctorName = appointment.doctor?.name || "Your Doctor";
-    const patientName = appointment.patient?.name || appointment.patient_full_name || "Patient";
+    // Use proper fallback chain for patient name
+    const patientName = getRecipientName(
+      appointment.patient?.name,
+      appointment.patient_full_name,
+      patientEmail
+    );
+    
     const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -79,56 +123,94 @@ const handler = async (req: Request): Promise<Response> => {
       ? `Appointment Confirmation - Token #${appointment.token_number}`
       : `Appointment Reminder - Tomorrow with Dr. ${doctorName}`;
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #0d9488, #14b8a6); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-          .footer { background: #1f2937; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }
-          .highlight { background: #d1fae5; padding: 15px; border-radius: 8px; margin: 15px 0; }
-          .token { font-size: 32px; font-weight: bold; color: #0d9488; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>${isConfirmation ? "Appointment Confirmed!" : "Appointment Reminder"}</h1>
-          </div>
-          <div class="content">
-            <p>Dear ${patientName},</p>
-            <p>${isConfirmation 
-              ? "Your appointment has been successfully booked. Please find the details below:" 
-              : "This is a friendly reminder about your upcoming appointment:"}</p>
-            
-            <div class="highlight">
-              <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
-              <p><strong>Date:</strong> ${appointmentDate}</p>
-              <p><strong>Token Number:</strong> <span class="token">#${appointment.token_number}</span></p>
-              ${appointment.department ? `<p><strong>Department:</strong> ${appointment.department}</p>` : ""}
-            </div>
-            
-            <p><strong>Important:</strong></p>
-            <ul>
-              <li>Please arrive 15 minutes before your scheduled time</li>
-              <li>Bring your ID and any relevant medical records</li>
-              <li>Keep your token number handy</li>
-            </ul>
-            
-            <p>If you need to reschedule or cancel, please contact us as soon as possible.</p>
-            
-            <p>Best regards,<br>Medical Booking Team</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Clean HTML template with inline styles only (no =20 artifacts)
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 20px 0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0d9488, #14b8a6); color: #ffffff; padding: 30px 40px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${isConfirmation ? "Appointment Confirmed!" : "Appointment Reminder"}</h1>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 16px 0; font-size: 16px;">Dear ${patientName},</p>
+              <p style="margin: 0 0 24px 0; font-size: 16px;">${isConfirmation 
+                ? "Your appointment has been successfully booked. Please find the details below:" 
+                : "This is a friendly reminder about your upcoming appointment:"}</p>
+              
+              <!-- Appointment Details Box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #d1fae5; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Doctor:</strong> Dr. ${doctorName}</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Date:</strong> ${appointmentDate}</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Token Number:</strong> <span style="font-size: 28px; font-weight: bold; color: #0d9488;">#${appointment.token_number}</span></p>
+                    ${appointment.department ? `<p style="margin: 0; font-size: 14px;"><strong>Department:</strong> ${appointment.department}</p>` : ""}
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: bold;">Important:</p>
+              <ul style="margin: 0 0 24px 0; padding-left: 20px;">
+                <li style="margin-bottom: 8px;">Please arrive 15 minutes before your scheduled time</li>
+                <li style="margin-bottom: 8px;">Bring your ID and any relevant medical records</li>
+                <li style="margin-bottom: 0;">Keep your token number handy</li>
+              </ul>
+              
+              <p style="margin: 0 0 16px 0; font-size: 16px;">If you need to reschedule or cancel, please contact us as soon as possible.</p>
+              
+              <p style="margin: 0; font-size: 16px;">Best regards,<br>Medical Booking Team</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1f2937; color: #9ca3af; padding: 20px 40px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0;">This is an automated message. Please do not reply directly to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    // Generate plain text version
+    const plainText = `${isConfirmation ? "Appointment Confirmed!" : "Appointment Reminder"}
+
+Dear ${patientName},
+
+${isConfirmation ? "Your appointment has been successfully booked. Please find the details below:" : "This is a friendly reminder about your upcoming appointment:"}
+
+Doctor: Dr. ${doctorName}
+Date: ${appointmentDate}
+Token Number: #${appointment.token_number}
+${appointment.department ? `Department: ${appointment.department}` : ""}
+
+Important:
+- Please arrive 15 minutes before your scheduled time
+- Bring your ID and any relevant medical records
+- Keep your token number handy
+
+If you need to reschedule or cancel, please contact us as soon as possible.
+
+Best regards,
+Medical Booking Team
+
+---
+This is an automated message. Please do not reply directly to this email.`;
 
     // Create email log entry
     const { data: logEntry, error: logError } = await supabase
@@ -164,7 +246,7 @@ const handler = async (req: Request): Promise<Response> => {
         from: gmailUser,
         to: patientEmail,
         subject: subject,
-        content: `${isConfirmation ? "Appointment Confirmation" : "Appointment Reminder"} - Token #${appointment.token_number} with Dr. ${doctorName} on ${appointmentDate}`,
+        content: plainText,
         html: html,
       });
 
@@ -177,6 +259,14 @@ const handler = async (req: Request): Promise<Response> => {
           .update({ status: "sent", sent_at: new Date().toISOString() })
           .eq("id", logEntry.id);
       }
+
+      // Log to audit_logs
+      await supabase.from("audit_logs").insert({
+        action: "email_sent",
+        entity_type: "appointments",
+        entity_id: appointmentId,
+        details: { to: patientEmail, subject, type },
+      });
 
       console.log(`${type} email sent successfully to ${patientEmail}`);
 
@@ -197,6 +287,14 @@ const handler = async (req: Request): Promise<Response> => {
           .update({ status: "failed", error_message: emailError.message })
           .eq("id", logEntry.id);
       }
+
+      // Log failure to audit_logs
+      await supabase.from("audit_logs").insert({
+        action: "email_failed",
+        entity_type: "appointments",
+        entity_id: appointmentId,
+        details: { to: patientEmail, subject, error: emailError.message },
+      });
 
       throw emailError;
     }

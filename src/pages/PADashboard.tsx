@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from "date-fns";
 import {
   UserCog,
   CreditCard,
@@ -14,7 +14,10 @@ import {
   Trash2,
   Users,
   History,
-  Bell
+  Bell,
+  Download,
+  Filter,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +34,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Layout } from "@/components/layout/Layout";
 import { useRequireAuth, useAuth } from "@/hooks/useAuth";
@@ -58,6 +68,12 @@ export default function PADashboard() {
   const [paymentNote, setPaymentNote] = useState("");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [loadingReceipt, setLoadingReceipt] = useState(false);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
+  
+  // Payment history filter state
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<string>("all");
+  const [historyDateRange, setHistoryDateRange] = useState<string>("all");
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
 
   // Fetch PA assignments
   const { data: assignments } = useQuery({
@@ -202,6 +218,38 @@ export default function PADashboard() {
       supabase.removeChannel(channel);
     };
   }, [assignedDoctorIds, queryClient, toast]);
+
+  // Download receipt as PDF
+  const downloadReceiptAsPDF = async (receiptPath: string, patientName: string) => {
+    setDownloadingReceipt(true);
+    try {
+      const { data, error } = await supabase.storage
+        .from("receipts")
+        .createSignedUrl(receiptPath, 60);
+      if (error) throw error;
+      
+      // Fetch the image and convert to PDF
+      const response = await fetch(data.signedUrl);
+      const blob = await response.blob();
+      
+      // Create a download link for the image (as PDF would require additional library)
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt-${patientName.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.${blob.type.split('/')[1] || 'png'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({ title: "Receipt downloaded" });
+    } catch (error) {
+      console.error("Failed to download receipt:", error);
+      toast({ title: "Download failed", variant: "destructive" });
+    } finally {
+      setDownloadingReceipt(false);
+    }
+  };
 
   // Load receipt with signed URL (receipts bucket is private)
   const loadReceipt = async (receiptPath: string) => {
@@ -619,58 +667,157 @@ export default function PADashboard() {
                     <CardDescription>Recent payment confirmations and rejections with notes</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
-                    {paymentHistory && paymentHistory.length > 0 ? (
-                      <div className="space-y-4">
-                        {paymentHistory.map((payment) => {
-                          const isConfirmed = payment.status !== "Cancelled";
-                          const note = payment.doctor_comments?.replace(/^Payment (confirmed|rejected): /, "") || "";
-                          return (
-                            <motion.div 
-                              key={payment.id} 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="p-4 rounded-xl border border-border/50 bg-white/50"
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                    isConfirmed 
-                                      ? "bg-gradient-to-br from-green-100 to-green-200" 
-                                      : "bg-gradient-to-br from-red-100 to-red-200"
-                                  }`}>
-                                    {isConfirmed ? (
-                                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                    ) : (
-                                      <XCircle className="w-5 h-5 text-red-600" />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold">{payment.patient_full_name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={isConfirmed ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
-                                    {isConfirmed ? "Confirmed" : "Rejected"}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {format(new Date(payment.updated_at), "MMM d, h:mm a")}
-                                  </span>
-                                </div>
-                              </div>
-                              {note && (
-                                <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium text-foreground">Note:</span> {note}
-                                  </p>
-                                </div>
-                              )}
-                            </motion.div>
-                          );
-                        })}
+                    {/* Filters */}
+                    <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 rounded-xl bg-muted/30 border border-border/30">
+                      <div className="flex items-center gap-2 flex-1">
+                        <Search className="w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by patient name..."
+                          value={historySearchTerm}
+                          onChange={(e) => setHistorySearchTerm(e.target.value)}
+                          className="flex-1 border-border/50"
+                        />
                       </div>
+                      <div className="flex gap-2">
+                        <Select value={historyStatusFilter} onValueChange={setHistoryStatusFilter}>
+                          <SelectTrigger className="w-[140px] border-border/50">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={historyDateRange} onValueChange={setHistoryDateRange}>
+                          <SelectTrigger className="w-[140px] border-border/50">
+                            <SelectValue placeholder="Date Range" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Time</SelectItem>
+                            <SelectItem value="7days">Last 7 Days</SelectItem>
+                            <SelectItem value="30days">Last 30 Days</SelectItem>
+                            <SelectItem value="90days">Last 90 Days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    {paymentHistory && paymentHistory.length > 0 ? (
+                      (() => {
+                        // Apply filters
+                        const filteredHistory = paymentHistory.filter((payment) => {
+                          const isConfirmed = payment.status !== "Cancelled";
+                          
+                          // Status filter
+                          if (historyStatusFilter === "confirmed" && !isConfirmed) return false;
+                          if (historyStatusFilter === "rejected" && isConfirmed) return false;
+                          
+                          // Date range filter
+                          const paymentDate = new Date(payment.updated_at);
+                          const now = new Date();
+                          if (historyDateRange === "7days" && isBefore(paymentDate, subDays(now, 7))) return false;
+                          if (historyDateRange === "30days" && isBefore(paymentDate, subDays(now, 30))) return false;
+                          if (historyDateRange === "90days" && isBefore(paymentDate, subDays(now, 90))) return false;
+                          
+                          // Search filter
+                          if (historySearchTerm && !payment.patient_full_name?.toLowerCase().includes(historySearchTerm.toLowerCase())) {
+                            return false;
+                          }
+                          
+                          return true;
+                        });
+                        
+                        if (filteredHistory.length === 0) {
+                          return (
+                            <div className="text-center py-12">
+                              <Filter className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                              <p className="text-muted-foreground">No payments match your filters</p>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="mt-2"
+                                onClick={() => {
+                                  setHistoryStatusFilter("all");
+                                  setHistoryDateRange("all");
+                                  setHistorySearchTerm("");
+                                }}
+                              >
+                                Clear Filters
+                              </Button>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Showing {filteredHistory.length} of {paymentHistory.length} payments
+                            </p>
+                            {filteredHistory.map((payment) => {
+                              const isConfirmed = payment.status !== "Cancelled";
+                              const note = payment.doctor_comments?.replace(/^Payment (confirmed|rejected): /, "") || "";
+                              return (
+                                <motion.div 
+                                  key={payment.id} 
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  className="p-4 rounded-xl border border-border/50 bg-white/50"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                        isConfirmed 
+                                          ? "bg-gradient-to-br from-green-100 to-green-200" 
+                                          : "bg-gradient-to-br from-red-100 to-red-200"
+                                      }`}>
+                                        {isConfirmed ? (
+                                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                        ) : (
+                                          <XCircle className="w-5 h-5 text-red-600" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold">{payment.patient_full_name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                          {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {payment.receipt_path && (
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={() => downloadReceiptAsPDF(payment.receipt_path!, payment.patient_full_name || "patient")}
+                                          disabled={downloadingReceipt}
+                                          className="h-8 w-8"
+                                          title="Download receipt"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </Button>
+                                      )}
+                                      <Badge className={isConfirmed ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
+                                        {isConfirmed ? "Confirmed" : "Rejected"}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {format(new Date(payment.updated_at), "MMM d, h:mm a")}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {note && (
+                                    <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/30">
+                                      <p className="text-sm text-muted-foreground">
+                                        <span className="font-medium text-foreground">Note:</span> {note}
+                                      </p>
+                                    </div>
+                                  )}
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
                     ) : (
                       <div className="text-center py-16">
                         <History className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
