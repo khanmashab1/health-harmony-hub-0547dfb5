@@ -1,5 +1,6 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, subMonths } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, subMonths, isWithinInterval, parseISO } from "date-fns";
 import {
   AreaChart,
   Area,
@@ -17,23 +18,68 @@ import {
   Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
   TrendingDown, 
   Users, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   DollarSign,
   Activity,
   UserPlus,
-  Stethoscope
+  Stethoscope,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const COLORS = ["#0d9488", "#14b8a6", "#2dd4bf", "#5eead4", "#99f6e4"];
 
+type DateRange = {
+  from: Date;
+  to: Date;
+};
+
+const presetRanges = [
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 30 days", days: 30 },
+  { label: "Last 90 days", days: 90 },
+  { label: "This Month", days: -1 },
+  { label: "Last 6 Months", days: -6 },
+];
+
 export function AnalyticsPanel() {
+  const { toast } = useToast();
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const handlePresetClick = (days: number) => {
+    const now = new Date();
+    if (days === -1) {
+      // This month
+      setDateRange({ from: startOfMonth(now), to: now });
+    } else if (days === -6) {
+      // Last 6 months
+      setDateRange({ from: subMonths(now, 6), to: now });
+    } else {
+      setDateRange({ from: subDays(now, days), to: now });
+    }
+  };
+
   // Fetch appointments for trends
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["analytics-appointments"],
@@ -72,17 +118,31 @@ export function AnalyticsPanel() {
     },
   });
 
-  // Calculate appointment trends (last 30 days)
-  const appointmentTrends = (() => {
+  // Filter data by date range
+  const filteredAppointments = useMemo(() => {
     if (!appointments) return [];
-    const last30Days = eachDayOfInterval({
-      start: subDays(new Date(), 29),
-      end: new Date(),
+    return appointments.filter((a) => {
+      const date = new Date(a.appointment_date);
+      return isWithinInterval(date, { start: dateRange.from, end: dateRange.to });
     });
+  }, [appointments, dateRange]);
 
-    return last30Days.map((date) => {
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter((u) => {
+      const date = new Date(u.created_at);
+      return isWithinInterval(date, { start: dateRange.from, end: dateRange.to });
+    });
+  }, [users, dateRange]);
+
+  // Calculate appointment trends
+  const appointmentTrends = useMemo(() => {
+    if (!filteredAppointments.length) return [];
+    const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+    
+    return days.map((date) => {
       const dateStr = format(date, "yyyy-MM-dd");
-      const count = appointments.filter(
+      const count = filteredAppointments.filter(
         (a) => format(new Date(a.appointment_date), "yyyy-MM-dd") === dateStr
       ).length;
       return {
@@ -90,21 +150,18 @@ export function AnalyticsPanel() {
         appointments: count,
       };
     });
-  })();
+  }, [filteredAppointments, dateRange]);
 
   // Calculate monthly revenue
-  const revenueData = (() => {
-    if (!appointments || !doctors) return [];
-    const last6Months = eachMonthOfInterval({
-      start: subMonths(new Date(), 5),
-      end: new Date(),
-    });
+  const revenueData = useMemo(() => {
+    if (!filteredAppointments.length || !doctors) return [];
+    const months = eachMonthOfInterval({ start: dateRange.from, end: dateRange.to });
 
-    return last6Months.map((month) => {
+    return months.map((month) => {
       const monthStart = startOfMonth(month);
       const monthEnd = endOfMonth(month);
 
-      const monthAppointments = appointments.filter((a) => {
+      const monthAppointments = filteredAppointments.filter((a) => {
         const date = new Date(a.appointment_date);
         return date >= monthStart && date <= monthEnd && a.status !== "Cancelled";
       });
@@ -115,22 +172,19 @@ export function AnalyticsPanel() {
       }, 0);
 
       return {
-        month: format(month, "MMM"),
+        month: format(month, "MMM yyyy"),
         revenue: revenue,
         appointments: monthAppointments.length,
       };
     });
-  })();
+  }, [filteredAppointments, doctors, dateRange]);
 
   // Calculate user growth
-  const userGrowth = (() => {
+  const userGrowth = useMemo(() => {
     if (!users) return [];
-    const last6Months = eachMonthOfInterval({
-      start: subMonths(new Date(), 5),
-      end: new Date(),
-    });
+    const months = eachMonthOfInterval({ start: dateRange.from, end: dateRange.to });
 
-    return last6Months.map((month) => {
+    return months.map((month) => {
       const monthEnd = endOfMonth(month);
       const totalUsers = users.filter(
         (u) => new Date(u.created_at) <= monthEnd
@@ -146,23 +200,23 @@ export function AnalyticsPanel() {
         new: newUsers,
       };
     });
-  })();
+  }, [users, dateRange]);
 
   // Appointment status distribution
-  const statusDistribution = (() => {
-    if (!appointments) return [];
+  const statusDistribution = useMemo(() => {
+    if (!filteredAppointments.length) return [];
     const statusCounts: Record<string, number> = {};
-    appointments.forEach((a) => {
+    filteredAppointments.forEach((a) => {
       statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
     });
     return Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-  })();
+  }, [filteredAppointments]);
 
   // Specialty distribution
-  const specialtyDistribution = (() => {
-    if (!doctors || !appointments) return [];
+  const specialtyDistribution = useMemo(() => {
+    if (!doctors || !filteredAppointments.length) return [];
     const specialtyCounts: Record<string, number> = {};
-    appointments.forEach((a) => {
+    filteredAppointments.forEach((a) => {
       const doctor = doctors.find((d) => d.user_id === a.doctor_user_id);
       if (doctor) {
         specialtyCounts[doctor.specialty] = (specialtyCounts[doctor.specialty] || 0) + 1;
@@ -172,75 +226,104 @@ export function AnalyticsPanel() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  })();
+  }, [filteredAppointments, doctors]);
 
   // Calculate key metrics
-  const metrics = (() => {
-    if (!appointments || !users || !doctors) {
+  const metrics = useMemo(() => {
+    if (!filteredAppointments.length || !doctors) {
       return {
         totalAppointments: 0,
-        thisMonthAppointments: 0,
-        appointmentGrowth: 0,
         totalRevenue: 0,
-        thisMonthRevenue: 0,
-        revenueGrowth: 0,
-        totalUsers: 0,
-        newUsersThisMonth: 0,
-        userGrowth: 0,
-        avgAppointmentsPerDay: 0,
+        newUsers: filteredUsers.length,
+        avgPerDay: 0,
       };
     }
 
-    const now = new Date();
-    const thisMonthStart = startOfMonth(now);
-    const lastMonthStart = startOfMonth(subMonths(now, 1));
-    const lastMonthEnd = endOfMonth(subMonths(now, 1));
-
-    const thisMonthAppointments = appointments.filter(
-      (a) => new Date(a.appointment_date) >= thisMonthStart
-    );
-    const lastMonthAppointments = appointments.filter((a) => {
-      const date = new Date(a.appointment_date);
-      return date >= lastMonthStart && date <= lastMonthEnd;
-    });
-
-    const calcRevenue = (apps: typeof appointments) =>
-      apps.reduce((sum, a) => {
-        if (a.status === "Cancelled") return sum;
+    const totalRevenue = filteredAppointments
+      .filter((a) => a.status !== "Cancelled")
+      .reduce((sum, a) => {
         const doctor = doctors.find((d) => d.user_id === a.doctor_user_id);
         return sum + (doctor?.fee || 500);
       }, 0);
 
-    const thisMonthRevenue = calcRevenue(thisMonthAppointments);
-    const lastMonthRevenue = calcRevenue(lastMonthAppointments);
-
-    const newUsersThisMonth = users.filter(
-      (u) => new Date(u.created_at) >= thisMonthStart
-    ).length;
-    const newUsersLastMonth = users.filter((u) => {
-      const date = new Date(u.created_at);
-      return date >= lastMonthStart && date <= lastMonthEnd;
-    }).length;
+    const daysDiff = Math.max(1, Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)));
 
     return {
-      totalAppointments: appointments.length,
-      thisMonthAppointments: thisMonthAppointments.length,
-      appointmentGrowth: lastMonthAppointments.length
-        ? ((thisMonthAppointments.length - lastMonthAppointments.length) / lastMonthAppointments.length) * 100
-        : 100,
-      totalRevenue: calcRevenue(appointments),
-      thisMonthRevenue,
-      revenueGrowth: lastMonthRevenue
-        ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
-        : 100,
-      totalUsers: users.length,
-      newUsersThisMonth,
-      userGrowth: newUsersLastMonth
-        ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth) * 100
-        : 100,
-      avgAppointmentsPerDay: Math.round(appointments.length / 30),
+      totalAppointments: filteredAppointments.length,
+      totalRevenue,
+      newUsers: filteredUsers.length,
+      avgPerDay: Math.round(filteredAppointments.length / daysDiff * 10) / 10,
     };
-  })();
+  }, [filteredAppointments, filteredUsers, doctors, dateRange]);
+
+  // Export functions
+  const exportToCSV = () => {
+    const headers = ["Date", "Appointments", "Revenue"];
+    const rows = revenueData.map((r) => [r.month, r.appointments, r.revenue]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-${format(dateRange.from, "yyyy-MM-dd")}-to-${format(dateRange.to, "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({ title: "CSV exported successfully" });
+  };
+
+  const exportToPDF = () => {
+    // Create a printable report
+    const reportContent = `
+      ANALYTICS REPORT
+      ================
+      Period: ${format(dateRange.from, "MMM d, yyyy")} - ${format(dateRange.to, "MMM d, yyyy")}
+      
+      KEY METRICS
+      -----------
+      Total Appointments: ${metrics.totalAppointments}
+      Total Revenue: Rs. ${metrics.totalRevenue.toLocaleString()}
+      New Users: ${metrics.newUsers}
+      Avg. Appointments/Day: ${metrics.avgPerDay}
+      
+      MONTHLY BREAKDOWN
+      -----------------
+      ${revenueData.map((r) => `${r.month}: ${r.appointments} appointments, Rs. ${r.revenue.toLocaleString()}`).join("\n      ")}
+      
+      APPOINTMENT STATUS
+      ------------------
+      ${statusDistribution.map((s) => `${s.name}: ${s.value}`).join("\n      ")}
+      
+      TOP SPECIALTIES
+      ---------------
+      ${specialtyDistribution.map((s) => `${s.name}: ${s.value} appointments`).join("\n      ")}
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Analytics Report</title>
+            <style>
+              body { font-family: monospace; padding: 40px; white-space: pre-wrap; }
+              @media print { body { padding: 20px; } }
+            </style>
+          </head>
+          <body>${reportContent}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    toast({ title: "PDF report opened for printing" });
+  };
 
   if (loadingAppointments || loadingUsers) {
     return (
@@ -260,6 +343,63 @@ export function AnalyticsPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Date Range Filter & Export */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {presetRanges.map((preset) => (
+            <Button
+              key={preset.label}
+              variant="outline"
+              size="sm"
+              onClick={() => handlePresetClick(preset.days)}
+              className="text-xs"
+            >
+              {preset.label}
+            </Button>
+          ))}
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs">
+                <CalendarIcon className="w-3 h-3 mr-1" />
+                {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={{ from: dateRange.from, to: dateRange.to }}
+                onSelect={(range) => {
+                  if (range?.from && range?.to) {
+                    setDateRange({ from: range.from, to: range.to });
+                    setCalendarOpen(false);
+                  }
+                }}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={exportToCSV}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={exportToPDF}>
+              <FileText className="w-4 h-4 mr-2" />
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -268,10 +408,7 @@ export function AnalyticsPanel() {
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">Rs. {metrics.totalRevenue.toLocaleString()}</p>
-                <div className={`flex items-center gap-1 text-xs ${metrics.revenueGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {metrics.revenueGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(metrics.revenueGrowth).toFixed(1)}% from last month
-                </div>
+                <p className="text-xs text-muted-foreground">In selected period</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-green-600" />
@@ -286,31 +423,10 @@ export function AnalyticsPanel() {
               <div>
                 <p className="text-sm text-muted-foreground">Appointments</p>
                 <p className="text-2xl font-bold">{metrics.totalAppointments}</p>
-                <div className={`flex items-center gap-1 text-xs ${metrics.appointmentGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {metrics.appointmentGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(metrics.appointmentGrowth).toFixed(1)}% from last month
-                </div>
+                <p className="text-xs text-muted-foreground">In selected period</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">{metrics.totalUsers}</p>
-                <div className={`flex items-center gap-1 text-xs ${metrics.userGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {metrics.userGrowth >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(metrics.userGrowth).toFixed(1)}% from last month
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Users className="w-6 h-6 text-purple-600" />
+                <CalendarIcon className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -321,11 +437,26 @@ export function AnalyticsPanel() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">New Users</p>
-                <p className="text-2xl font-bold">{metrics.newUsersThisMonth}</p>
-                <p className="text-xs text-muted-foreground">This month</p>
+                <p className="text-2xl font-bold">{metrics.newUsers}</p>
+                <p className="text-xs text-muted-foreground">In selected period</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <UserPlus className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Avg/Day</p>
+                <p className="text-2xl font-bold">{metrics.avgPerDay}</p>
+                <p className="text-xs text-muted-foreground">Appointments</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-amber-600" />
+                <Activity className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </CardContent>
@@ -341,37 +472,43 @@ export function AnalyticsPanel() {
               <Activity className="w-5 h-5 text-primary" />
               Appointment Trends
             </CardTitle>
-            <CardDescription>Daily appointments over the last 30 days</CardDescription>
+            <CardDescription>Daily appointments in selected period</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={appointmentTrends}>
-                  <defs>
-                    <linearGradient id="appointmentGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }} 
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="appointments"
-                    stroke="#0d9488"
-                    strokeWidth={2}
-                    fill="url(#appointmentGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {appointmentTrends.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={appointmentTrends}>
+                    <defs>
+                      <linearGradient id="appointmentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }} 
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="appointments"
+                      stroke="#0d9488"
+                      strokeWidth={2}
+                      fill="url(#appointmentGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data for selected period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -381,28 +518,34 @@ export function AnalyticsPanel() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-green-600" />
-              Monthly Revenue
+              Revenue by Month
             </CardTitle>
-            <CardDescription>Revenue trends over the last 6 months</CardDescription>
+            <CardDescription>Monthly revenue breakdown</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, "Revenue"]}
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                  />
-                  <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {revenueData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, "Revenue"]}
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }}
+                    />
+                    <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data for selected period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -418,36 +561,42 @@ export function AnalyticsPanel() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    dot={{ fill: "#8b5cf6" }}
-                    name="Total Users"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="new"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ fill: "#f59e0b" }}
-                    name="New Users"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {userGrowth.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={userGrowth}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="#8b5cf6"
+                      strokeWidth={2}
+                      dot={{ fill: "#8b5cf6" }}
+                      name="Total Users"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="new"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      dot={{ fill: "#f59e0b" }}
+                      name="New Users"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data for selected period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -463,32 +612,38 @@ export function AnalyticsPanel() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={specialtyDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {specialtyDistribution.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {specialtyDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={specialtyDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {specialtyDistribution.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data for selected period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -500,20 +655,24 @@ export function AnalyticsPanel() {
           <CardTitle>Appointment Status Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {statusDistribution.map((status, index) => (
-              <div key={status.name} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <div>
-                  <p className="font-medium">{status.name}</p>
-                  <p className="text-sm text-muted-foreground">{status.value} appointments</p>
+          {statusDistribution.length > 0 ? (
+            <div className="flex flex-wrap gap-4">
+              {statusDistribution.map((status, index) => (
+                <div key={status.name} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  />
+                  <div>
+                    <p className="font-medium">{status.name}</p>
+                    <p className="text-sm text-muted-foreground">{status.value} appointments</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center py-8 text-muted-foreground">No appointments in selected period</p>
+          )}
         </CardContent>
       </Card>
     </div>
