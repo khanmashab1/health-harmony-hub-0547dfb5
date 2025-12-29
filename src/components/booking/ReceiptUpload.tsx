@@ -88,7 +88,7 @@ export function ReceiptUpload({ appointmentId, doctorFee, onSuccess, onCancel }:
         .from("appointments")
         .update({ 
           receipt_path: receiptPath,
-          payment_status: "Pending Verification"
+          payment_status: "Pending"  // Allowed values: Pending, Confirmed, NA
         })
         .eq("id", appointmentId);
 
