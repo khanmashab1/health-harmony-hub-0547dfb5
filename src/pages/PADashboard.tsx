@@ -7,11 +7,12 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
-  Upload,
   CalendarX,
   Clock,
   LogOut,
-  Eye
+  Eye,
+  Trash2,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +24,6 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -57,7 +56,6 @@ export default function PADashboard() {
         .eq("pa_user_id", user!.id);
       if (error) throw error;
 
-      // Get doctor profiles
       const doctorIds = data.map(a => a.doctor_user_id);
       if (doctorIds.length > 0) {
         const { data: profiles } = await supabase
@@ -101,7 +99,7 @@ export default function PADashboard() {
     enabled: assignedDoctorIds.length > 0,
   });
 
-  // Fetch all appointments for assigned doctors
+  // Fetch all appointments
   const { data: appointments } = useQuery({
     queryKey: ["pa-appointments", assignedDoctorIds],
     queryFn: async () => {
@@ -133,7 +131,7 @@ export default function PADashboard() {
     enabled: assignedDoctorIds.length > 0,
   });
 
-  // Confirm payment mutation
+  // Mutations
   const confirmPayment = useMutation({
     mutationFn: async (appointmentId: string) => {
       const { error } = await supabase
@@ -149,7 +147,6 @@ export default function PADashboard() {
     },
   });
 
-  // Cancel appointment mutation
   const cancelAppointment = useMutation({
     mutationFn: async (appointmentId: string) => {
       const { error } = await supabase
@@ -165,7 +162,6 @@ export default function PADashboard() {
     },
   });
 
-  // Block slot mutation
   const blockSlot = useMutation({
     mutationFn: async (doctorId: string) => {
       if (!blockDate) return;
@@ -184,7 +180,6 @@ export default function PADashboard() {
     },
   });
 
-  // Unblock slot mutation
   const unblockSlot = useMutation({
     mutationFn: async (slotId: string) => {
       const { error } = await supabase.from("blocked_slots").delete().eq("id", slotId);
@@ -204,10 +199,12 @@ export default function PADashboard() {
   if (loading) {
     return (
       <Layout showFooter={false}>
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-12 w-64 mb-8" />
-          <div className="grid md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-brand-50/20">
+          <div className="container mx-auto px-4 py-8">
+            <Skeleton className="h-12 w-64 mb-8" />
+            <div className="grid md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
+            </div>
           </div>
         </div>
       </Layout>
@@ -216,205 +213,266 @@ export default function PADashboard() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-muted/30">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-brand-50/20">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center">
-                <UserCog className="w-6 h-6 text-primary-foreground" />
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
+                <UserCog className="w-7 h-7 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold">{profile?.name || "PA Dashboard"}</h1>
-                <p className="text-muted-foreground">Personal Assistant</p>
+                <p className="text-muted-foreground font-medium">Personal Assistant</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
+            <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>
-          </div>
+          </motion.div>
 
           {/* Assigned Doctors */}
           {assignments && assignments.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4">Assigned Doctors</h2>
-              <div className="flex flex-wrap gap-3">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-8"
+            >
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Assigned Doctors</h2>
+              <div className="flex flex-wrap gap-2">
                 {assignments.map((a: any) => (
-                  <Badge key={a.id} variant="secondary" className="text-sm py-2 px-4">
-                    Dr. {a.doctorProfile?.name || "Unknown"} - {a.doctorInfo?.specialty || "Specialist"}
+                  <Badge key={a.id} variant="secondary" className="py-2 px-4 bg-gradient-to-r from-purple-100 to-brand-100 text-purple-700 border-0">
+                    Dr. {a.doctorProfile?.name || "Unknown"} — {a.doctorInfo?.specialty || "Specialist"}
                   </Badge>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          >
             {[
-              { label: "Pending Payments", value: pendingPayments?.length || 0, icon: CreditCard, color: "text-yellow-600" },
-              { label: "Today's Appointments", value: appointments?.filter(a => a.appointment_date === format(new Date(), "yyyy-MM-dd")).length || 0, icon: Calendar, color: "text-blue-600" },
-              { label: "Blocked Slots", value: blockedSlots?.length || 0, icon: CalendarX, color: "text-red-600" },
-              { label: "Doctors Assigned", value: assignments?.length || 0, icon: UserCog, color: "text-purple-600" },
-            ].map((stat) => (
-              <Card key={stat.label}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${stat.color}`}>
-                      <stat.icon className="w-5 h-5" />
+              { label: "Pending Payments", value: pendingPayments?.length || 0, icon: CreditCard, color: "from-yellow-500 to-orange-500" },
+              { label: "Today's Appointments", value: appointments?.filter(a => a.appointment_date === format(new Date(), "yyyy-MM-dd")).length || 0, icon: Calendar, color: "from-blue-500 to-blue-600" },
+              { label: "Blocked Slots", value: blockedSlots?.length || 0, icon: CalendarX, color: "from-red-500 to-red-600" },
+              { label: "Doctors Assigned", value: assignments?.length || 0, icon: Users, color: "from-purple-500 to-purple-600" },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              >
+                <Card variant="glass" className="border-white/50 hover:shadow-lg transition-all">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
+                        <stat.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold">{stat.value}</p>
+                        <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Tabs */}
-          <Tabs defaultValue="payments" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="appointments">Appointments</TabsTrigger>
-              <TabsTrigger value="slots">Blocked Slots</TabsTrigger>
-            </TabsList>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Tabs defaultValue="payments" className="space-y-6">
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm">
+                <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Payments
+                </TabsTrigger>
+                <TabsTrigger value="appointments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Appointments
+                </TabsTrigger>
+                <TabsTrigger value="slots" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <CalendarX className="w-4 h-4 mr-2" />
+                  Blocked Slots
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Pending Payments */}
-            <TabsContent value="payments">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pending Payment Confirmations</CardTitle>
-                  <CardDescription>Review and confirm online payments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingPayments ? (
-                    <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-                  ) : pendingPayments && pendingPayments.length > 0 ? (
-                    <div className="space-y-4">
-                      {pendingPayments.map((payment) => (
-                        <div key={payment.id} className="flex items-center justify-between p-4 rounded-xl border bg-card">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                              <CreditCard className="w-6 h-6 text-yellow-600" />
+              {/* Pending Payments */}
+              <TabsContent value="payments">
+                <Card variant="glass" className="border-white/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent">
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-yellow-600" />
+                      Pending Payment Confirmations
+                    </CardTitle>
+                    <CardDescription>Review and confirm online payments</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {loadingPayments ? (
+                      <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
+                    ) : pendingPayments && pendingPayments.length > 0 ? (
+                      <div className="space-y-4">
+                        {pendingPayments.map((payment) => (
+                          <motion.div 
+                            key={payment.id} 
+                            whileHover={{ scale: 1.01 }}
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                                <CreditCard className="w-6 h-6 text-yellow-600" />
+                              </div>
+                              <div>
+                                <p className="font-semibold">{payment.patient_full_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium">{payment.patient_full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            {payment.receipt_path && (
+                            <div className="flex gap-2">
+                              {payment.receipt_path && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => setSelectedReceipt(payment.receipt_path)}
+                                  className="hover:bg-brand-50"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              )}
                               <Button
-                                variant="outline"
                                 size="sm"
-                                onClick={() => setSelectedReceipt(payment.receipt_path)}
+                                variant="hero"
+                                onClick={() => confirmPayment.mutate(payment.id)}
                               >
-                                <Eye className="w-4 h-4" />
+                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                Confirm
                               </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              onClick={() => confirmPayment.mutate(payment.id)}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Confirm
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => cancelAppointment.mutate(payment.id)}
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
-                      <p className="text-muted-foreground">No pending payments</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Appointments */}
-            <TabsContent value="appointments">
-              <Card>
-                <CardHeader>
-                  <CardTitle>All Appointments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {appointments && appointments.length > 0 ? (
-                    <div className="space-y-3">
-                      {appointments.slice(0, 20).map((apt) => (
-                        <div key={apt.id} className="flex items-center justify-between p-4 rounded-xl border bg-card">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="font-bold text-primary">#{apt.token_number}</span>
-                            </div>
-                            <div>
-                              <p className="font-medium">{apt.patient_full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(apt.appointment_date), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={
-                              apt.status === "Completed" ? "default" :
-                              apt.status === "Upcoming" ? "secondary" :
-                              apt.status === "Cancelled" ? "destructive" : "outline"
-                            }>
-                              {apt.status}
-                            </Badge>
-                            {apt.status === "Pending" && (
-                              <Button size="sm" variant="destructive" onClick={() => cancelAppointment.mutate(apt.id)}>
-                                Cancel
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => cancelAppointment.mutate(payment.id)}
+                              >
+                                <XCircle className="w-4 h-4" />
                               </Button>
-                            )}
-                          </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center mb-4">
+                          <CheckCircle2 className="w-10 h-10 text-green-600" />
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center py-8 text-muted-foreground">No appointments</p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                        <p className="text-muted-foreground font-medium">No pending payments</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            {/* Blocked Slots */}
-            <TabsContent value="slots">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage Blocked Slots</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium mb-3">Block a Date</h4>
+              {/* Appointments */}
+              <TabsContent value="appointments">
+                <Card variant="glass" className="border-white/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent">
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-blue-600" />
+                      All Appointments
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {appointments && appointments.length > 0 ? (
+                      <div className="space-y-3">
+                        {appointments.slice(0, 20).map((apt) => (
+                          <motion.div 
+                            key={apt.id} 
+                            whileHover={{ scale: 1.01 }}
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
+                                <span className="font-bold text-brand-600">#{apt.token_number}</span>
+                              </div>
+                              <div>
+                                <p className="font-semibold">{apt.patient_full_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(new Date(apt.appointment_date), "MMM d, yyyy")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={
+                                apt.status === "Completed" ? "status-completed" :
+                                apt.status === "Upcoming" ? "status-upcoming" :
+                                apt.status === "Cancelled" ? "status-cancelled" : "status-pending"
+                              }>
+                                {apt.status}
+                              </Badge>
+                              {apt.status === "Pending" && (
+                                <Button size="sm" variant="destructive" onClick={() => cancelAppointment.mutate(apt.id)}>
+                                  Cancel
+                                </Button>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">No appointments</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Blocked Slots */}
+              <TabsContent value="slots">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card variant="glass" className="border-white/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent">
+                      <CardTitle className="flex items-center gap-2">
+                        <CalendarX className="w-5 h-5 text-purple-600" />
+                        Block a Date
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
                       <CalendarComponent
                         mode="single"
                         selected={blockDate}
                         onSelect={setBlockDate}
-                        className="rounded-lg border mb-4"
+                        className="rounded-xl border border-border/50 bg-white/50 mb-4"
                       />
                       {blockDate && assignments && assignments.length > 0 && (
-                        <div className="space-y-3">
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-4"
+                        >
                           <div>
-                            <Label>Reason</Label>
+                            <Label className="text-sm font-medium">Reason (optional)</Label>
                             <Input
                               value={blockReason}
                               onChange={(e) => setBlockReason(e.target.value)}
-                              placeholder="Optional"
-                              className="mt-1"
+                              placeholder="Leave, Holiday, etc."
+                              className="mt-2 border-border/50"
                             />
                           </div>
                           <div className="space-y-2">
@@ -423,58 +481,72 @@ export default function PADashboard() {
                                 key={a.id}
                                 onClick={() => blockSlot.mutate(a.doctor_user_id)}
                                 variant="outline"
-                                className="w-full justify-start"
+                                className="w-full justify-start hover:bg-purple-50"
                               >
                                 Block for Dr. {a.doctorProfile?.name}
                               </Button>
                             ))}
                           </div>
-                        </div>
+                        </motion.div>
                       )}
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-3">Current Blocked Dates</h4>
+                    </CardContent>
+                  </Card>
+
+                  <Card variant="glass" className="border-white/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-red-50/50 to-transparent">
+                      <CardTitle className="flex items-center gap-2">
+                        <CalendarX className="w-5 h-5 text-red-500" />
+                        Current Blocked Dates
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
                       {blockedSlots && blockedSlots.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {blockedSlots.map((slot) => (
-                            <div key={slot.id} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div key={slot.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50">
                               <div>
-                                <p className="font-medium text-sm">
-                                  {format(new Date(slot.blocked_date), "MMM d, yyyy")}
+                                <p className="font-semibold">
+                                  {format(new Date(slot.blocked_date), "EEEE, MMM d, yyyy")}
                                 </p>
                                 {slot.reason && (
-                                  <p className="text-xs text-muted-foreground">{slot.reason}</p>
+                                  <p className="text-sm text-muted-foreground">{slot.reason}</p>
                                 )}
                               </div>
-                              <Button size="sm" variant="ghost" onClick={() => unblockSlot.mutate(slot.id)}>
-                                <XCircle className="w-4 h-4" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => unblockSlot.mutate(slot.id)}
+                                className="text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-center py-8 text-muted-foreground">No blocked dates</p>
+                        <div className="text-center py-12">
+                          <CalendarX className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                          <p className="text-muted-foreground">No blocked dates</p>
+                        </div>
                       )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
         </div>
       </div>
 
-      {/* Receipt Preview Dialog */}
+      {/* Receipt Dialog */}
       <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Payment Receipt</DialogTitle>
           </DialogHeader>
-          {selectedReceipt && (
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Receipt preview coming soon</p>
-            </div>
-          )}
+          <div className="p-4 rounded-xl bg-muted/50 text-center">
+            <p className="text-muted-foreground">Receipt preview would appear here</p>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
