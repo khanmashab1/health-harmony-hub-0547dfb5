@@ -16,13 +16,19 @@ import {
   Quote,
   Shield,
   Clock,
-  Users
+  Users,
+  AlertCircle,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import doctorHero from "@/assets/doctor-hero.png";
 
 const specialties = [
@@ -50,6 +56,9 @@ const features = [
 ];
 
 export default function Index() {
+  const { user, profile } = useAuth();
+
+  // Fetch stats including review stats
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
     queryFn: async () => {
@@ -57,26 +66,46 @@ export default function Index() {
         supabase.from("doctors").select("user_id", { count: "exact", head: true }),
         supabase.from("reviews").select("rating").eq("status", "Approved"),
       ]);
-      const avgRating = reviewsRes.data?.length 
-        ? (reviewsRes.data.reduce((a, b) => a + b.rating, 0) / reviewsRes.data.length).toFixed(1)
+      const totalReviews = reviewsRes.data?.length || 0;
+      const avgRating = totalReviews 
+        ? (reviewsRes.data!.reduce((a, b) => a + b.rating, 0) / totalReviews).toFixed(1)
         : "4.8";
       return {
         doctors: doctorsRes.count || 50,
         patients: 10000,
         rating: avgRating,
+        totalReviews,
       };
     },
   });
 
-  const { data: reviews } = useQuery({
+  // Fetch patients (profiles with role='patient')
+  const { data: patients, isLoading: loadingPatients, error: patientsError } = useQuery({
+    queryKey: ["home-patients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, age, gender, avatar_path, created_at, city")
+        .eq("role", "patient")
+        .eq("status", "Active")
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch approved reviews
+  const { data: reviews, isLoading: loadingReviews, error: reviewsError } = useQuery({
     queryKey: ["approved-reviews"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("reviews")
         .select("*")
         .eq("status", "Approved")
         .order("created_at", { ascending: false })
         .limit(6);
+      if (error) throw error;
       return data || [];
     },
   });
@@ -316,58 +345,189 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Reviews Section */}
-      {reviews && reviews.length > 0 && (
-        <section className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                What Patients <span className="gradient-text">Say</span>
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Real reviews from our satisfied patients
-              </p>
-            </motion.div>
+      {/* Patients Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Our <span className="gradient-text">Patients</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Join our growing community of patients receiving quality healthcare
+            </p>
+          </motion.div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reviews.map((review, index) => (
+          {patientsError ? (
+            <Alert variant="destructive" className="max-w-md mx-auto">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Failed to load patients. Please try again later.</AlertDescription>
+            </Alert>
+          ) : loadingPatients ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i} className="p-4">
+                  <Skeleton className="w-16 h-16 rounded-full mx-auto mb-3" />
+                  <Skeleton className="h-4 w-24 mx-auto mb-2" />
+                  <Skeleton className="h-3 w-16 mx-auto" />
+                </Card>
+              ))}
+            </div>
+          ) : patients && patients.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {patients.map((patient, index) => (
                 <motion.div
-                  key={review.id}
+                  key={patient.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="p-6 h-full">
-                    <Quote className="w-8 h-8 text-primary/20 mb-4" />
-                    <p className="text-muted-foreground mb-4 line-clamp-3">
-                      {review.comment || "Great experience with the doctor and staff!"}
+                  <Card className="p-4 text-center hover:shadow-lg transition-all">
+                    <Avatar className="w-16 h-16 mx-auto mb-3 border-2 border-primary/20">
+                      <AvatarImage src={patient.avatar_path || undefined} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                        {patient.name?.charAt(0)?.toUpperCase() || <User className="w-6 h-6" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold text-sm truncate">{patient.name || "Patient"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || patient.city || "Member"}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">{review.display_name}</p>
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating
-                                  ? "text-amber-500 fill-amber-500"
-                                  : "text-gray-200"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
                   </Card>
                 </motion.div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+                <Users className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No patients yet. Be the first to join!</p>
+              <Link to="/auth?mode=signup" className="mt-4 inline-block">
+                <Button variant="hero">Create Account</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              What Patients <span className="gradient-text">Say</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Real reviews from our satisfied patients
+            </p>
+            {stats && stats.totalReviews > 0 && (
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <div className="flex items-center gap-1">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <span className="font-bold text-lg">{stats.rating}</span>
+                </div>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{stats.totalReviews} reviews</span>
+              </div>
+            )}
+          </motion.div>
+
+          {reviewsError ? (
+            <Alert variant="destructive" className="max-w-md mx-auto">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Failed to load reviews. Please try again later.</AlertDescription>
+            </Alert>
+          ) : loadingReviews ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6">
+                  <Skeleton className="w-8 h-8 mb-4" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-4" />
+                  <Skeleton className="h-4 w-24" />
+                </Card>
+              ))}
+            </div>
+          ) : reviews && reviews.length > 0 ? (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {reviews.map((review, index) => (
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="p-6 h-full">
+                      <Quote className="w-8 h-8 text-primary/20 mb-4" />
+                      <p className="text-muted-foreground mb-4 line-clamp-3">
+                        {review.comment || "Great experience with the doctor and staff!"}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold">{review.display_name}</p>
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating
+                                    ? "text-amber-500 fill-amber-500"
+                                    : "text-gray-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="text-center mt-8">
+                <Link to="/reviews">
+                  <Button variant="outline" className="gap-2">
+                    View All Reviews
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+                <Star className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Dashboard CTA for logged in users */}
+      {user && profile && (
+        <section className="py-8 bg-primary/5">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">Welcome back, {profile.name}!</p>
+                <p className="text-sm text-muted-foreground">Continue managing your health journey</p>
+              </div>
+              <Link to={profile.role === "admin" ? "/admin" : profile.role === "doctor" ? "/doctor" : profile.role === "pa" ? "/pa" : "/profile"}>
+                <Button variant="hero">Go to Dashboard</Button>
+              </Link>
             </div>
           </div>
         </section>

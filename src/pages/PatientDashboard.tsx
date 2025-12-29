@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, 
-  ChevronRight, LogOut, Edit, History, Heart
+  ChevronRight, LogOut, Edit, History, Heart, PenSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileEditForm } from "@/components/patient/ProfileEditForm";
 import { HealthMetrics } from "@/components/patient/HealthMetrics";
 import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimeline";
+import { WriteReviewDialog } from "@/components/patient/WriteReviewDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PatientDashboard() {
@@ -26,6 +27,7 @@ export default function PatientDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [writeReviewOpen, setWriteReviewOpen] = useState(false);
 
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", user?.id],
@@ -35,6 +37,22 @@ export default function PatientDashboard() {
         .select("*")
         .eq("patient_user_id", user!.id)
         .order("appointment_date", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch patient's reviews
+  const { data: myReviews, isLoading: loadingReviews } = useQuery({
+    queryKey: ["patient-reviews", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("patient_user_id", user!.id)
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
@@ -111,7 +129,7 @@ export default function PatientDashboard() {
               { label: "Upcoming", value: upcomingAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600" },
               { label: "Completed", value: completedAppointments.length, icon: Activity, color: "from-green-500 to-green-600" },
               { label: "Total Visits", value: appointments?.length || 0, icon: FileText, color: "from-purple-500 to-purple-600" },
-              { label: "Reviews", value: 0, icon: Star, color: "from-yellow-500 to-orange-500" },
+              { label: "Reviews", value: myReviews?.length || 0, icon: Star, color: "from-yellow-500 to-orange-500" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -163,6 +181,10 @@ export default function PatientDashboard() {
                 <TabsTrigger value="records" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
                   <FileText className="w-4 h-4 mr-2" />
                   Records
+                </TabsTrigger>
+                <TabsTrigger value="reviews" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Star className="w-4 h-4 mr-2" />
+                  Reviews
                 </TabsTrigger>
               </TabsList>
 
@@ -332,8 +354,96 @@ export default function PatientDashboard() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Reviews Tab */}
+              <TabsContent value="reviews">
+                <Card variant="glass" className="border-white/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-amber-50/50 to-transparent flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-amber-600" />
+                      My Reviews
+                    </CardTitle>
+                    <Button variant="hero" size="sm" onClick={() => setWriteReviewOpen(true)}>
+                      <PenSquare className="w-4 h-4 mr-2" />
+                      Write a Review
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {loadingReviews ? (
+                      <div className="space-y-4">
+                        {[1, 2].map((i) => (
+                          <Skeleton key={i} className="h-24" />
+                        ))}
+                      </div>
+                    ) : myReviews && myReviews.length > 0 ? (
+                      <div className="space-y-4">
+                        {myReviews.map((review, index) => (
+                          <motion.div
+                            key={review.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="p-4 rounded-xl border border-border/50 bg-white/50"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex gap-0.5">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < review.rating
+                                            ? "text-amber-500 fill-amber-500"
+                                            : "text-gray-200"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <Badge className={
+                                    review.status === "Approved" ? "status-completed" :
+                                    review.status === "Pending" ? "status-pending" : "status-cancelled"
+                                  }>
+                                    {review.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground text-sm mb-2">
+                                  {review.comment || "No comment provided."}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(review.created_at), "MMM d, yyyy 'at' h:mm a")}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center mb-4">
+                          <Star className="w-10 h-10 text-amber-500" />
+                        </div>
+                        <p className="text-muted-foreground mb-4">You haven't written any reviews yet</p>
+                        <Button variant="hero" onClick={() => setWriteReviewOpen(true)}>
+                          Write Your First Review
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </motion.div>
+
+          {/* Write Review Dialog */}
+          {user && profile && (
+            <WriteReviewDialog
+              open={writeReviewOpen}
+              onOpenChange={setWriteReviewOpen}
+              userId={user.id}
+              userName={profile.name || "Anonymous"}
+            />
+          )}
         </div>
       </div>
     </Layout>
