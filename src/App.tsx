@@ -10,6 +10,9 @@ import Booking from "./pages/Booking";
 import TokenPrint from "./pages/TokenPrint";
 import PrescriptionPrint from "./pages/PrescriptionPrint";
 import PatientDashboard from "./pages/PatientDashboard";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import PADashboard from "./pages/PADashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +29,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/profile" element={<PatientDashboard />} />
+            <Route path="/doctor" element={<DoctorDashboard />} />
+            <Route path="/pa" element={<PADashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/token/:appointmentId" element={<TokenPrint />} />
             <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
             <Route path="*" element={<NotFound />} />
