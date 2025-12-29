@@ -7,14 +7,14 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.5rem",
       screens: {
-        "2xl": "1400px",
+        "2xl": "1280px",
       },
     },
     extend: {
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -60,6 +60,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        brand: {
+          teal: "hsl(var(--brand-teal))",
+          "teal-light": "hsl(var(--brand-teal-light))",
+          blue: "hsl(var(--brand-blue))",
+          "blue-light": "hsl(var(--brand-blue-light))",
+        },
         medical: {
           teal: "hsl(var(--medical-teal))",
           "teal-light": "hsl(var(--medical-teal-light))",
@@ -74,12 +80,19 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        "2xl": "1rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
         "3xl": "1.5rem",
       },
       boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)",
         glow: "var(--shadow-glow)",
         card: "var(--shadow-card)",
+        button: "var(--shadow-button)",
       },
       keyframes: {
         "accordion-down": {
@@ -116,7 +129,7 @@ export default {
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-20px)" },
+          "50%": { transform: "translateY(-15px)" },
         },
         "pulse-soft": {
           "0%, 100%": { opacity: "1" },
@@ -137,6 +150,7 @@ export default {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-brand": "var(--gradient-brand)",
         "hero-gradient": "var(--gradient-hero)",
         "card-gradient": "var(--gradient-card)",
         "accent-gradient": "var(--gradient-accent)",

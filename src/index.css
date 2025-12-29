@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,130 +6,145 @@
 
 @layer base {
   :root {
-    /* Premium Medical Color Palette */
-    --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    /* Premium Medical Color Palette - Teal & Blue Theme */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary - Deep Teal */
-    --primary: 175 84% 32%;
+    /* Primary - Teal */
+    --primary: 168 76% 42%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Soft Sage */
-    --secondary: 160 30% 94%;
-    --secondary-foreground: 175 84% 25%;
+    /* Secondary - Soft Teal */
+    --secondary: 168 50% 95%;
+    --secondary-foreground: 168 76% 30%;
 
     /* Muted */
-    --muted: 210 20% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Accent - Warm Coral */
-    --accent: 12 90% 60%;
+    /* Accent - Blue */
+    --accent: 210 100% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 175 84% 32%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 168 76% 42%;
 
     --radius: 0.75rem;
 
-    /* Custom Medical Colors */
-    --medical-teal: 175 84% 32%;
-    --medical-teal-light: 175 60% 95%;
-    --medical-blue: 210 100% 50%;
-    --medical-green: 150 80% 40%;
+    /* Brand Colors */
+    --brand-teal: 168 76% 42%;
+    --brand-teal-light: 168 50% 95%;
+    --brand-blue: 210 100% 52%;
+    --brand-blue-light: 210 100% 96%;
+
+    /* Medical Colors */
+    --medical-teal: 168 76% 42%;
+    --medical-teal-light: 168 50% 95%;
+    --medical-blue: 210 100% 52%;
+    --medical-green: 142 76% 36%;
     --medical-coral: 12 90% 60%;
-    --medical-purple: 280 70% 55%;
-    --medical-gold: 45 100% 50%;
+    --medical-purple: 262 83% 58%;
+    --medical-gold: 45 93% 47%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(175 84% 32%) 0%, hsl(190 90% 35%) 50%, hsl(210 100% 50%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%) 0%, hsl(25 100% 55%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsla(175, 84%, 32%, 0.15) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsla(190, 90%, 35%, 0.1) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsla(210, 100%, 50%, 0.1) 0px, transparent 50%),
-                     radial-gradient(at 80% 50%, hsla(12, 90%, 60%, 0.08) 0px, transparent 50%),
-                     radial-gradient(at 0% 100%, hsla(175, 84%, 32%, 0.1) 0px, transparent 50%);
+    --gradient-brand: linear-gradient(135deg, hsl(168 76% 42%) 0%, hsl(210 100% 52%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(168 60% 95%) 0%, hsl(210 60% 95%) 50%, hsl(0 0% 98%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(168 76% 42%) 0%, hsl(190 80% 45%) 50%, hsl(210 100% 52%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+    --gradient-mesh: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, hsla(168, 76%, 42%, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, hsla(210, 100%, 52%, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 40% 80%, hsla(168, 76%, 42%, 0.05) 0%, transparent 50%);
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    --shadow-glow: 0 0 40px rgba(0, 166, 153, 0.15);
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --shadow-glow: 0 0 40px rgba(20, 184, 166, 0.12);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+    --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(20, 184, 166, 0.15);
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 25% 10%;
-    --sidebar-primary: 175 84% 32%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 168 76% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 160 30% 94%;
-    --sidebar-accent-foreground: 175 84% 25%;
-    --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 175 84% 32%;
+    --sidebar-accent: 168 50% 95%;
+    --sidebar-accent-foreground: 168 76% 30%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 168 76% 42%;
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 210 20% 98%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 210 20% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 175 70% 45%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 168 70% 50%;
+    --primary-foreground: 222 47% 8%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 175 70% 45%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 168 70% 50%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 12 80% 55%;
+    --accent: 210 90% 55%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 175 70% 45%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 168 70% 50%;
 
-    --medical-teal: 175 70% 45%;
-    --medical-teal-light: 175 50% 15%;
+    --brand-teal: 168 70% 50%;
+    --brand-teal-light: 168 40% 15%;
+    --brand-blue: 210 90% 55%;
+    --brand-blue-light: 210 50% 15%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(175 70% 30%) 0%, hsl(190 80% 30%) 50%, hsl(210 90% 40%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(220 25% 12%) 0%, hsl(220 25% 10%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(30,35,45,0.9) 0%, rgba(30,35,45,0.7) 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsla(175, 70%, 45%, 0.1) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsla(190, 80%, 40%, 0.08) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsla(210, 90%, 45%, 0.08) 0px, transparent 50%);
+    --medical-teal: 168 70% 50%;
+    --medical-teal-light: 168 40% 15%;
 
-    --shadow-glow: 0 0 40px rgba(0, 200, 180, 0.1);
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --gradient-brand: linear-gradient(135deg, hsl(168 70% 50%) 0%, hsl(210 90% 55%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(222 47% 10%) 0%, hsl(222 47% 8%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 9%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(30,35,45,0.95) 0%, rgba(30,35,45,0.85) 100%);
+    --gradient-mesh: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, hsla(168, 70%, 50%, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, hsla(210, 90%, 55%, 0.05) 0%, transparent 50%);
 
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 175 70% 45%;
-    --sidebar-primary-foreground: 220 25% 8%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 175 70% 45%;
-    --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 175 70% 45%;
+    --shadow-glow: 0 0 40px rgba(45, 212, 191, 0.1);
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-button: 0 4px 12px -2px rgba(45, 212, 191, 0.2);
+
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 168 70% 50%;
+    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 168 70% 50%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 168 70% 50%;
   }
 }
 
@@ -139,58 +154,112 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-bold;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl font-semibold;
   }
 }
 
 @layer components {
+  /* Glass Card */
   .glass-card {
-    @apply backdrop-blur-xl border border-white/20 shadow-lg;
+    @apply backdrop-blur-xl border border-white/30 shadow-lg;
     background: var(--gradient-glass);
   }
 
+  /* Gradient Text */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-hero);
+    background-image: var(--gradient-brand);
   }
 
+  /* Gradient Background */
   .gradient-bg {
-    background-image: var(--gradient-hero);
+    background-image: var(--gradient-brand);
   }
 
+  /* Mesh Gradient Background */
   .mesh-gradient {
+    background-color: hsl(var(--background));
     background-image: var(--gradient-mesh);
   }
 
+  /* Hero Gradient Background */
+  .hero-gradient {
+    background-image: var(--gradient-hero);
+  }
+
+  /* Card Hover Effect */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 
+  /* Button Glow */
   .btn-glow {
     @apply relative overflow-hidden;
+    box-shadow: var(--shadow-button);
   }
 
-  .btn-glow::after {
-    content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  .btn-glow:hover {
+    box-shadow: 0 4px 20px -2px rgba(20, 184, 166, 0.25);
   }
 
-  .btn-glow:hover::after {
-    @apply opacity-100;
-  }
-
+  /* Floating Animation */
   .floating-animation {
     animation: floating 6s ease-in-out infinite;
   }
 
+  /* Pulse Glow */
   .pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Premium Badge */
+  .premium-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+    @apply bg-white/80 backdrop-blur-sm border border-border/50 shadow-sm;
+  }
+
+  /* Nav Pill */
+  .nav-pill {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all;
+    @apply text-muted-foreground hover:text-foreground hover:bg-muted;
+  }
+
+  .nav-pill.active {
+    @apply bg-primary/10 text-primary;
+  }
+
+  /* Status Badges */
+  .status-pending {
+    @apply bg-amber-100 text-amber-800 border-amber-200;
+  }
+
+  .status-upcoming {
+    @apply bg-blue-100 text-blue-800 border-blue-200;
+  }
+
+  .status-completed {
+    @apply bg-green-100 text-green-800 border-green-200;
+  }
+
+  .status-cancelled {
+    @apply bg-red-100 text-red-800 border-red-200;
   }
 }
 
@@ -213,21 +282,22 @@
   }
 }
 
+/* Keyframe Animations */
 @keyframes floating {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-15px);
   }
 }
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(0, 166, 153, 0.3);
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.2);
   }
   50% {
-    box-shadow: 0 0 40px rgba(0, 166, 153, 0.6);
+    box-shadow: 0 0 40px rgba(20, 184, 166, 0.4);
   }
 }
 
@@ -250,15 +320,15 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted rounded-full;
+  @apply bg-muted/50 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full transition-colors;
+  @apply bg-muted-foreground/20 rounded-full transition-colors;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  @apply bg-muted-foreground/30;
 }
 
 /* Print Styles */
@@ -269,13 +339,37 @@
 
   body {
     @apply bg-white text-black;
+    font-size: 12pt;
   }
 
   .print-only {
     display: block !important;
   }
+
+  .print-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  @page {
+    margin: 1cm;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  table, figure {
+    page-break-inside: avoid;
+  }
 }
 
 .print-only {
   display: none;
+}
+
+/* Focus visible improvements */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
 }

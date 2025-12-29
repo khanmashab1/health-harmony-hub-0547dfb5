@@ -5,13 +5,14 @@ import { Footer } from "./Footer";
 interface LayoutProps {
   children: ReactNode;
   showFooter?: boolean;
+  showHeader?: boolean;
 }
 
-export function Layout({ children, showFooter = true }: LayoutProps) {
+export function Layout({ children, showFooter = true, showHeader = true }: LayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 pt-16 md:pt-20">
+    <div className="min-h-screen flex flex-col bg-background">
+      {showHeader && <Header />}
+      <main className={`flex-1 ${showHeader ? 'pt-[72px] md:pt-[72px]' : ''}`}>
         {children}
       </main>
       {showFooter && <Footer />}

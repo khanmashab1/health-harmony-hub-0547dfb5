@@ -5,8 +5,6 @@ import {
   Calendar, 
   Activity, 
   Star, 
-  Users, 
-  Award,
   Heart,
   Brain,
   Baby,
@@ -15,7 +13,10 @@ import {
   Smile,
   ArrowRight,
   CheckCircle2,
-  Quote
+  Quote,
+  Shield,
+  Clock,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +41,12 @@ const howItWorks = [
   { step: 2, title: "Find a Doctor", description: "Browse qualified doctors in your area with ratings" },
   { step: 3, title: "Pick a Date", description: "Select your preferred appointment date and time" },
   { step: 4, title: "Confirm Booking", description: "Get your token number and appointment confirmation" },
+];
+
+const features = [
+  { icon: Shield, title: "Verified Doctors", description: "All doctors are verified and certified" },
+  { icon: Clock, title: "24/7 Support", description: "Round-the-clock medical assistance" },
+  { icon: Users, title: "10K+ Patients", description: "Trusted by thousands of patients" },
 ];
 
 export default function Index() {
@@ -77,31 +84,46 @@ export default function Index() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden mesh-gradient">
-        <div className="container mx-auto px-4 py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="relative min-h-[calc(100vh-72px)] flex items-center overflow-hidden hero-gradient">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="container mx-auto px-4 py-16 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
               className="space-y-8"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                <Stethoscope className="w-4 h-4" />
-                Trusted Healthcare Platform
-              </div>
+              {/* Trust Badge */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="premium-badge"
+              >
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="text-foreground">Trusted Healthcare Platform</span>
+              </motion.div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              {/* Headline */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
                 Your Health, Our{" "}
                 <span className="gradient-text">Priority</span>
               </h1>
               
-              <p className="text-lg text-muted-foreground max-w-lg">
+              {/* Subheadline */}
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
                 Book appointments with top doctors, track your health metrics, 
-                and get expert medical advice - all in one place.
+                and get expert medical advice - all in one secure platform.
               </p>
 
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/booking">
                   <Button variant="hero" size="xl" className="w-full sm:w-auto gap-2">
@@ -121,13 +143,13 @@ export default function Index() {
               <div className="flex flex-wrap gap-8 pt-4">
                 {[
                   { value: `${stats?.doctors || 50}+`, label: "Doctors" },
-                  { value: `${stats?.patients?.toLocaleString() || "10K"}+`, label: "Patients" },
+                  { value: `${(stats?.patients || 10000).toLocaleString()}+`, label: "Patients" },
                   { value: stats?.rating || "4.8", label: "Avg Rating", icon: Star },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <span className="text-3xl font-bold gradient-text">{stat.value}</span>
-                      {stat.icon && <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />}
+                      <span className="text-3xl font-bold text-foreground">{stat.value}</span>
+                      {stat.icon && <Star className="w-5 h-5 text-amber-500 fill-amber-500" />}
                     </div>
                     <span className="text-sm text-muted-foreground">{stat.label}</span>
                   </div>
@@ -137,19 +159,19 @@ export default function Index() {
 
             {/* Right - Floating Doctor Image */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
               className="relative hidden lg:block"
             >
               <div className="relative">
                 {/* Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-3xl opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-60 scale-90" />
                 
                 {/* Floating Image */}
                 <motion.div
-                  animate={{ y: [0, -20, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                   className="relative z-10"
                 >
                   <img
@@ -161,13 +183,13 @@ export default function Index() {
 
                 {/* Floating Cards */}
                 <motion.div
-                  animate={{ y: [0, -10, 0], x: [0, 5, 0] }}
+                  animate={{ y: [0, -8, 0], x: [0, 4, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                   className="absolute top-20 -left-4 z-20"
                 >
                   <Card variant="glass" className="p-4 shadow-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
@@ -179,14 +201,14 @@ export default function Index() {
                 </motion.div>
 
                 <motion.div
-                  animate={{ y: [0, 10, 0], x: [0, -5, 0] }}
+                  animate={{ y: [0, 8, 0], x: [0, -4, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                   className="absolute bottom-32 -right-4 z-20"
                 >
                   <Card variant="glass" className="p-4 shadow-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                        <Star className="w-5 h-5 text-yellow-600 fill-yellow-500" />
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                        <Star className="w-5 h-5 text-amber-600 fill-amber-500" />
                       </div>
                       <div>
                         <p className="font-semibold text-sm">Top Rated</p>
@@ -226,10 +248,10 @@ export default function Index() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
                 <Link to={`/booking?specialty=${encodeURIComponent(specialty.name)}`}>
-                  <Card variant="interactive" className="text-center p-6 h-full">
+                  <Card variant="interactive" className="text-center p-6 h-full bg-card">
                     <div className={`w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br ${specialty.color} flex items-center justify-center mb-4 shadow-lg`}>
                       <specialty.icon className="w-7 h-7 text-white" />
                     </div>
@@ -270,14 +292,14 @@ export default function Index() {
                 className="relative"
               >
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-2xl font-bold text-primary-foreground mb-4 shadow-lg">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-brand flex items-center justify-center text-2xl font-bold text-white mb-4 shadow-lg">
                     {item.step}
                   </div>
                   <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 </div>
                 {index < howItWorks.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
+                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
                 )}
               </motion.div>
             ))}
@@ -319,7 +341,7 @@ export default function Index() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   <Card className="p-6 h-full">
                     <Quote className="w-8 h-8 text-primary/20 mb-4" />
@@ -335,8 +357,8 @@ export default function Index() {
                               key={i}
                               className={`w-4 h-4 ${
                                 i < review.rating
-                                  ? "text-yellow-500 fill-yellow-500"
-                                  : "text-gray-300"
+                                  ? "text-amber-500 fill-amber-500"
+                                  : "text-gray-200"
                               }`}
                             />
                           ))}
@@ -359,13 +381,13 @@ export default function Index() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
           >
-            <Card className="relative overflow-hidden gradient-bg text-primary-foreground p-12 text-center">
+            <Card className="relative overflow-hidden bg-gradient-brand text-white p-12 text-center">
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
               <div className="relative z-10">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
                   Ready to Book Your Appointment?
                 </h2>
-                <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
+                <p className="text-white/80 max-w-2xl mx-auto mb-8">
                   Join thousands of patients who trust MediCare+ for their healthcare needs.
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
