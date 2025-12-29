@@ -62,6 +62,7 @@ import { DoctorPerformancePanel } from "@/components/admin/DoctorPerformancePane
 import { CreateDoctorForm } from "@/components/admin/CreateDoctorForm";
 import { CreatePAForm } from "@/components/admin/CreatePAForm";
 import { AssignPAForm } from "@/components/admin/AssignPAForm";
+import { DoctorCard } from "@/components/admin/DoctorCard";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -197,6 +198,25 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pa-assignments"] });
       toast({ title: "Assignment removed" });
+    },
+  });
+
+  const deleteDoctor = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete doctor record first
+      const { error: doctorError } = await supabase.from("doctors").delete().eq("user_id", userId);
+      if (doctorError) throw doctorError;
+      // Update profile status to inactive (we don't delete the profile/user as they may have appointments)
+      const { error: profileError } = await supabase.from("profiles").update({ status: "Deleted" }).eq("id", userId);
+      if (profileError) throw profileError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast({ title: "Doctor deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Failed to delete doctor", description: error.message });
     },
   });
 
@@ -344,23 +364,25 @@ export default function AdminDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-6">
-                    {loadingDoctors ? (<div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>) : doctors && doctors.length > 0 ? (
+                    {loadingDoctors ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+                      </div>
+                    ) : doctors && doctors.length > 0 ? (
                       <div className="grid gap-4">
                         {doctors.map((doc: any) => (
-                          <motion.div key={doc.user_id} whileHover={{ scale: 1.01 }} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center"><Stethoscope className="w-6 h-6 text-green-600" /></div>
-                              <div>
-                                <p className="font-semibold">Dr. {doc.profile?.name || "Unknown"}</p>
-                                <p className="text-sm text-muted-foreground">{doc.specialty}</p>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1"><span>Rs. {doc.fee}</span><span>•</span><span>{doc.city}, {doc.province}</span><span>•</span><span className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />{doc.rating || 4.0}</span></div>
-                              </div>
-                            </div>
-                            <Badge className={doc.profile?.status === "Active" ? "status-completed" : "status-pending"}>{doc.profile?.status || "Active"}</Badge>
-                          </motion.div>
+                          <DoctorCard
+                            key={doc.user_id}
+                            doctor={doc}
+                            onEdit={() => queryClient.invalidateQueries({ queryKey: ["admin-doctors"] })}
+                            onDelete={(userId) => deleteDoctor.mutate(userId)}
+                            isDeleting={deleteDoctor.isPending}
+                          />
                         ))}
                       </div>
-                    ) : (<p className="text-center py-8 text-muted-foreground">No doctors found</p>)}
+                    ) : (
+                      <p className="text-center py-8 text-muted-foreground">No doctors found</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
