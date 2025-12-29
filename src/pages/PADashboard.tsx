@@ -24,9 +24,12 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Layout } from "@/components/layout/Layout";
 import { useRequireAuth, useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +48,12 @@ export default function PADashboard() {
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [blockDate, setBlockDate] = useState<Date | undefined>();
   const [blockReason, setBlockReason] = useState("");
+  
+  // Payment confirmation dialog state
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [paymentNote, setPaymentNote] = useState("");
 
   // Fetch PA assignments
   const { data: assignments } = useQuery({
@@ -131,20 +140,130 @@ export default function PADashboard() {
     enabled: assignedDoctorIds.length > 0,
   });
 
+  // Send payment email notification
+  const sendPaymentEmail = async (appointment: any, status: "confirmed" | "rejected", note?: string) => {
+    if (!appointment.patient_email) {
+      console.log("No patient email, skipping notification");
+      return;
+    }
+
+    const doctorName = (assignments?.find(a => a.doctor_user_id === appointment.doctor_user_id) as any)?.doctorProfile?.name || "Doctor";
+    
+    const subject = status === "confirmed" 
+      ? `Payment Confirmed - Appointment with Dr. ${doctorName}`
+      : `Payment Issue - Appointment with Dr. ${doctorName}`;
+    
+    const html = status === "confirmed" 
+      ? `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #16a34a;">✓ Payment Confirmed</h2>
+          <p>Dear ${appointment.patient_full_name},</p>
+          <p>Your payment for the appointment with <strong>Dr. ${doctorName}</strong> has been confirmed.</p>
+          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin: 4px 0;"><strong>Date:</strong> ${format(new Date(appointment.appointment_date), "MMMM d, yyyy")}</p>
+            <p style="margin: 4px 0;"><strong>Token Number:</strong> #${appointment.token_number}</p>
+          </div>
+          ${note ? `<p><strong>Note from PA:</strong> ${note}</p>` : ""}
+          <p>Your appointment status is now <strong>Upcoming</strong>. Please arrive on time.</p>
+          <p>Thank you!</p>
+        </div>
+      `
+      : `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #dc2626;">Payment Issue</h2>
+          <p>Dear ${appointment.patient_full_name},</p>
+          <p>We encountered an issue with your payment for the appointment with <strong>Dr. ${doctorName}</strong>.</p>
+          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin: 4px 0;"><strong>Date:</strong> ${format(new Date(appointment.appointment_date), "MMMM d, yyyy")}</p>
+            <p style="margin: 4px 0;"><strong>Token Number:</strong> #${appointment.token_number}</p>
+          </div>
+          ${note ? `<p><strong>Reason:</strong> ${note}</p>` : ""}
+          <p>Your appointment has been cancelled. Please contact us or rebook if needed.</p>
+        </div>
+      `;
+
+    try {
+      await supabase.functions.invoke("send-email", {
+        body: { to: appointment.patient_email, subject, html }
+      });
+      
+      // Log the email
+      await supabase.from("email_logs").insert({
+        recipient_email: appointment.patient_email,
+        email_type: status === "confirmed" ? "payment_confirmed" : "payment_rejected",
+        subject,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        appointment_id: appointment.id,
+      });
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      // Log failed email
+      await supabase.from("email_logs").insert({
+        recipient_email: appointment.patient_email,
+        email_type: status === "confirmed" ? "payment_confirmed" : "payment_rejected",
+        subject,
+        status: "failed",
+        error_message: error instanceof Error ? error.message : "Unknown error",
+        appointment_id: appointment.id,
+      });
+    }
+  };
+
   // Mutations
   const confirmPayment = useMutation({
-    mutationFn: async (appointmentId: string) => {
+    mutationFn: async ({ appointment, note }: { appointment: any; note?: string }) => {
       const { error } = await supabase
         .from("appointments")
-        .update({ payment_status: "Confirmed", status: "Upcoming" })
-        .eq("id", appointmentId);
+        .update({ 
+          payment_status: "Confirmed", 
+          status: "Upcoming",
+          doctor_comments: note ? `Payment confirmed: ${note}` : undefined
+        })
+        .eq("id", appointment.id);
       if (error) throw error;
+      
+      // Send email notification
+      await sendPaymentEmail(appointment, "confirmed", note);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
-      toast({ title: "Payment confirmed" });
+      toast({ title: "Payment confirmed", description: "Email notification sent to patient" });
+      setConfirmDialogOpen(false);
+      setSelectedPayment(null);
+      setPaymentNote("");
     },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const rejectPayment = useMutation({
+    mutationFn: async ({ appointment, note }: { appointment: any; note?: string }) => {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ 
+          status: "Cancelled",
+          doctor_comments: note ? `Payment rejected: ${note}` : "Payment rejected"
+        })
+        .eq("id", appointment.id);
+      if (error) throw error;
+      
+      // Send email notification
+      await sendPaymentEmail(appointment, "rejected", note);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+      toast({ title: "Payment rejected", description: "Appointment cancelled and patient notified" });
+      setRejectDialogOpen(false);
+      setSelectedPayment(null);
+      setPaymentNote("");
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   });
 
   const cancelAppointment = useMutation({
@@ -161,6 +280,18 @@ export default function PADashboard() {
       toast({ title: "Appointment cancelled" });
     },
   });
+
+  const openConfirmDialog = (payment: any) => {
+    setSelectedPayment(payment);
+    setPaymentNote("");
+    setConfirmDialogOpen(true);
+  };
+
+  const openRejectDialog = (payment: any) => {
+    setSelectedPayment(payment);
+    setPaymentNote("");
+    setRejectDialogOpen(true);
+  };
 
   const blockSlot = useMutation({
     mutationFn: async (doctorId: string) => {
@@ -359,7 +490,7 @@ export default function PADashboard() {
                               <Button
                                 size="sm"
                                 variant="hero"
-                                onClick={() => confirmPayment.mutate(payment.id)}
+                                onClick={() => openConfirmDialog(payment)}
                               >
                                 <CheckCircle2 className="w-4 h-4 mr-1" />
                                 Confirm
@@ -367,7 +498,7 @@ export default function PADashboard() {
                               <Button
                                 variant="destructive"
                                 size="icon"
-                                onClick={() => cancelAppointment.mutate(payment.id)}
+                                onClick={() => openRejectDialog(payment)}
                               >
                                 <XCircle className="w-4 h-4" />
                               </Button>
@@ -585,6 +716,88 @@ export default function PADashboard() {
               <p className="text-muted-foreground">Unable to load receipt image</p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Payment Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="w-5 h-5" />
+              Confirm Payment
+            </DialogTitle>
+            <DialogDescription>
+              Confirm payment for {selectedPayment?.patient_full_name}'s appointment on{" "}
+              {selectedPayment && format(new Date(selectedPayment.appointment_date), "MMM d, yyyy")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="confirm-note">Add a note (optional)</Label>
+              <Textarea
+                id="confirm-note"
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="e.g., Payment verified via EasyPaisa transaction #..."
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="hero" 
+              onClick={() => selectedPayment && confirmPayment.mutate({ appointment: selectedPayment, note: paymentNote })}
+              disabled={confirmPayment.isPending}
+            >
+              {confirmPayment.isPending ? "Confirming..." : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Payment Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="w-5 h-5" />
+              Reject Payment
+            </DialogTitle>
+            <DialogDescription>
+              Reject payment and cancel appointment for {selectedPayment?.patient_full_name} on{" "}
+              {selectedPayment && format(new Date(selectedPayment.appointment_date), "MMM d, yyyy")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="reject-note">Reason for rejection</Label>
+              <Textarea
+                id="reject-note"
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="e.g., Receipt not clear, incorrect amount, etc."
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => selectedPayment && rejectPayment.mutate({ appointment: selectedPayment, note: paymentNote })}
+              disabled={rejectPayment.isPending}
+            >
+              {rejectPayment.isPending ? "Rejecting..." : "Reject & Cancel"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>
