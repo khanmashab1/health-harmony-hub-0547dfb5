@@ -109,7 +109,7 @@ export default function Index() {
                     Book Appointment
                   </Button>
                 </Link>
-                <Link to="/symptoms-checker">
+                <Link to="/symptoms">
                   <Button variant="outline" size="xl" className="w-full sm:w-auto gap-2">
                     <Activity className="w-5 h-5" />
                     Check Symptoms

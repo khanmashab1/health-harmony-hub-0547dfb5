@@ -16,6 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileEditForm } from "@/components/patient/ProfileEditForm";
+import { HealthMetrics } from "@/components/patient/HealthMetrics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PatientDashboard() {
@@ -263,15 +264,8 @@ export default function PatientDashboard() {
 
             <TabsContent value="health">
               <Card>
-                <CardHeader>
-                  <CardTitle>Health Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Track your health metrics here</p>
-                    <p className="text-sm text-muted-foreground mt-2">Coming soon!</p>
-                  </div>
+                <CardContent className="p-6">
+                  {user && <HealthMetrics userId={user.id} />}
                 </CardContent>
               </Card>
             </TabsContent>
