@@ -13,6 +13,7 @@ import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PADashboard from "./pages/PADashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import SymptomsChecker from "./pages/SymptomsChecker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/pa" element={<PADashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/symptoms" element={<SymptomsChecker />} />
             <Route path="/token/:appointmentId" element={<TokenPrint />} />
             <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
             <Route path="*" element={<NotFound />} />
