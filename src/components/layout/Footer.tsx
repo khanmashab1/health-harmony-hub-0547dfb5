@@ -17,9 +17,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Stethoscope className="w-5 h-5 text-primary-foreground" />
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center">
+                <Stethoscope className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-background">
                 MediCare+
@@ -29,12 +29,12 @@ export function Footer() {
               Your trusted healthcare partner. Book appointments with top doctors,
               track your health metrics, and get expert medical advice.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"
-                  className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                  className="w-9 h-9 rounded-xl bg-background/10 flex items-center justify-center hover:bg-primary transition-colors"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -45,17 +45,17 @@ export function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {[
                 { label: "Book Appointment", href: "/booking" },
                 { label: "Find Doctors", href: "/booking" },
-                { label: "Symptoms Checker", href: "/symptoms-checker" },
+                { label: "Symptoms Checker", href: "/symptoms" },
                 { label: "My Profile", href: "/profile" },
               ].map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-background/70 hover:text-primary transition-colors text-sm"
+                    className="text-background/70 hover:text-background transition-colors text-sm"
                   >
                     {link.label}
                   </Link>
@@ -67,7 +67,7 @@ export function Footer() {
           {/* Services */}
           <div>
             <h4 className="font-semibold text-lg mb-4">Our Services</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {[
                 "General Consultation",
                 "Specialist Appointments",
@@ -107,7 +107,7 @@ export function Footer() {
 
         <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-background/50 text-sm">
-            © 2024 MediCare+. All rights reserved.
+            © {new Date().getFullYear()} MediCare+. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-background/50 hover:text-background text-sm transition-colors">

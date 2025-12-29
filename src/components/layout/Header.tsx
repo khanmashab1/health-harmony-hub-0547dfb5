@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Menu, 
@@ -10,7 +10,8 @@ import {
   Calendar, 
   Activity,
   Shield,
-  UserCog
+  UserCog,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +20,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -49,47 +51,55 @@ export function Header() {
 
   const DashboardIcon = getDashboardIcon();
 
+  const isActiveLink = (path: string) => location.pathname === path;
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-border/40">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-shadow">
-                <Stethoscope className="w-5 h-5 text-primary-foreground" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 to-transparent rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <span className="text-xl font-bold gradient-text hidden sm:block">
+            <span className="text-xl font-bold text-foreground">
               MediCare+
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-2">
+          {/* Desktop Nav - Center */}
+          <nav className="hidden md:flex items-center gap-1">
             <Link to="/booking">
-              <Button variant="ghost" className="gap-2">
+              <button
+                className={`nav-pill ${isActiveLink('/booking') ? 'active' : ''}`}
+              >
                 <Calendar className="w-4 h-4" />
                 Book Appointment
-              </Button>
+              </button>
             </Link>
             <Link to="/symptoms">
-              <Button variant="ghost" className="gap-2">
+              <button
+                className={`nav-pill ${isActiveLink('/symptoms') ? 'active' : ''}`}
+              >
                 <Activity className="w-4 h-4" />
                 Symptoms Checker
-              </Button>
+              </button>
             </Link>
+          </nav>
 
+          {/* Desktop Actions - Right */}
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
                 <Link to={getDashboardLink()}>
-                  <Button variant="secondary" className="gap-2">
+                  <Button variant="ghost" className="gap-2">
                     <DashboardIcon className="w-4 h-4" />
                     Dashboard
                   </Button>
                 </Link>
-                <Button variant="outline" onClick={handleSignOut} className="gap-2">
+                <Button variant="outline-muted" onClick={handleSignOut} className="gap-2">
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </Button>
@@ -104,11 +114,11 @@ export function Header() {
                 </Link>
               </>
             )}
-          </nav>
+          </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+            className="md:hidden p-2 rounded-xl hover:bg-muted transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
@@ -117,6 +127,26 @@ export function Header() {
               <Menu className="w-6 h-6" />
             )}
           </button>
+        </div>
+
+        {/* Mobile Navigation Pills */}
+        <div className="md:hidden pb-3 flex gap-2 overflow-x-auto">
+          <Link to="/booking">
+            <button
+              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/booking') ? 'active' : ''}`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Book Appointment
+            </button>
+          </Link>
+          <Link to="/symptoms">
+            <button
+              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/symptoms') ? 'active' : ''}`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Symptoms Checker
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -127,22 +157,9 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl"
+            className="md:hidden border-t border-border/40 bg-white"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              <Link to="/booking" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Book Appointment
-                </Button>
-              </Link>
-              <Link to="/symptoms" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Activity className="w-4 h-4" />
-                  Symptoms Checker
-                </Button>
-              </Link>
-
               {user ? (
                 <>
                   <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
