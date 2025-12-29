@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
+import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -27,12 +28,19 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const resetSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type ResetFormData = z.infer<typeof resetSchema>;
+
+type AuthMode = "login" | "signup" | "reset";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const [isSignup, setIsSignup] = useState(searchParams.get("mode") === "signup");
+  const [mode, setMode] = useState<AuthMode>(searchParams.get("mode") === "signup" ? "signup" : "login");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, user, profile } = useAuth();
   const navigate = useNavigate();
@@ -58,6 +66,11 @@ export default function Auth() {
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+  });
+
+  const resetForm = useForm<ResetFormData>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: { email: "" },
   });
 
   const onLogin = async (data: LoginFormData) => {
@@ -99,6 +112,34 @@ export default function Auth() {
         title: "Account created!",
         description: "Welcome to MediCare+. You can now access your dashboard.",
       });
+    }
+  };
+
+  const onResetPassword = async (data: ResetFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-password-reset", {
+        body: {
+          email: data.email,
+          redirectTo: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+      setMode("login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Reset failed",
+        description: error.message || "Failed to send reset email. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,16 +215,22 @@ export default function Auth() {
                 </div>
               </div>
               <CardTitle className="text-2xl">
-                {isSignup ? "Create an Account" : "Welcome Back"}
+                {mode === "signup" 
+                  ? "Create an Account" 
+                  : mode === "reset" 
+                  ? "Reset Password"
+                  : "Welcome Back"}
               </CardTitle>
               <CardDescription>
-                {isSignup
+                {mode === "signup"
                   ? "Join MediCare+ to start booking appointments"
+                  : mode === "reset"
+                  ? "Enter your email to receive a password reset link"
                   : "Sign in to access your health dashboard"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isSignup ? (
+              {mode === "signup" ? (
                 <Form {...signupForm}>
                   <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
                     <FormField
@@ -262,6 +309,40 @@ export default function Auth() {
                     </Button>
                   </form>
                 </Form>
+              ) : mode === "reset" ? (
+                <Form {...resetForm}>
+                  <form onSubmit={resetForm.handleSubmit(onResetPassword)} className="space-y-4">
+                    <FormField
+                      control={resetForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input placeholder="you@example.com" className="pl-10" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Sending Reset Link...
+                        </>
+                      ) : (
+                        <>
+                          Send Reset Link
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               ) : (
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
@@ -286,7 +367,16 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Password</FormLabel>
+                            <button
+                              type="button"
+                              onClick={() => setMode("reset")}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Forgot password?
+                            </button>
+                          </div>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -312,21 +402,31 @@ export default function Auth() {
               )}
 
               <div className="mt-6 text-center text-sm">
-                {isSignup ? (
+                {mode === "signup" ? (
                   <p className="text-muted-foreground">
                     Already have an account?{" "}
                     <button
-                      onClick={() => setIsSignup(false)}
+                      onClick={() => setMode("login")}
                       className="text-primary hover:underline font-medium"
                     >
                       Sign in
+                    </button>
+                  </p>
+                ) : mode === "reset" ? (
+                  <p className="text-muted-foreground">
+                    Remember your password?{" "}
+                    <button
+                      onClick={() => setMode("login")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Back to sign in
                     </button>
                   </p>
                 ) : (
                   <p className="text-muted-foreground">
                     Don't have an account?{" "}
                     <button
-                      onClick={() => setIsSignup(true)}
+                      onClick={() => setMode("signup")}
                       className="text-primary hover:underline font-medium"
                     >
                       Sign up

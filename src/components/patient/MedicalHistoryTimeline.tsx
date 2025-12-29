@@ -13,7 +13,10 @@ import {
   TestTube,
   MessageSquare,
   AlertCircle,
-  Clock
+  Clock,
+  Download,
+  Share2,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +27,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import { downloadMedicalHistoryPDF, getMedicalHistoryPDFBlob } from "@/lib/pdfGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimelineAppointment {
   id: string;
@@ -45,9 +50,11 @@ interface TimelineAppointment {
 }
 
 export function MedicalHistoryTimeline() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const { data: appointments, isLoading } = useQuery({
     queryKey: ["medical-history", user?.id],
     queryFn: async () => {
@@ -182,8 +189,125 @@ export function MedicalHistoryTimeline() {
     );
   }
 
+  const handleDownloadPDF = async () => {
+    if (!appointments) return;
+    setIsDownloading(true);
+    try {
+      downloadMedicalHistoryPDF(
+        appointments,
+        medicalRecords || [],
+        {
+          name: profile?.name || "Patient",
+          phone: profile?.phone || undefined,
+          age: profile?.age || undefined,
+          gender: profile?.gender || undefined,
+          blood_type: profile?.blood_type || undefined,
+        }
+      );
+      toast({
+        title: "PDF Downloaded",
+        description: "Your medical history has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Failed to generate PDF. Please try again.",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleSharePDF = async () => {
+    if (!appointments) return;
+    setIsSharing(true);
+    try {
+      const blob = getMedicalHistoryPDFBlob(
+        appointments,
+        medicalRecords || [],
+        {
+          name: profile?.name || "Patient",
+          phone: profile?.phone || undefined,
+          age: profile?.age || undefined,
+          gender: profile?.gender || undefined,
+          blood_type: profile?.blood_type || undefined,
+        }
+      );
+      
+      const file = new File(
+        [blob],
+        `medical-history-${profile?.name?.replace(/\s+/g, "-").toLowerCase() || "patient"}.pdf`,
+        { type: "application/pdf" }
+      );
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "Medical History Report",
+          text: "My complete medical history from MediCare+",
+          files: [file],
+        });
+        toast({
+          title: "Shared successfully",
+          description: "Your medical history has been shared.",
+        });
+      } else {
+        // Fallback: copy link or download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({
+          title: "PDF Downloaded",
+          description: "Sharing not supported. PDF has been downloaded instead.",
+        });
+      }
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        toast({
+          variant: "destructive",
+          title: "Share failed",
+          description: "Failed to share PDF. Please try downloading instead.",
+        });
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Actions */}
+      <div className="flex flex-wrap gap-3">
+        <Button
+          onClick={handleDownloadPDF}
+          disabled={isDownloading || !appointments?.length}
+          className="gap-2"
+        >
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          Download PDF
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleSharePDF}
+          disabled={isSharing || !appointments?.length}
+          className="gap-2"
+        >
+          {isSharing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Share2 className="w-4 h-4" />
+          )}
+          Share
+        </Button>
+      </div>
+
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
