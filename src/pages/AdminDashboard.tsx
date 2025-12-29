@@ -18,7 +18,8 @@ import {
   Activity,
   Calendar,
   TrendingUp,
-  LogOut
+  LogOut,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,6 +58,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { useNavigate } from "react-router-dom";
+import { EmailLogsPanel } from "@/components/admin/EmailLogsPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -301,11 +303,15 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="doctors">Doctors</TabsTrigger>
               <TabsTrigger value="pas">PAs</TabsTrigger>
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              <TabsTrigger value="emails" className="flex items-center gap-1">
+                <Mail className="w-4 h-4" />
+                Emails
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -618,6 +624,11 @@ export default function AdminDashboard() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Emails Tab */}
+            <TabsContent value="emails">
+              <EmailLogsPanel />
             </TabsContent>
           </Tabs>
         </div>

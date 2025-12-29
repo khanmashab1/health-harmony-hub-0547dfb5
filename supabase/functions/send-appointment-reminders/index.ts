@@ -13,18 +13,18 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!gmailUser || !gmailAppPassword) {
       console.error("Gmail credentials not configured");
       throw new Error("Email service not configured");
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Calculate tomorrow's date range
     const now = new Date();
@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Fetching appointments for: ${tomorrowStart}`);
 
-    // Fetch appointments scheduled for tomorrow that haven't been reminded
+    // Fetch appointments scheduled for tomorrow
     const { data: appointments, error: fetchError } = await supabase
       .from("appointments")
       .select(`
@@ -77,20 +77,34 @@ const handler = async (req: Request): Promise<Response> => {
     const errors: string[] = [];
 
     for (const appointment of appointments) {
+      const patientEmail = appointment.patient_email;
+      if (!patientEmail) continue;
+
+      const doctorName = appointment.doctor?.name || "Your Doctor";
+      const patientName = appointment.patient?.name || appointment.patient_full_name || "Patient";
+      const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const subject = `Reminder: Appointment Tomorrow with Dr. ${doctorName}`;
+      
+      // Create log entry
+      const { data: logEntry } = await supabase
+        .from("email_logs")
+        .insert({
+          appointment_id: appointment.id,
+          recipient_email: patientEmail,
+          email_type: "reminder",
+          status: "pending",
+          subject: subject,
+        })
+        .select()
+        .single();
+
       try {
-        const patientEmail = appointment.patient_email;
-        if (!patientEmail) continue;
-
-        const doctorName = appointment.doctor?.name || "Your Doctor";
-        const patientName = appointment.patient?.name || appointment.patient_full_name || "Patient";
-        const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        const subject = `Reminder: Appointment Tomorrow with Dr. ${doctorName}`;
         const html = `
           <!DOCTYPE html>
           <html>
@@ -151,10 +165,27 @@ const handler = async (req: Request): Promise<Response> => {
           html: html,
         });
 
+        // Update log to sent
+        if (logEntry) {
+          await supabase
+            .from("email_logs")
+            .update({ status: "sent", sent_at: new Date().toISOString() })
+            .eq("id", logEntry.id);
+        }
+
         sentCount++;
         console.log(`Reminder sent to ${patientEmail} for appointment ${appointment.id}`);
       } catch (emailError: any) {
         console.error(`Failed to send reminder for appointment ${appointment.id}:`, emailError);
+        
+        // Update log to failed
+        if (logEntry) {
+          await supabase
+            .from("email_logs")
+            .update({ status: "failed", error_message: emailError.message })
+            .eq("id", logEntry.id);
+        }
+        
         errors.push(`${appointment.id}: ${emailError.message}`);
       }
     }
