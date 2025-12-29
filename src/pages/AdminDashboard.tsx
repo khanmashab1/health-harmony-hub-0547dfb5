@@ -19,7 +19,8 @@ import {
   Calendar,
   TrendingUp,
   LogOut,
-  Mail
+  Mail,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,7 @@ import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { useNavigate } from "react-router-dom";
 import { EmailLogsPanel } from "@/components/admin/EmailLogsPanel";
 import { AnalyticsPanel } from "@/components/admin/AnalyticsPanel";
+import { DoctorPerformancePanel } from "@/components/admin/DoctorPerformancePanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -304,10 +306,14 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="analytics" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
               <TabsTrigger value="analytics" className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
                 Analytics
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-1">
+                <BarChart3 className="w-4 h-4" />
+                Performance
               </TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="doctors">Doctors</TabsTrigger>
@@ -322,6 +328,11 @@ export default function AdminDashboard() {
             {/* Analytics Tab */}
             <TabsContent value="analytics">
               <AnalyticsPanel />
+            </TabsContent>
+
+            {/* Doctor Performance Tab */}
+            <TabsContent value="performance">
+              <DoctorPerformancePanel />
             </TabsContent>
 
             {/* Users Tab */}
