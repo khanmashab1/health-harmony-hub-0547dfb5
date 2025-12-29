@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, Upload, 
-  ChevronRight, Clock, MapPin, Loader2, LogOut, Edit, X
+  ChevronRight, Clock, MapPin, Loader2, LogOut, Edit, X, History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileEditForm } from "@/components/patient/ProfileEditForm";
 import { HealthMetrics } from "@/components/patient/HealthMetrics";
+import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimeline";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PatientDashboard() {
@@ -116,8 +117,12 @@ export default function PatientDashboard() {
 
           {/* Tabs */}
           <Tabs defaultValue="appointments" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
               <TabsTrigger value="appointments">Appointments</TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-1">
+                <History className="w-4 h-4" />
+                History
+              </TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="health">Health</TabsTrigger>
               <TabsTrigger value="records">Records</TabsTrigger>
@@ -186,6 +191,10 @@ export default function PatientDashboard() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="history">
+              <MedicalHistoryTimeline />
             </TabsContent>
 
             <TabsContent value="profile">
