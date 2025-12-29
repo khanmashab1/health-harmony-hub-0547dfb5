@@ -1,0 +1,693 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
+  public: {
+    Tables: {
+      appointments: {
+        Row: {
+          allergies: string | null
+          appointment_date: string
+          created_at: string
+          department: string | null
+          diagnosis: string | null
+          doctor_comments: string | null
+          doctor_user_id: string
+          id: string
+          lab_tests: string | null
+          medicines: string | null
+          patient_email: string | null
+          patient_full_name: string | null
+          patient_phone: string | null
+          patient_user_id: string | null
+          payment_method: string
+          payment_status: string
+          reason: string | null
+          receipt_path: string | null
+          status: string
+          token_number: number
+          updated_at: string
+          vitals_bp: string | null
+          vitals_heart_rate: string | null
+          vitals_temperature: string | null
+          vitals_weight: string | null
+        }
+        Insert: {
+          allergies?: string | null
+          appointment_date: string
+          created_at?: string
+          department?: string | null
+          diagnosis?: string | null
+          doctor_comments?: string | null
+          doctor_user_id: string
+          id?: string
+          lab_tests?: string | null
+          medicines?: string | null
+          patient_email?: string | null
+          patient_full_name?: string | null
+          patient_phone?: string | null
+          patient_user_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          reason?: string | null
+          receipt_path?: string | null
+          status?: string
+          token_number: number
+          updated_at?: string
+          vitals_bp?: string | null
+          vitals_heart_rate?: string | null
+          vitals_temperature?: string | null
+          vitals_weight?: string | null
+        }
+        Update: {
+          allergies?: string | null
+          appointment_date?: string
+          created_at?: string
+          department?: string | null
+          diagnosis?: string | null
+          doctor_comments?: string | null
+          doctor_user_id?: string
+          id?: string
+          lab_tests?: string | null
+          medicines?: string | null
+          patient_email?: string | null
+          patient_full_name?: string | null
+          patient_phone?: string | null
+          patient_user_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          reason?: string | null
+          receipt_path?: string | null
+          status?: string
+          token_number?: number
+          updated_at?: string
+          vitals_bp?: string | null
+          vitals_heart_rate?: string | null
+          vitals_temperature?: string | null
+          vitals_weight?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocked_slots: {
+        Row: {
+          blocked_date: string
+          blocked_time: string | null
+          created_at: string
+          doctor_user_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_date: string
+          blocked_time?: string | null
+          created_at?: string
+          doctor_user_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_date?: string
+          blocked_time?: string | null
+          created_at?: string
+          doctor_user_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_slots_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          bio: string | null
+          city: string | null
+          created_at: string
+          easypaisa_number: string | null
+          experience_years: number | null
+          fee: number
+          image_path: string | null
+          max_patients_per_day: number
+          province: string | null
+          rating: number | null
+          specialty: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          city?: string | null
+          created_at?: string
+          easypaisa_number?: string | null
+          experience_years?: number | null
+          fee?: number
+          image_path?: string | null
+          max_patients_per_day?: number
+          province?: string | null
+          rating?: number | null
+          specialty: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          city?: string | null
+          created_at?: string
+          easypaisa_number?: string | null
+          experience_years?: number | null
+          fee?: number
+          image_path?: string | null
+          max_patients_per_day?: number
+          province?: string | null
+          rating?: number | null
+          specialty?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_metrics: {
+        Row: {
+          created_at: string
+          diastolic: number | null
+          id: string
+          metric_date: string
+          notes: string | null
+          patient_user_id: string
+          sugar_level: number | null
+          systolic: number | null
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          diastolic?: number | null
+          id?: string
+          metric_date?: string
+          notes?: string | null
+          patient_user_id: string
+          sugar_level?: number | null
+          systolic?: number | null
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          diastolic?: number | null
+          id?: string
+          metric_date?: string
+          notes?: string | null
+          patient_user_id?: string
+          sugar_level?: number | null
+          systolic?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_metrics_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_records: {
+        Row: {
+          comments: string | null
+          created_at: string
+          diagnosis: string | null
+          doctor_name: string | null
+          id: string
+          lab_tests: string | null
+          medicines: string | null
+          patient_user_id: string
+          record_date: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_name?: string | null
+          id?: string
+          lab_tests?: string | null
+          medicines?: string | null
+          patient_user_id: string
+          record_date?: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_name?: string | null
+          id?: string
+          lab_tests?: string | null
+          medicines?: string | null
+          patient_user_id?: string
+          record_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_records_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pa_assignments: {
+        Row: {
+          created_at: string
+          doctor_user_id: string
+          id: string
+          pa_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_user_id: string
+          id?: string
+          pa_user_id: string
+        }
+        Update: {
+          created_at?: string
+          doctor_user_id?: string
+          id?: string
+          pa_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pa_assignments_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pa_assignments_pa_user_id_fkey"
+            columns: ["pa_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          avatar_path: string | null
+          blood_type: string | null
+          city: string | null
+          created_at: string
+          gender: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          province: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          avatar_path?: string | null
+          blood_type?: string | null
+          city?: string | null
+          created_at?: string
+          gender?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          province?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          avatar_path?: string | null
+          blood_type?: string | null
+          city?: string | null
+          created_at?: string
+          gender?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          province?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          display_name: string
+          id: string
+          patient_user_id: string | null
+          rating: number
+          source: string | null
+          status: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          patient_user_id?: string | null
+          rating: number
+          source?: string | null
+          status?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          patient_user_id?: string | null
+          rating?: number
+          source?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      symptom_submissions: {
+        Row: {
+          age: number | null
+          created_at: string
+          duration: string | null
+          gender: string | null
+          id: string
+          medical_history: string | null
+          patient_user_id: string | null
+          result_advice: string | null
+          result_condition: string | null
+          result_confidence: number | null
+          selected_tags: string[] | null
+          severity: string | null
+          symptoms_text: string | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          duration?: string | null
+          gender?: string | null
+          id?: string
+          medical_history?: string | null
+          patient_user_id?: string | null
+          result_advice?: string | null
+          result_condition?: string | null
+          result_confidence?: number | null
+          selected_tags?: string[] | null
+          severity?: string | null
+          symptoms_text?: string | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          duration?: string | null
+          gender?: string | null
+          id?: string
+          medical_history?: string | null
+          patient_user_id?: string | null
+          result_advice?: string | null
+          result_condition?: string | null
+          result_confidence?: number | null
+          selected_tags?: string[] | null
+          severity?: string | null
+          symptoms_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "symptom_submissions_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      allocate_token: {
+        Args: { p_date: string; p_doctor_id: string }
+        Returns: number
+      }
+      get_available_slots: {
+        Args: { p_date: string; p_doctor_id: string }
+        Returns: number
+      }
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          check_role: Database["public"]["Enums"]["app_role"]
+          user_uuid: string
+        }
+        Returns: boolean
+      }
+      is_pa_for_doctor: {
+        Args: { doctor_uuid: string; pa_uuid: string }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      app_role: "patient" | "doctor" | "pa" | "admin"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["patient", "doctor", "pa", "admin"],
+    },
+  },
+} as const
