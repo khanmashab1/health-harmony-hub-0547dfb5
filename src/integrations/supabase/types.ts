@@ -242,6 +242,50 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_metrics: {
         Row: {
           created_at: string

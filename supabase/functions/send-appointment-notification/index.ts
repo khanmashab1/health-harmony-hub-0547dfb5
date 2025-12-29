@@ -11,6 +11,7 @@ const corsHeaders = {
 interface NotificationRequest {
   appointmentId: string;
   type: "confirmation" | "reminder";
+  resend?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -18,19 +19,20 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!gmailUser || !gmailAppPassword) {
       console.error("Gmail credentials not configured");
       throw new Error("Email service not configured");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { appointmentId, type }: NotificationRequest = await req.json();
+    const { appointmentId, type, resend }: NotificationRequest = await req.json();
 
     if (!appointmentId) {
       throw new Error("Missing appointmentId");
@@ -128,37 +130,76 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailUser,
-          password: gmailAppPassword,
+    // Create email log entry
+    const { data: logEntry, error: logError } = await supabase
+      .from("email_logs")
+      .insert({
+        appointment_id: appointmentId,
+        recipient_email: patientEmail,
+        email_type: type,
+        status: "pending",
+        subject: subject,
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error("Error creating log entry:", logError);
+    }
+
+    try {
+      const client = new SMTPClient({
+        connection: {
+          hostname: "smtp.gmail.com",
+          port: 465,
+          tls: true,
+          auth: {
+            username: gmailUser,
+            password: gmailAppPassword,
+          },
         },
-      },
-    });
+      });
 
-    await client.send({
-      from: gmailUser,
-      to: patientEmail,
-      subject: subject,
-      content: `${isConfirmation ? "Appointment Confirmation" : "Appointment Reminder"} - Token #${appointment.token_number} with Dr. ${doctorName} on ${appointmentDate}`,
-      html: html,
-    });
+      await client.send({
+        from: gmailUser,
+        to: patientEmail,
+        subject: subject,
+        content: `${isConfirmation ? "Appointment Confirmation" : "Appointment Reminder"} - Token #${appointment.token_number} with Dr. ${doctorName} on ${appointmentDate}`,
+        html: html,
+      });
 
-    await client.close();
+      await client.close();
 
-    console.log(`${type} email sent successfully to ${patientEmail}`);
-
-    return new Response(
-      JSON.stringify({ success: true, message: `${type} email sent successfully` }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+      // Update log entry to sent
+      if (logEntry) {
+        await supabase
+          .from("email_logs")
+          .update({ status: "sent", sent_at: new Date().toISOString() })
+          .eq("id", logEntry.id);
       }
-    );
+
+      console.log(`${type} email sent successfully to ${patientEmail}`);
+
+      return new Response(
+        JSON.stringify({ success: true, message: `${type} email sent successfully` }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    } catch (emailError: any) {
+      console.error("SMTP error:", emailError);
+
+      // Update log entry to failed
+      if (logEntry) {
+        await supabase
+          .from("email_logs")
+          .update({ status: "failed", error_message: emailError.message })
+          .eq("id", logEntry.id);
+      }
+
+      throw emailError;
+    }
   } catch (error: any) {
     console.error("Error sending notification:", error);
     return new Response(
