@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -21,28 +22,30 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/booking" element={<Booking />} />
-            <Route path="/profile" element={<PatientDashboard />} />
-            <Route path="/doctor" element={<DoctorDashboard />} />
-            <Route path="/pa" element={<PADashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/symptoms" element={<SymptomsChecker />} />
-            <Route path="/token/:appointmentId" element={<TokenPrint />} />
-            <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
-            <Route path="/print/history" element={<MedicalHistoryPrint />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/booking" element={<Booking />} />
+              <Route path="/profile" element={<PatientDashboard />} />
+              <Route path="/doctor" element={<DoctorDashboard />} />
+              <Route path="/pa" element={<PADashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/symptoms" element={<SymptomsChecker />} />
+              <Route path="/token/:appointmentId" element={<TokenPrint />} />
+              <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
+              <Route path="/print/history" element={<MedicalHistoryPrint />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

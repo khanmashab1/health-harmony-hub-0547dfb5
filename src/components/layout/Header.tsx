@@ -10,11 +10,11 @@ import {
   Calendar, 
   Activity,
   Shield,
-  UserCog,
-  ChevronDown
+  UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,7 +54,7 @@ export function Header() {
   const isActiveLink = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-border/40">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
@@ -91,6 +91,7 @@ export function Header() {
 
           {/* Desktop Actions - Right */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <>
                 <Link to={getDashboardLink()}>
@@ -157,7 +158,7 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border/40 bg-white"
+            className="md:hidden border-t border-border/40 bg-background"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {user ? (
