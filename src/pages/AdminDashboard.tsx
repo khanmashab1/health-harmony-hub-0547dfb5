@@ -301,7 +301,11 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground font-medium">Manage your platform</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => navigate("/admin/reviews")} className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300">
+                <Star className="w-4 h-4 mr-2" />
+                Reviews
+              </Button>
               <Button variant="outline" onClick={() => navigate("/admin/email-templates")} className="hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300">
                 <Palette className="w-4 h-4 mr-2" />
                 Email Templates

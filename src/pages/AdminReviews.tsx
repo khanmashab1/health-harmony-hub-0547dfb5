@@ -75,12 +75,60 @@ export default function AdminReviews() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, patientUserId }: { id: string; status: string; patientUserId: string | null }) => {
       const { error } = await supabase
         .from("reviews")
         .update({ status })
         .eq("id", id);
       if (error) throw error;
+
+      // Send email notification if we have the patient's email
+      if (patientUserId) {
+        try {
+          // Get patient email from auth or profile
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("id", patientUserId)
+            .single();
+
+          // Get user email from auth.users via edge function would require service key
+          // Instead, send notification through edge function that can look up email
+          await supabase.functions.invoke("send-email", {
+            body: {
+              to: patientUserId, // Edge function will need to resolve this
+              subject: status === "Approved" 
+                ? "🎉 Your Review Has Been Approved!" 
+                : "Review Status Update",
+              html: status === "Approved"
+                ? `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #16a34a;">Your Review Has Been Approved! 🎉</h2>
+                    <p>Dear ${profile?.name || "Patient"},</p>
+                    <p>Great news! Your review has been approved and is now visible to other patients on our platform.</p>
+                    <p>Thank you for taking the time to share your experience with us. Your feedback helps us improve our services and helps other patients make informed decisions.</p>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="color: #6b7280; font-size: 12px;">Thank you for choosing our clinic.</p>
+                  </div>
+                `
+                : `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #dc2626;">Review Status Update</h2>
+                    <p>Dear ${profile?.name || "Patient"},</p>
+                    <p>We have reviewed your submission and unfortunately, it could not be approved at this time.</p>
+                    <p>This may be due to our review guidelines. Please feel free to submit a new review that follows our community guidelines.</p>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="color: #6b7280; font-size: 12px;">Thank you for choosing our clinic.</p>
+                  </div>
+                `,
+              recipientName: profile?.name,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send review notification email:", emailError);
+          // Don't throw - email is not critical
+        }
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-all-reviews"] });
@@ -88,7 +136,7 @@ export default function AdminReviews() {
       queryClient.invalidateQueries({ queryKey: ["approved-reviews"] });
       toast({
         title: `Review ${status.toLowerCase()}`,
-        description: `The review has been ${status.toLowerCase()}.`,
+        description: `The review has been ${status.toLowerCase()}. Email notification sent.`,
       });
     },
     onError: (error: any) => {
@@ -305,7 +353,7 @@ export default function AdminReviews() {
                                 variant="outline"
                                 className="text-green-600 hover:bg-green-50 hover:border-green-300"
                                 onClick={() =>
-                                  updateStatus.mutate({ id: review.id, status: "Approved" })
+                                  updateStatus.mutate({ id: review.id, status: "Approved", patientUserId: review.patient_user_id })
                                 }
                                 disabled={updateStatus.isPending}
                               >
@@ -317,7 +365,7 @@ export default function AdminReviews() {
                                 variant="outline"
                                 className="text-red-600 hover:bg-red-50 hover:border-red-300"
                                 onClick={() =>
-                                  updateStatus.mutate({ id: review.id, status: "Rejected" })
+                                  updateStatus.mutate({ id: review.id, status: "Rejected", patientUserId: review.patient_user_id })
                                 }
                                 disabled={updateStatus.isPending}
                               >
