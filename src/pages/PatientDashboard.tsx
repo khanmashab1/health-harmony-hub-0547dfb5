@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, 
-  ChevronRight, LogOut, Edit, History, Heart, PenSquare
+  ChevronRight, LogOut, Edit, History, Heart, PenSquare, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ export default function PatientDashboard() {
   const queryClient = useQueryClient();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
 
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", user?.id],
@@ -414,6 +415,24 @@ export default function PatientDashboard() {
                                   {format(new Date(review.created_at), "MMM d, yyyy 'at' h:mm a")}
                                 </p>
                               </div>
+                              {review.status === "Pending" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingReview({
+                                      id: review.id,
+                                      rating: review.rating,
+                                      comment: review.comment,
+                                    });
+                                    setWriteReviewOpen(true);
+                                  }}
+                                  className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300"
+                                >
+                                  <Pencil className="w-4 h-4 mr-1" />
+                                  Edit
+                                </Button>
+                              )}
                             </div>
                           </motion.div>
                         ))}
@@ -439,9 +458,13 @@ export default function PatientDashboard() {
           {user && profile && (
             <WriteReviewDialog
               open={writeReviewOpen}
-              onOpenChange={setWriteReviewOpen}
+              onOpenChange={(open) => {
+                setWriteReviewOpen(open);
+                if (!open) setEditingReview(null);
+              }}
               userId={user.id}
               userName={profile.name || "Anonymous"}
+              editReview={editingReview}
             />
           )}
         </div>
