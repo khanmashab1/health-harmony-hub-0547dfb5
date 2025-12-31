@@ -498,10 +498,6 @@ export default function PADashboard() {
                 <p className="text-muted-foreground font-medium">Personal Assistant</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
           </motion.div>
 
           {/* Assigned Doctors */}
@@ -566,31 +562,34 @@ export default function PADashboard() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="payments" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap">
-                <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <CreditCard className="w-4 h-4 mr-2" />
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="payments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <CreditCard className="w-4 h-4 mr-1 sm:mr-2" />
                   Payments
                   {pendingPayments && pendingPayments.length > 0 && (
-                    <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    <Badge variant="destructive" className="ml-1 sm:ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                       {pendingPayments.length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <History className="w-4 h-4 mr-2" />
-                  Payment History
+                <TabsTrigger value="history" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <History className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Payment History</span>
+                  <span className="sm:hidden">History</span>
                 </TabsTrigger>
-                <TabsTrigger value="appointments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Appointments
+                <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Appointments</span>
+                  <span className="sm:hidden">Appts</span>
                 </TabsTrigger>
-                <TabsTrigger value="vitals" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Activity className="w-4 h-4 mr-2" />
-                  Vitals Entry
+                <TabsTrigger value="vitals" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Activity className="w-4 h-4 mr-1 sm:mr-2" />
+                  Vitals
                 </TabsTrigger>
-                <TabsTrigger value="slots" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <CalendarX className="w-4 h-4 mr-2" />
-                  Blocked Slots
+                <TabsTrigger value="slots" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Blocked Slots</span>
+                  <span className="sm:hidden">Slots</span>
                 </TabsTrigger>
               </TabsList>
 

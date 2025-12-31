@@ -316,10 +316,6 @@ export default function AdminDashboard() {
                 <Database className="w-4 h-4 mr-2" />
                 Symptom Checker
               </Button>
-              <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
             </div>
           </motion.div>
 
@@ -352,22 +348,26 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <Tabs defaultValue="analytics" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto">
-                <TabsTrigger value="analytics" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
-                  <TrendingUp className="w-4 h-4 mr-2" />Analytics
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
+                  <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Analytics</span>
+                  <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
-                <TabsTrigger value="performance" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
-                  <BarChart3 className="w-4 h-4 mr-2" />Performance
+                <TabsTrigger value="performance" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
+                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Performance</span>
+                  <span className="sm:hidden">Perf</span>
                 </TabsTrigger>
-                <TabsTrigger value="users" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Users</TabsTrigger>
-                <TabsTrigger value="doctors" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Doctors</TabsTrigger>
-                <TabsTrigger value="pas" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">PAs</TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Reviews</TabsTrigger>
-                <TabsTrigger value="emails" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
-                  <Mail className="w-4 h-4 mr-2" />Emails
+                <TabsTrigger value="users" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Users</TabsTrigger>
+                <TabsTrigger value="doctors" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Doctors</TabsTrigger>
+                <TabsTrigger value="pas" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">PAs</TabsTrigger>
+                <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">Reviews</TabsTrigger>
+                <TabsTrigger value="emails" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
+                  <Mail className="w-4 h-4 mr-1 sm:mr-2" />Emails
                 </TabsTrigger>
-                <TabsTrigger value="backup" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
-                  <HardDrive className="w-4 h-4 mr-2" />Backup
+                <TabsTrigger value="backup" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
+                  <HardDrive className="w-4 h-4 mr-1 sm:mr-2" />Backup
                 </TabsTrigger>
               </TabsList>
 

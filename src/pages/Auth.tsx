@@ -247,7 +247,7 @@ export default function Auth() {
                           <FormLabel>Full Name</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input placeholder="John Doe" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -263,7 +263,7 @@ export default function Auth() {
                           <FormLabel>Email</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -279,7 +279,7 @@ export default function Auth() {
                           <FormLabel>Password</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -295,7 +295,7 @@ export default function Auth() {
                           <FormLabel>Confirm Password</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -326,7 +326,7 @@ export default function Auth() {
                           <FormLabel>Email</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -360,7 +360,7 @@ export default function Auth() {
                           <FormLabel>Email</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
@@ -385,7 +385,7 @@ export default function Auth() {
                           </div>
                           <FormControl>
                             <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                               <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
                             </div>
                           </FormControl>
