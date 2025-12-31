@@ -147,8 +147,8 @@ export default function Auth() {
     <div className="min-h-screen flex bg-background">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand items-center justify-center p-12 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
+        {/* Decorative elements - pointer-events-none to not block input */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-20 right-20 w-64 h-64 rounded-full border-2 border-white/30" />
           <div className="absolute bottom-40 left-10 w-40 h-40 rounded-full border border-white/20" />
         </div>
