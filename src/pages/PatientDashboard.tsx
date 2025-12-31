@@ -105,18 +105,12 @@ export default function PatientDashboard() {
                 <p className="text-muted-foreground font-medium">Manage your health journey</p>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Link to="/booking">
-                <Button variant="hero">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book Appointment
-                </Button>
-              </Link>
-              <Button variant="outline" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+            <Link to="/booking">
+              <Button variant="hero">
+                <Calendar className="w-4 h-4 mr-2" />
+                Book Appointment
               </Button>
-            </div>
+            </Link>
           </motion.div>
 
           {/* Quick Stats */}
@@ -162,29 +156,30 @@ export default function PatientDashboard() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="appointments" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm">
-                <TabsTrigger value="appointments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Appointments
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Appointments</span>
+                  <span className="sm:hidden">Appts</span>
                 </TabsTrigger>
-                <TabsTrigger value="history" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <History className="w-4 h-4 mr-2" />
+                <TabsTrigger value="history" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <History className="w-4 h-4 mr-1 sm:mr-2" />
                   History
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <User className="w-4 h-4 mr-2" />
+                <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <User className="w-4 h-4 mr-1 sm:mr-2" />
                   Profile
                 </TabsTrigger>
-                <TabsTrigger value="health" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Activity className="w-4 h-4 mr-2" />
+                <TabsTrigger value="health" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Activity className="w-4 h-4 mr-1 sm:mr-2" />
                   Health
                 </TabsTrigger>
-                <TabsTrigger value="records" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <FileText className="w-4 h-4 mr-2" />
+                <TabsTrigger value="records" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                   Records
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
-                  <Star className="w-4 h-4 mr-2" />
+                <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                  <Star className="w-4 h-4 mr-1 sm:mr-2" />
                   Reviews
                 </TabsTrigger>
               </TabsList>

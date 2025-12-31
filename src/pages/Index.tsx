@@ -334,14 +334,6 @@ export default function Index() {
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <Link to="/booking">
-              <Button variant="hero" size="lg" className="gap-2">
-                Get Started Now
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
