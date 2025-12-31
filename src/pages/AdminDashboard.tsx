@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Database,
   Palette,
-  ExternalLink
+  ExternalLink,
+  HardDrive
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +69,7 @@ import { CreateDoctorForm } from "@/components/admin/CreateDoctorForm";
 import { CreatePAForm } from "@/components/admin/CreatePAForm";
 import { AssignPAForm } from "@/components/admin/AssignPAForm";
 import { DoctorCard } from "@/components/admin/DoctorCard";
+import { BackupPanel } from "@/components/admin/BackupPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -364,6 +366,9 @@ export default function AdminDashboard() {
                 <TabsTrigger value="emails" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
                   <Mail className="w-4 h-4 mr-2" />Emails
                 </TabsTrigger>
+                <TabsTrigger value="backup" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-900 data-[state=active]:text-white">
+                  <HardDrive className="w-4 h-4 mr-2" />Backup
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
@@ -659,6 +664,7 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="emails"><EmailLogsPanel /></TabsContent>
+              <TabsContent value="backup"><BackupPanel /></TabsContent>
             </Tabs>
           </motion.div>
         </div>
