@@ -41,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { MedicineEntry } from "@/components/doctor/MedicineEntry";
+import { DoctorSettingsPanel } from "@/components/doctor/DoctorSettingsPanel";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -661,32 +662,7 @@ export default function DoctorDashboard() {
 
               {/* Settings */}
               <TabsContent value="settings">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-brand-500" />
-                      Doctor Settings
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {[
-                        { label: "Max Patients/Day", value: doctorInfo?.max_patients_per_day || 30, icon: Users },
-                        { label: "Consultation Fee", value: `Rs. ${doctorInfo?.fee || 500}`, icon: TrendingUp },
-                        { label: "Experience", value: `${doctorInfo?.experience_years || 0} years`, icon: Activity },
-                        { label: "Rating", value: `${doctorInfo?.rating || 4.0} ⭐`, icon: CheckCircle2 },
-                      ].map((item) => (
-                        <div key={item.label} className="p-4 rounded-xl border border-border/50 bg-card">
-                          <div className="flex items-center gap-2 mb-2">
-                            <item.icon className="w-4 h-4 text-brand-500" />
-                            <p className="text-sm text-muted-foreground font-medium">{item.label}</p>
-                          </div>
-                          <p className="font-bold text-xl">{item.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <DoctorSettingsPanel doctorInfo={doctorInfo} userId={user?.id} />
               </TabsContent>
             </Tabs>
           </motion.div>

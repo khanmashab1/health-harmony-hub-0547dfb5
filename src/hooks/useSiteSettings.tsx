@@ -1,14 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useTheme } from "next-themes";
 
 interface SiteSettings {
   logo_url: string | null;
+  logo_url_dark: string | null;
   favicon_url: string | null;
   site_name: string | null;
 }
 
 export function useSiteSettings() {
+  const { resolvedTheme } = useTheme();
+  
   const { data: settings, isLoading } = useQuery({
     queryKey: ["site-settings"],
     queryFn: async () => {
@@ -19,7 +23,7 @@ export function useSiteSettings() {
       return data?.reduce((acc, item) => {
         acc[item.setting_key as keyof SiteSettings] = item.setting_value;
         return acc;
-      }, {} as SiteSettings) || { logo_url: null, favicon_url: null, site_name: null };
+      }, {} as SiteSettings) || { logo_url: null, logo_url_dark: null, favicon_url: null, site_name: null };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -34,8 +38,18 @@ export function useSiteSettings() {
     }
   }, [settings?.favicon_url]);
 
+  // Get appropriate logo based on theme
+  const getLogoUrl = () => {
+    if (resolvedTheme === "dark" && settings?.logo_url_dark) {
+      return settings.logo_url_dark;
+    }
+    return settings?.logo_url || null;
+  };
+
   return {
-    logoUrl: settings?.logo_url || null,
+    logoUrl: getLogoUrl(),
+    logoUrlLight: settings?.logo_url || null,
+    logoUrlDark: settings?.logo_url_dark || null,
     faviconUrl: settings?.favicon_url || null,
     siteName: settings?.site_name || "MediCare+",
     isLoading,
