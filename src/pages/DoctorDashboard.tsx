@@ -721,6 +721,9 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
   const [medicines, setMedicines] = useState(appointment.medicines || "");
   const [labTests, setLabTests] = useState(appointment.lab_tests || "");
   const [comments, setComments] = useState(appointment.doctor_comments || "");
+  const [followUpDate, setFollowUpDate] = useState(appointment.follow_up_date || "");
+
+  const isCompleted = appointment.status === "Completed";
 
   const handleSave = () => {
     onUpdate({
@@ -732,6 +735,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       medicines,
       lab_tests: labTests,
       doctor_comments: comments,
+      follow_up_date: followUpDate || null,
     });
   };
 
@@ -745,6 +749,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       medicines,
       lab_tests: labTests,
       doctor_comments: comments,
+      follow_up_date: followUpDate || null,
       status: "Completed",
     });
   };
@@ -757,12 +762,28 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
           <div className="w-14 h-14 rounded-xl bg-background flex items-center justify-center">
             <span className="text-xl font-bold text-primary">#{appointment.token_number}</span>
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-xl font-bold text-foreground">{appointment.patient_full_name}</h3>
             <p className="text-muted-foreground">{appointment.patient_phone}</p>
           </div>
+          {isCompleted && (
+            <Badge className="status-completed">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              Completed
+            </Badge>
+          )}
         </div>
       </div>
+
+      {/* Completed Notice */}
+      {isCompleted && (
+        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
+          <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            This prescription is finalized and cannot be edited.
+          </p>
+        </div>
+      )}
 
       {/* Vitals */}
       <div className="space-y-3">
@@ -778,6 +799,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
               onChange={(e) => setVitals({ ...vitals, bp: e.target.value })}
               placeholder="120/80"
               className="mt-1 border-border/50"
+              disabled={isCompleted}
             />
           </div>
           <div>
@@ -787,6 +809,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
               onChange={(e) => setVitals({ ...vitals, heartRate: e.target.value })}
               placeholder="72 bpm"
               className="mt-1 border-border/50"
+              disabled={isCompleted}
             />
           </div>
           <div>
@@ -796,6 +819,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
               onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
               placeholder="98.6°F"
               className="mt-1 border-border/50"
+              disabled={isCompleted}
             />
           </div>
           <div>
@@ -805,6 +829,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
               onChange={(e) => setVitals({ ...vitals, weight: e.target.value })}
               placeholder="70 kg"
               className="mt-1 border-border/50"
+              disabled={isCompleted}
             />
           </div>
         </div>
@@ -818,6 +843,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
           onChange={(e) => setDiagnosis(e.target.value)}
           placeholder="Enter diagnosis..."
           className="border-border/50 min-h-[80px]"
+          disabled={isCompleted}
         />
       </div>
 
@@ -825,6 +851,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       <MedicineEntry 
         value={medicines}
         onChange={setMedicines}
+        disabled={isCompleted}
       />
 
       {/* Lab Tests */}
@@ -835,6 +862,23 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
           onChange={(e) => setLabTests(e.target.value)}
           placeholder="Enter lab tests if any..."
           className="border-border/50"
+          disabled={isCompleted}
+        />
+      </div>
+
+      {/* Follow-up Date */}
+      <div className="space-y-2">
+        <Label className="font-semibold flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-brand-500" />
+          Follow-up Date
+        </Label>
+        <Input
+          type="date"
+          value={followUpDate}
+          onChange={(e) => setFollowUpDate(e.target.value)}
+          min={format(new Date(), "yyyy-MM-dd")}
+          className="border-border/50"
+          disabled={isCompleted}
         />
       </div>
 
@@ -846,26 +890,32 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
           onChange={(e) => setComments(e.target.value)}
           placeholder="Additional notes..."
           className="border-border/50"
+          disabled={isCompleted}
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={handleSave} disabled={isLoading} className="flex-1">
-          Save Draft
-        </Button>
-        <Button variant="hero" onClick={handleComplete} disabled={isLoading} className="flex-1">
-          {isLoading ? "Saving..." : "Complete"}
-        </Button>
-      </div>
-
-      {appointment.status === "Completed" && (
-        <Link to={`/prescription/${appointment.id}`}>
-          <Button variant="outline" className="w-full mt-2">
-            <FileText className="w-4 h-4 mr-2" />
-            View Prescription
+      {/* Actions - Only show if not completed */}
+      {!isCompleted && (
+        <div className="flex gap-3 pt-4">
+          <Button variant="outline" onClick={handleSave} disabled={isLoading} className="flex-1">
+            Save Draft
           </Button>
-        </Link>
+          <Button variant="hero" onClick={handleComplete} disabled={isLoading} className="flex-1">
+            {isLoading ? "Saving..." : "Complete"}
+          </Button>
+        </div>
+      )}
+
+      {/* View Prescription - Show if completed */}
+      {isCompleted && (
+        <div className="pt-4">
+          <Link to={`/prescription/${appointment.id}`} className="block">
+            <Button variant="hero" className="w-full">
+              <FileText className="w-4 h-4 mr-2" />
+              View Prescription
+            </Button>
+          </Link>
+        </div>
       )}
     </div>
   );

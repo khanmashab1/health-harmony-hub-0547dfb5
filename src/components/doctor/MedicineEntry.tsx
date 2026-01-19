@@ -26,6 +26,7 @@ interface Medicine {
 interface MedicineEntryProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const frequencyOptions = [
@@ -77,7 +78,7 @@ const parseMedicines = (value: string): Medicine[] => {
   return [];
 };
 
-export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
+export function MedicineEntry({ value, onChange, disabled = false }: MedicineEntryProps) {
   const [medicines, setMedicines] = useState<Medicine[]>(() => parseMedicines(value));
   const [searchTerm, setSearchTerm] = useState("");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -158,6 +159,35 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
     setShowSuggestions(false);
     setSearchTerm("");
   };
+
+  if (disabled) {
+    // Read-only view for completed prescriptions
+    return (
+      <div className="space-y-4">
+        <Label className="font-semibold flex items-center gap-2">
+          <Pill className="w-4 h-4 text-primary" />
+          Medicines
+        </Label>
+        {medicines.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No medicines prescribed</p>
+        ) : (
+          <div className="space-y-2">
+            {medicines.map((medicine, index) => (
+              <div key={index} className="p-3 rounded-lg border border-border/50 bg-muted/30">
+                <p className="font-medium">{medicine.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {medicine.dosage} • {frequencyLabels[medicine.frequency] || medicine.frequency} • {timingLabels[medicine.timing] || medicine.timing} • {durationLabels[medicine.duration] || medicine.duration}
+                </p>
+                {medicine.instructions && (
+                  <p className="text-xs text-muted-foreground mt-1">Note: {medicine.instructions}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -23,6 +23,8 @@ export type Database = {
           diagnosis: string | null
           doctor_comments: string | null
           doctor_user_id: string
+          follow_up_date: string | null
+          follow_up_reminder_sent: boolean | null
           id: string
           lab_tests: string | null
           medicines: string | null
@@ -50,6 +52,8 @@ export type Database = {
           diagnosis?: string | null
           doctor_comments?: string | null
           doctor_user_id: string
+          follow_up_date?: string | null
+          follow_up_reminder_sent?: boolean | null
           id?: string
           lab_tests?: string | null
           medicines?: string | null
@@ -77,6 +81,8 @@ export type Database = {
           diagnosis?: string | null
           doctor_comments?: string | null
           doctor_user_id?: string
+          follow_up_date?: string | null
+          follow_up_reminder_sent?: boolean | null
           id?: string
           lab_tests?: string | null
           medicines?: string | null
