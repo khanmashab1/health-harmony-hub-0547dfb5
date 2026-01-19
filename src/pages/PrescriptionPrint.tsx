@@ -238,177 +238,171 @@ export default function PrescriptionPrint() {
 
       {/* Prescription Page */}
       <div className="max-w-4xl mx-auto py-16 px-4 print:py-0 print:px-0">
-        <div className="bg-white shadow-2xl print:shadow-none min-h-[297mm] relative overflow-hidden">
+        <div className="bg-white shadow-2xl print:shadow-none prescription-page relative overflow-hidden">
           {/* Decorative Border */}
-          <div className="absolute inset-0 border-[3px] border-primary/20 m-2 pointer-events-none print:border-primary/30" />
+          <div className="absolute inset-0 border-[2px] border-primary/20 m-1.5 pointer-events-none print:border-primary/30" />
           
-          {/* Header */}
-          <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-8 py-6 print:bg-primary">
+          {/* Header - Compact */}
+          <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-6 py-4 print:bg-primary print:py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                  <Stethoscope className="w-8 h-8" />
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center print:w-10 print:h-10">
+                  <Stethoscope className="w-6 h-6 print:w-5 print:h-5" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight">{clinicName}</h1>
-                  <p className="text-primary-foreground/80 text-sm mt-0.5">Healthcare Excellence</p>
+                  <h1 className="text-xl font-bold tracking-tight print:text-lg">{clinicName}</h1>
+                  <p className="text-primary-foreground/80 text-xs">Healthcare Excellence</p>
                 </div>
               </div>
-              <div className="text-right text-sm">
+              <div className="text-right text-xs">
                 <p className="font-medium">Prescription #{appointment.token_number}</p>
-                <p className="text-primary-foreground/80">{format(new Date(appointment.appointment_date), "MMMM d, yyyy")}</p>
+                <p className="text-primary-foreground/80">{format(new Date(appointment.appointment_date), "MMM d, yyyy")}</p>
               </div>
             </div>
           </header>
 
-          <div className="px-8 py-6">
-            {/* Doctor & Patient Details Row */}
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div className="px-5 py-4 print:px-4 print:py-3">
+            {/* Doctor & Patient Details Row - Compact */}
+            <div className="grid md:grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-3">
               {/* Doctor Info */}
-              <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-                <h3 className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Prescribing Physician</h3>
-                <div className="space-y-1">
-                  <p className="text-lg font-bold text-foreground">Dr. {appointment.doctorProfile?.name}</p>
-                  <p className="text-sm text-muted-foreground">{appointment.doctor?.specialty}</p>
+              <div className="bg-primary/5 rounded-lg p-3 border border-primary/10 print:p-2">
+                <h3 className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-2 print:mb-1">Prescribing Physician</h3>
+                <div className="space-y-0.5">
+                  <p className="text-base font-bold text-foreground print:text-sm">Dr. {appointment.doctorProfile?.name}</p>
+                  <p className="text-xs text-muted-foreground">{appointment.doctor?.specialty}</p>
                   {appointment.doctor?.degree && (
-                    <p className="text-xs text-muted-foreground">{appointment.doctor.degree}</p>
+                    <p className="text-[10px] text-muted-foreground">{appointment.doctor.degree}</p>
                   )}
                   {appointment.doctor?.qualifications && (
-                    <p className="text-xs text-muted-foreground">{appointment.doctor.qualifications}</p>
+                    <p className="text-[10px] text-muted-foreground">{appointment.doctor.qualifications}</p>
                   )}
                   {(appointment.doctor?.city || appointment.doctor?.province) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
-                      <MapPin className="w-3 h-3" />
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                      <MapPin className="w-2.5 h-2.5" />
                       {[appointment.doctor.city, appointment.doctor.province].filter(Boolean).join(", ")}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Patient Info with Age & Gender */}
-              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Patient Details</h3>
-                <div className="space-y-1">
-                  <p className="text-lg font-bold text-foreground">{appointment.patient_full_name}</p>
-                  <div className="flex flex-wrap gap-3 mt-2">
+              {/* Patient Info */}
+              <div className="bg-muted/50 rounded-lg p-3 border border-border/50 print:p-2">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 print:mb-1">Patient Details</h3>
+                <div className="space-y-0.5">
+                  <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
                     {appointment.patientProfile?.age && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <CalendarDays className="w-3 h-3" />
-                        {appointment.patientProfile.age} years
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <CalendarDays className="w-2.5 h-2.5" />
+                        {appointment.patientProfile.age} yrs
                       </span>
                     )}
                     {appointment.patientProfile?.gender && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <User className="w-3 h-3" />
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <User className="w-2.5 h-2.5" />
                         {appointment.patientProfile.gender}
                       </span>
                     )}
                   </div>
                   {appointment.patient_phone && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Phone className="w-3 h-3" />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Phone className="w-2.5 h-2.5" />
                       {appointment.patient_phone}
                     </p>
                   )}
-                  {appointment.patient_email && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Mail className="w-3 h-3" />
-                      {appointment.patient_email}
-                    </p>
-                  )}
                   {appointment.allergies && (
-                    <p className="text-xs text-red-600 mt-2 font-medium">⚠️ Allergies: {appointment.allergies}</p>
+                    <p className="text-[10px] text-red-600 mt-1 font-medium">⚠️ Allergies: {appointment.allergies}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Vitals */}
+            {/* Vitals - Compact */}
             {(appointment.vitals_weight || appointment.vitals_bp || appointment.vitals_temperature || appointment.vitals_heart_rate) && (
-              <div className="mb-6 p-4 rounded-xl border border-border/50 bg-muted/30">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
+              <div className="mb-4 p-3 rounded-lg border border-border/50 bg-muted/30 print:p-2 print:mb-3">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1 print:mb-1">
+                  <Activity className="w-3 h-3" />
                   Recorded Vitals
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-2 print:gap-1">
                   {appointment.vitals_bp && (
-                    <div className="text-center p-3 bg-white rounded-lg border border-border/30">
-                      <p className="text-xl font-bold text-primary">{appointment.vitals_bp}</p>
-                      <p className="text-xs text-muted-foreground">Blood Pressure (mmHg)</p>
+                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_bp}</p>
+                      <p className="text-[9px] text-muted-foreground">BP (mmHg)</p>
                     </div>
                   )}
                   {appointment.vitals_heart_rate && (
-                    <div className="text-center p-3 bg-white rounded-lg border border-border/30">
-                      <p className="text-xl font-bold text-primary">{appointment.vitals_heart_rate}</p>
-                      <p className="text-xs text-muted-foreground">Heart Rate (bpm)</p>
+                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_heart_rate}</p>
+                      <p className="text-[9px] text-muted-foreground">HR (bpm)</p>
                     </div>
                   )}
                   {appointment.vitals_temperature && (
-                    <div className="text-center p-3 bg-white rounded-lg border border-border/30">
-                      <p className="text-xl font-bold text-primary">{appointment.vitals_temperature}°F</p>
-                      <p className="text-xs text-muted-foreground">Temperature</p>
+                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_temperature}°F</p>
+                      <p className="text-[9px] text-muted-foreground">Temp</p>
                     </div>
                   )}
                   {appointment.vitals_weight && (
-                    <div className="text-center p-3 bg-white rounded-lg border border-border/30">
-                      <p className="text-xl font-bold text-primary">{appointment.vitals_weight} kg</p>
-                      <p className="text-xs text-muted-foreground">Weight</p>
+                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_weight} kg</p>
+                      <p className="text-[9px] text-muted-foreground">Weight</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Diagnosis */}
+            {/* Diagnosis - Compact */}
             {appointment.diagnosis && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2 border-b border-border/50 pb-2">
-                  <FileText className="w-4 h-4 text-primary" />
+              <div className="mb-4 print:mb-3">
+                <h3 className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5 border-b border-border/50 pb-1">
+                  <FileText className="w-3.5 h-3.5 text-primary" />
                   Diagnosis
                 </h3>
-                <p className="text-muted-foreground whitespace-pre-wrap pl-6">{appointment.diagnosis}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap pl-5 print:text-[11px]">{appointment.diagnosis}</p>
               </div>
             )}
 
             {/* Prescription Symbol */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="text-4xl font-serif text-primary font-bold">℞</div>
+            <div className="flex items-center gap-2 mb-3 print:mb-2">
+              <div className="text-2xl font-serif text-primary font-bold print:text-xl">℞</div>
               <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent" />
             </div>
 
-            {/* Medicines Table */}
+            {/* Medicines Table - Compact */}
             {medicines.length > 0 ? (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Pill className="w-4 h-4 text-primary" />
+              <div className="mb-4 print:mb-3">
+                <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5 print:mb-1">
+                  <Pill className="w-3.5 h-3.5 text-primary" />
                   Prescribed Medications
                 </h3>
-                <div className="border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="border rounded-lg overflow-hidden print:rounded">
+                  <table className="w-full text-xs print:text-[10px]">
                     <thead className="bg-primary/10">
                       <tr>
-                        <th className="text-left p-3 font-semibold text-foreground">#</th>
-                        <th className="text-left p-3 font-semibold text-foreground">Medicine</th>
-                        <th className="text-left p-3 font-semibold text-foreground">Dosage</th>
-                        <th className="text-left p-3 font-semibold text-foreground">Frequency</th>
-                        <th className="text-left p-3 font-semibold text-foreground">Duration</th>
-                        <th className="text-left p-3 font-semibold text-foreground">Timing</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">#</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Medicine</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Dosage</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Frequency</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Duration</th>
+                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Timing</th>
                       </tr>
                     </thead>
                     <tbody>
                       {medicines.map((med, idx) => (
                         <tr key={idx} className="border-t border-border/30">
-                          <td className="p-3 font-medium text-muted-foreground">{idx + 1}.</td>
-                          <td className="p-3">
+                          <td className="p-2 font-medium text-muted-foreground print:p-1">{idx + 1}.</td>
+                          <td className="p-2 print:p-1">
                             <span className="font-medium text-foreground">{med.name}</span>
                             {med.instructions && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{med.instructions}</p>
+                              <p className="text-[9px] text-muted-foreground mt-0.5">{med.instructions}</p>
                             )}
                           </td>
-                          <td className="p-3 text-muted-foreground">{med.dosage || "-"}</td>
-                          <td className="p-3 text-muted-foreground">{frequencyLabels[med.frequency] || med.frequency}</td>
-                          <td className="p-3 text-muted-foreground">{durationLabels[med.duration] || med.duration}</td>
-                          <td className="p-3 text-muted-foreground">{timingLabels[med.timing] || med.timing}</td>
+                          <td className="p-2 text-muted-foreground print:p-1">{med.dosage || "-"}</td>
+                          <td className="p-2 text-muted-foreground print:p-1">{frequencyLabels[med.frequency] || med.frequency}</td>
+                          <td className="p-2 text-muted-foreground print:p-1">{durationLabels[med.duration] || med.duration}</td>
+                          <td className="p-2 text-muted-foreground print:p-1">{timingLabels[med.timing] || med.timing}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -416,28 +410,28 @@ export default function PrescriptionPrint() {
                 </div>
               </div>
             ) : appointment.medicines ? (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Pill className="w-4 h-4 text-primary" />
+              <div className="mb-4 print:mb-3">
+                <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-primary" />
                   Prescribed Medications
                 </h3>
-                <div className="p-4 rounded-xl bg-muted/30 border border-border/30">
-                  <p className="whitespace-pre-wrap text-muted-foreground">{appointment.medicines}</p>
+                <div className="p-3 rounded-lg bg-muted/30 border border-border/30 print:p-2">
+                  <p className="whitespace-pre-wrap text-xs text-muted-foreground print:text-[10px]">{appointment.medicines}</p>
                 </div>
               </div>
             ) : null}
 
-            {/* Lab Tests */}
+            {/* Lab Tests - Compact */}
             {appointment.lab_tests && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2 border-b border-border/50 pb-2">
-                  <FlaskConical className="w-4 h-4 text-primary" />
+              <div className="mb-4 print:mb-3">
+                <h3 className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5 border-b border-border/50 pb-1">
+                  <FlaskConical className="w-3.5 h-3.5 text-primary" />
                   Recommended Lab Tests
                 </h3>
-                <div className="pl-6">
+                <div className="pl-5 grid grid-cols-2 gap-x-4">
                   {appointment.lab_tests.split('\n').filter(Boolean).map((test: string, idx: number) => (
-                    <p key={idx} className="flex items-center gap-2 text-muted-foreground py-1">
-                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    <p key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground py-0.5 print:text-[10px]">
+                      <CheckCircle className="w-2.5 h-2.5 text-green-500 flex-shrink-0" />
                       {test}
                     </p>
                   ))}
@@ -445,56 +439,54 @@ export default function PrescriptionPrint() {
               </div>
             )}
 
-            {/* Doctor Comments */}
+            {/* Doctor Comments - Compact */}
             {appointment.doctor_comments && !appointment.doctor_comments.startsWith("Payment") && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-foreground mb-2 border-b border-border/50 pb-2">
+              <div className="mb-4 print:mb-3">
+                <h3 className="text-xs font-semibold text-foreground mb-1 border-b border-border/50 pb-1">
                   Additional Notes
                 </h3>
-                <p className="text-muted-foreground whitespace-pre-wrap pl-6">{appointment.doctor_comments}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap pl-5 print:text-[10px]">{appointment.doctor_comments}</p>
               </div>
             )}
 
-            {/* QR Code & Signature Section */}
-            <div className="flex justify-between items-end mt-12 pt-6">
+            {/* QR Code & Signature Section - Compact */}
+            <div className="flex justify-between items-end mt-6 pt-4 print:mt-4 print:pt-3">
               {/* QR Code */}
               <div className="flex flex-col items-center">
                 <QRCodeSVG 
                   value={prescriptionUrl}
-                  size={80}
+                  size={60}
                   level="M"
-                  className="border p-1 rounded bg-white"
+                  className="border p-0.5 rounded bg-white print:w-12 print:h-12"
                 />
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Scan to verify<br />prescription
+                <p className="text-[9px] text-muted-foreground mt-1 text-center">
+                  Scan to verify
                 </p>
               </div>
 
               {/* Signature */}
               <div className="text-center">
-                <div className="w-48 border-t-2 border-foreground pt-2 mb-1" />
-                <p className="font-semibold text-foreground">Dr. {appointment.doctorProfile?.name}</p>
-                <p className="text-xs text-muted-foreground">{appointment.doctor?.specialty}</p>
+                <div className="w-40 border-t-2 border-foreground pt-1.5 mb-0.5 print:w-32" />
+                <p className="font-semibold text-foreground text-sm print:text-xs">Dr. {appointment.doctorProfile?.name}</p>
+                <p className="text-[10px] text-muted-foreground">{appointment.doctor?.specialty}</p>
                 {appointment.doctor?.degree && (
-                  <p className="text-xs text-muted-foreground">{appointment.doctor.degree}</p>
+                  <p className="text-[9px] text-muted-foreground">{appointment.doctor.degree}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <footer className="absolute bottom-0 left-0 right-0 bg-muted/50 px-8 py-4 border-t border-border/50">
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
+          {/* Footer - Compact */}
+          <div className="bg-muted/50 px-5 py-2 border-t border-border/50 print:px-4 print:py-1.5">
+            <div className="flex justify-between items-center text-[9px] text-muted-foreground">
               <div>
-                <p>This prescription is valid for 30 days from the date of issue.</p>
-                <p className="mt-1">For medical emergencies, please contact your healthcare provider immediately.</p>
+                <p>Valid for 30 days. For emergencies, contact your healthcare provider.</p>
               </div>
               <div className="text-right">
                 <p className="font-medium text-foreground">{clinicName}</p>
-                <p>Generated on {format(new Date(), "MMM d, yyyy 'at' h:mm a")}</p>
               </div>
             </div>
-          </footer>
+          </div>
         </div>
       </div>
 
@@ -503,7 +495,7 @@ export default function PrescriptionPrint() {
         @media print {
           @page {
             size: A4;
-            margin: 0;
+            margin: 5mm;
           }
           body {
             -webkit-print-color-adjust: exact !important;
@@ -512,6 +504,14 @@ export default function PrescriptionPrint() {
           .no-print {
             display: none !important;
           }
+          .prescription-page {
+            min-height: auto !important;
+            page-break-inside: auto;
+            box-shadow: none !important;
+          }
+        }
+        .prescription-page {
+          min-height: auto;
         }
       `}</style>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Upload, Trash2, Image, RefreshCw } from "lucide-react";
+import { Palette, Upload, Image, RefreshCw, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export function BrandingPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoDarkFile, setLogoDarkFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [siteName, setSiteName] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -51,24 +53,30 @@ export function BrandingPanel() {
     },
   });
 
-  const handleLogoUpload = async () => {
-    if (!logoFile) return;
+  const handleLogoUpload = async (isDark: boolean = false) => {
+    const file = isDark ? logoDarkFile : logoFile;
+    if (!file) return;
     setUploading(true);
     try {
       // Upload to hero-slides bucket (public)
-      const fileName = `logo-${Date.now()}.${logoFile.name.split('.').pop()}`;
+      const fileName = `logo${isDark ? '-dark' : ''}-${Date.now()}.${file.name.split('.').pop()}`;
       const { error: uploadError } = await supabase.storage
         .from("hero-slides")
-        .upload(fileName, logoFile, { upsert: true });
+        .upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from("hero-slides")
         .getPublicUrl(fileName);
 
-      await updateSetting.mutateAsync({ key: "logo_url", value: publicUrl });
-      toast({ title: "Logo updated successfully" });
-      setLogoFile(null);
+      const settingKey = isDark ? "logo_url_dark" : "logo_url";
+      await updateSetting.mutateAsync({ key: settingKey, value: publicUrl });
+      toast({ title: `${isDark ? "Dark theme" : "Light theme"} logo updated successfully` });
+      if (isDark) {
+        setLogoDarkFile(null);
+      } else {
+        setLogoFile(null);
+      }
     } catch (error: any) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
     } finally {
@@ -160,13 +168,19 @@ export function BrandingPanel() {
           </div>
         </div>
 
-        {/* Logo */}
+        {/* Light Theme Logo */}
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Site Logo</Label>
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-semibold">Site Logo</Label>
+            <Badge variant="secondary" className="gap-1">
+              <Sun className="w-3 h-3" />
+              Light Theme
+            </Badge>
+          </div>
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 overflow-hidden">
+            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-white overflow-hidden">
               {settings?.logo_url ? (
-                <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                <img src={settings.logo_url} alt="Light Logo" className="w-full h-full object-contain" />
               ) : (
                 <Image className="w-10 h-10 text-muted-foreground" />
               )}
@@ -180,12 +194,12 @@ export function BrandingPanel() {
               />
               <div className="flex gap-2">
                 <Button 
-                  onClick={handleLogoUpload} 
+                  onClick={() => handleLogoUpload(false)} 
                   disabled={!logoFile || uploading}
                   size="sm"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  {uploading ? "Uploading..." : "Upload Logo"}
+                  {uploading ? "Uploading..." : "Upload"}
                 </Button>
                 {settings?.logo_url && (
                   <Button 
@@ -198,7 +212,58 @@ export function BrandingPanel() {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Recommended: PNG or SVG, 200x200px minimum</p>
+              <p className="text-xs text-muted-foreground">Logo displayed on light backgrounds</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dark Theme Logo */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-semibold">Site Logo</Label>
+            <Badge variant="secondary" className="gap-1 bg-zinc-800 text-zinc-100">
+              <Moon className="w-3 h-3" />
+              Dark Theme
+            </Badge>
+          </div>
+          <div className="flex items-start gap-6">
+            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-zinc-600 flex items-center justify-center bg-zinc-900 overflow-hidden">
+              {settings?.logo_url_dark ? (
+                <img src={settings.logo_url_dark} alt="Dark Logo" className="w-full h-full object-contain" />
+              ) : settings?.logo_url ? (
+                <img src={settings.logo_url} alt="Fallback Logo" className="w-full h-full object-contain opacity-50" />
+              ) : (
+                <Image className="w-10 h-10 text-zinc-500" />
+              )}
+            </div>
+            <div className="flex-1 space-y-3">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setLogoDarkFile(e.target.files?.[0] || null)}
+                className="max-w-xs"
+              />
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => handleLogoUpload(true)} 
+                  disabled={!logoDarkFile || uploading}
+                  size="sm"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploading ? "Uploading..." : "Upload"}
+                </Button>
+                {settings?.logo_url_dark && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => resetToDefault("logo_url_dark")}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Logo displayed on dark backgrounds (falls back to light logo if not set)</p>
             </div>
           </div>
         </div>
