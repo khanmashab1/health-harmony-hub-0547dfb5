@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import doctorHero from "@/assets/doctor-hero.png";
+import { HeroSlider } from "@/components/home/HeroSlider";
 import medicareLogo from "@/assets/medicare-logo.png";
 
 const specialties = [
@@ -114,145 +114,8 @@ export default function Index() {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-72px)] flex items-center overflow-hidden hero-gradient">
-        {/* Decorative Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              {/* Trust Badge */}
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="premium-badge"
-              >
-                <Shield className="w-4 h-4 text-primary" />
-                <span className="text-foreground">Trusted Healthcare Platform</span>
-              </motion.div>
-              
-              {/* Headline */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Your Health, Our{" "}
-                <span className="gradient-text">Priority</span>
-              </h1>
-              
-              {/* Subheadline */}
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Book appointments with top doctors, track your health metrics, 
-                and get expert medical advice - all in one secure platform.
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/booking">
-                  <Button variant="hero" size="xl" className="w-full sm:w-auto gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Book Appointment
-                  </Button>
-                </Link>
-                <Link to="/symptoms">
-                  <Button variant="outline" size="xl" className="w-full sm:w-auto gap-2">
-                    <Activity className="w-5 h-5" />
-                    Check Symptoms
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Stats */}
-              <div className="flex flex-wrap gap-8 pt-4">
-                {[
-                  { value: `${stats?.doctors || 50}+`, label: "Doctors" },
-                  { value: `${(stats?.patients || 10000).toLocaleString()}+`, label: "Patients" },
-                  { value: stats?.rating || "4.8", label: "Avg Rating", icon: Star },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-3xl font-bold text-foreground">{stat.value}</span>
-                      {stat.icon && <Star className="w-5 h-5 text-amber-500 fill-amber-500" />}
-                    </div>
-                    <span className="text-sm text-muted-foreground">{stat.label}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Right - Floating Doctor Image */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="relative hidden lg:block"
-            >
-              <div className="relative">
-                {/* Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-60 scale-90" />
-                
-                {/* Floating Image */}
-                <motion.div
-                  animate={{ y: [0, -15, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative z-10"
-                >
-                  <img
-                    src={doctorHero}
-                    alt="Professional Doctor"
-                    className="w-full max-w-lg mx-auto drop-shadow-2xl"
-                  />
-                </motion.div>
-
-                {/* Floating Cards */}
-                <motion.div
-                  animate={{ y: [0, -8, 0], x: [0, 4, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  className="absolute top-20 -left-4 z-20"
-                >
-                  <Card variant="glass" className="p-4 shadow-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">Verified Doctors</p>
-                        <p className="text-xs text-muted-foreground">100% Certified</p>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  animate={{ y: [0, 8, 0], x: [0, -4, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute bottom-32 -right-4 z-20"
-                >
-                  <Card variant="glass" className="p-4 shadow-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                        <Star className="w-5 h-5 text-amber-600 fill-amber-500" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">Top Rated</p>
-                        <p className="text-xs text-muted-foreground">{stats?.rating || "4.8"} Average</p>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Slider */}
+      <HeroSlider />
 
       {/* Specialties Section */}
       <section className="py-20 bg-muted/30">
