@@ -329,7 +329,7 @@ export default function AdminDashboard() {
               { label: "Pending Reviews", value: stats?.pendingReviews || 0, icon: Star, color: "from-yellow-500 to-orange-500" },
             ].map((stat, index) => (
               <motion.div key={stat.label} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + index * 0.05 }}>
-                <Card variant="glass" className="border-white/50 hover:shadow-lg transition-all">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 hover:shadow-lg transition-all dark:bg-card/50">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
@@ -381,10 +381,10 @@ export default function AdminDashboard() {
 
               {/* Users Tab */}
               <TabsContent value="users">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-blue-600" />User Management</CardTitle>
+                      <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />User Management</CardTitle>
                       <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9 border-border/50" />
@@ -423,12 +423,12 @@ export default function AdminDashboard() {
 
               {/* Doctors Tab */}
               <TabsContent value="doctors">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-900/10 dark:to-transparent">
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                          <Stethoscope className="w-5 h-5 text-green-600" />
+                          <Stethoscope className="w-5 h-5 text-green-600 dark:text-green-400" />
                           Doctor Management
                           {doctors && <Badge variant="secondary" className="ml-2">{doctors.length}</Badge>}
                         </CardTitle>
@@ -588,10 +588,10 @@ export default function AdminDashboard() {
               {/* PAs Tab */}
               <TabsContent value="pas">
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent">
+                  <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10 dark:to-transparent">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2"><UserCog className="w-5 h-5 text-purple-600" />PA Accounts</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><UserCog className="w-5 h-5 text-purple-600 dark:text-purple-400" />PA Accounts</CardTitle>
                         <Dialog open={createPAOpen} onOpenChange={setCreatePAOpen}>
                           <DialogTrigger asChild><Button size="sm" variant="hero"><UserPlus className="w-4 h-4 mr-2" />Create PA</Button></DialogTrigger>
                           <DialogContent><CreatePAForm onSuccess={() => { setCreatePAOpen(false); queryClient.invalidateQueries({ queryKey: ["admin-pas"] }); }} /></DialogContent>
@@ -602,15 +602,15 @@ export default function AdminDashboard() {
                       {pas && pas.length > 0 ? (
                         <div className="space-y-3">{pas.map((pa) => (
                           <div key={pa.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50">
-                            <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center"><UserCog className="w-5 h-5 text-purple-600" /></div><div><p className="font-medium">{pa.name || "Unnamed PA"}</p><p className="text-xs text-muted-foreground">{pa.phone || "No phone"}</p></div></div>
+                            <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center"><UserCog className="w-5 h-5 text-purple-600 dark:text-purple-400" /></div><div><p className="font-medium">{pa.name || "Unnamed PA"}</p><p className="text-xs text-muted-foreground">{pa.phone || "No phone"}</p></div></div>
                             <Badge className={pa.status === "Active" ? "status-completed" : "status-pending"}>{pa.status}</Badge>
                           </div>
                         ))}</div>
                       ) : (<p className="text-center py-8 text-muted-foreground">No PAs found</p>)}
                     </CardContent>
                   </Card>
-                  <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                  <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/5 dark:to-transparent">
                       <div className="flex items-center justify-between">
                         <CardTitle>PA Assignments</CardTitle>
                         <Dialog open={assignPAOpen} onOpenChange={setAssignPAOpen}>
@@ -622,7 +622,7 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                       {paAssignments && paAssignments.length > 0 ? (
                         <div className="space-y-3">{paAssignments.map((assignment) => { const pa = pas?.find(p => p.id === assignment.pa_user_id); const doc = doctors?.find((d: any) => d.user_id === assignment.doctor_user_id); return (
-                          <div key={assignment.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50">
+                          <div key={assignment.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30">
                             <div className="text-sm"><span className="font-medium">{pa?.name || "PA"}</span><span className="text-muted-foreground"> → </span><span className="font-medium">Dr. {(doc as any)?.profile?.name || "Doctor"}</span></div>
                             <Button variant="ghost" size="sm" onClick={() => deleteAssignment.mutate(assignment.id)} className="text-destructive hover:bg-destructive/10"><X className="w-4 h-4" /></Button>
                           </div>
@@ -635,15 +635,15 @@ export default function AdminDashboard() {
 
               {/* Reviews Tab */}
               <TabsContent value="reviews">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent">
-                    <CardTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-yellow-600" />Review Moderation</CardTitle>
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent dark:from-yellow-900/10 dark:to-transparent">
+                    <CardTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />Review Moderation</CardTitle>
                     <CardDescription>Approve or reject patient reviews</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
                     {loadingReviews ? (<div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>) : reviews && reviews.length > 0 ? (
                       <div className="space-y-4">{reviews.map((review) => (
-                        <motion.div key={review.id} whileHover={{ scale: 1.01 }} className="p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all">
+                        <motion.div key={review.id} whileHover={{ scale: 1.01 }} className="p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
