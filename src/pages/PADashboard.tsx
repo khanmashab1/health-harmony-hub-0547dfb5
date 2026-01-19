@@ -657,8 +657,8 @@ export default function PADashboard() {
                       </div>
                     ) : (
                       <div className="text-center py-16">
-                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center mb-4">
-                          <CheckCircle2 className="w-10 h-10 text-green-600" />
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center mb-4">
+                          <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
                         </div>
                         <p className="text-muted-foreground font-medium">No pending payments</p>
                       </div>
@@ -797,19 +797,19 @@ export default function PADashboard() {
                                   key={payment.id} 
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
-                                  className="p-4 rounded-xl border border-border/50 bg-white/50"
+                                  className="p-4 rounded-xl border border-border/50 bg-card dark:bg-card/50"
                                 >
                                   <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-4">
                                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                                         isConfirmed 
-                                          ? "bg-gradient-to-br from-green-100 to-green-200" 
-                                          : "bg-gradient-to-br from-red-100 to-red-200"
+                                          ? "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30" 
+                                          : "bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30"
                                       }`}>
                                         {isConfirmed ? (
-                                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                                         ) : (
-                                          <XCircle className="w-5 h-5 text-red-600" />
+                                          <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                                         )}
                                       </div>
                                       <div>
@@ -832,7 +832,7 @@ export default function PADashboard() {
                                           <Download className="w-3.5 h-3.5" />
                                         </Button>
                                       )}
-                                      <Badge className={isConfirmed ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
+                                      <Badge className={isConfirmed ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800" : "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"}>
                                         {isConfirmed ? "Confirmed" : "Rejected"}
                                       </Badge>
                                       <span className="text-xs text-muted-foreground">
@@ -841,7 +841,7 @@ export default function PADashboard() {
                                     </div>
                                   </div>
                                   {note && (
-                                    <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/30">
+                                    <div className="mt-3 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
                                       <p className="text-sm text-muted-foreground">
                                         <span className="font-medium text-foreground">Note:</span> {note}
                                       </p>

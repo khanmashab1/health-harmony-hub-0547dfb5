@@ -15,11 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import medicareLogo from "@/assets/medicare-logo.png";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const { logoUrl, siteName } = useSiteSettings();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,13 +64,13 @@ export function Header() {
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
               <img 
-                src={medicareLogo} 
-                alt="MediCare+ Logo" 
+                src={logoUrl || medicareLogo} 
+                alt={`${siteName} Logo`} 
                 className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
               />
             </div>
             <span className="text-xl font-bold text-foreground">
-              MediCare+
+              {siteName}
             </span>
           </Link>
 
