@@ -169,7 +169,7 @@ export default function DoctorDashboard() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20">
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20 dark:from-background dark:via-background dark:to-background">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div 
@@ -233,21 +233,21 @@ export default function DoctorDashboard() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="today" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
-                <TabsTrigger value="today" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+              <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="today" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
                   Today
                 </TabsTrigger>
-                <TabsTrigger value="all" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="all" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                   All
                 </TabsTrigger>
-                <TabsTrigger value="availability" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="availability" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Availability</span>
                   <span className="sm:hidden">Avail</span>
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />
                   Settings
                 </TabsTrigger>

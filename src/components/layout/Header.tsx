@@ -4,17 +4,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Menu, 
   X, 
-  Stethoscope, 
   User, 
   LogOut, 
   Calendar, 
   Activity,
   Shield,
-  UserCog
+  UserCog,
+  Stethoscope
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import medicareLogo from "@/assets/medicare-logo.png";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -60,9 +61,11 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <Stethoscope className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src={medicareLogo} 
+                alt="MediCare+ Logo" 
+                className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
+              />
             </div>
             <span className="text-xl font-bold text-foreground">
               MediCare+

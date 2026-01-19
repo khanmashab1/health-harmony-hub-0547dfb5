@@ -176,12 +176,6 @@
 }
 
 @layer components {
-  /* Glass Card */
-  .glass-card {
-    @apply backdrop-blur-xl border border-white/30 shadow-lg;
-    background: var(--gradient-glass);
-  }
-
   /* Gradient Text */
   .gradient-text {
     @apply bg-clip-text text-transparent;
@@ -245,21 +239,34 @@
     @apply bg-primary/10 text-primary;
   }
 
-  /* Status Badges */
+  /* Status Badges - Works in both light and dark modes */
   .status-pending {
-    @apply bg-amber-100 text-amber-800 border-amber-200;
+    @apply bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700;
   }
 
   .status-upcoming {
-    @apply bg-blue-100 text-blue-800 border-blue-200;
+    @apply bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700;
   }
 
   .status-completed {
-    @apply bg-green-100 text-green-800 border-green-200;
+    @apply bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700;
   }
 
   .status-cancelled {
-    @apply bg-red-100 text-red-800 border-red-200;
+    @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700;
+  }
+
+  /* Premium Badge - Dark mode support */
+  .premium-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+    @apply bg-white/80 backdrop-blur-sm border border-border/50 shadow-sm;
+    @apply dark:bg-card/80 dark:border-border;
+  }
+
+  /* Glass Card - Dark mode support */
+  .glass-card {
+    @apply backdrop-blur-xl border border-white/30 shadow-lg dark:border-white/10;
+    background: var(--gradient-glass);
   }
 }
 

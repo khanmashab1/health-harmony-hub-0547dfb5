@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import doctorHero from "@/assets/doctor-hero.png";
+import medicareLogo from "@/assets/medicare-logo.png";
 
 const specialties = [
   { name: "General Physician", icon: Stethoscope, color: "from-primary to-primary/70" },
@@ -58,12 +59,13 @@ const features = [
 export default function Index() {
   const { user, profile } = useAuth();
 
-  // Fetch stats including review stats
+  // Fetch stats including review stats and patient count
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
     queryFn: async () => {
-      const [doctorsRes, reviewsRes] = await Promise.all([
+      const [doctorsRes, patientsRes, reviewsRes] = await Promise.all([
         supabase.from("doctors").select("user_id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "patient").eq("status", "Active"),
         supabase.from("reviews").select("rating").eq("status", "Approved"),
       ]);
       const totalReviews = reviewsRes.data?.length || 0;
@@ -71,8 +73,8 @@ export default function Index() {
         ? (reviewsRes.data!.reduce((a, b) => a + b.rating, 0) / totalReviews).toFixed(1)
         : "4.8";
       return {
-        doctors: doctorsRes.count || 50,
-        patients: 10000,
+        doctors: doctorsRes.count || 0,
+        patients: patientsRes.count || 0,
         rating: avgRating,
         totalReviews,
       };
