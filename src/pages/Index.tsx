@@ -212,6 +212,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Top Doctors Section - Right after hero */}
+      <TopDoctorsSlider />
+
       {/* Specialties Section */}
       <section className="py-20 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4">
@@ -624,9 +627,6 @@ export default function Index() {
           </div>
         </section>
       )}
-
-      {/* Top Doctors Slider - Moved to bottom */}
-      <TopDoctorsSlider />
 
       {/* CTA Section */}
       <section className="py-20">
