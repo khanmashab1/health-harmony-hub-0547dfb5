@@ -20,6 +20,7 @@ import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import AdminReviews from "./pages/AdminReviews";
 import SymptomsChecker from "./pages/SymptomsChecker";
 import Reviews from "./pages/Reviews";
+import DoctorProfile from "./pages/DoctorProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/booking" element={<Booking />} />
+              <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
               <Route path="/profile" element={<PatientDashboard />} />
               <Route path="/doctor" element={<DoctorDashboard />} />
               <Route path="/pa" element={<PADashboard />} />

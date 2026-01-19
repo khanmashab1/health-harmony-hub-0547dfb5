@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, isBefore, startOfToday } from "date-fns";
 import { 
@@ -16,7 +16,8 @@ import {
   Banknote,
   Smartphone,
   Loader2,
-  Info
+  Info,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { DoctorDetailsDialog } from "@/components/booking/DoctorDetailsDialog";
+import { DoctorSearchFilter } from "@/components/booking/DoctorSearchFilter";
 
 interface Doctor {
   user_id: string;
@@ -74,6 +76,11 @@ export default function Booking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsDoctor, setDetailsDoctor] = useState<Doctor | null>(null);
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [minRating, setMinRating] = useState(0);
+  const [sortBy, setSortBy] = useState("rating");
 
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
@@ -146,6 +153,57 @@ export default function Booking() {
     },
     enabled: step >= 3,
   });
+
+  // Filter and sort doctors
+  const filteredDoctors = useMemo(() => {
+    if (!doctors) return [];
+    
+    let filtered = [...doctors];
+    
+    // Search by name
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(doc => 
+        doc.profile?.name?.toLowerCase().includes(query) ||
+        doc.specialty.toLowerCase().includes(query)
+      );
+    }
+    
+    // Filter by minimum rating
+    if (minRating > 0) {
+      filtered = filtered.filter(doc => (doc.rating || 0) >= minRating);
+    }
+    
+    // Sort
+    switch (sortBy) {
+      case "rating":
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "experience":
+        filtered.sort((a, b) => (b.experience_years || 0) - (a.experience_years || 0));
+        break;
+      case "fee-low":
+        filtered.sort((a, b) => a.fee - b.fee);
+        break;
+      case "fee-high":
+        filtered.sort((a, b) => b.fee - a.fee);
+        break;
+      case "name":
+        filtered.sort((a, b) => 
+          (a.profile?.name || "").localeCompare(b.profile?.name || "")
+        );
+        break;
+    }
+    
+    return filtered;
+  }, [doctors, searchQuery, minRating, sortBy]);
+
+  const hasActiveFilters = searchQuery !== "" || minRating > 0;
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setMinRating(0);
+  };
 
   // Fetch available slots for selected doctor and date
   const { data: availableSlots } = useQuery({
@@ -360,12 +418,24 @@ export default function Booking() {
                 {/* Step 3: Doctor Selection */}
                 {step === 3 && (
                   <div className="space-y-4">
+                    {/* Search and Filter */}
+                    <DoctorSearchFilter
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      minRating={minRating}
+                      onMinRatingChange={setMinRating}
+                      sortBy={sortBy}
+                      onSortByChange={setSortBy}
+                      onClearFilters={clearFilters}
+                      hasActiveFilters={hasActiveFilters}
+                    />
+
                     {loadingDoctors ? (
                       <div className="flex items-center justify-center py-12">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       </div>
-                    ) : doctors && doctors.length > 0 ? (
-                      doctors.map((doc) => (
+                    ) : filteredDoctors && filteredDoctors.length > 0 ? (
+                      filteredDoctors.map((doc) => (
                         <div
                           key={doc.user_id}
                           className={`p-4 rounded-xl border-2 transition-all ${
@@ -377,9 +447,11 @@ export default function Booking() {
                           <div className="flex items-start gap-4">
                             <button
                               onClick={() => setSelectedDoctor(doc)}
-                              className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"
+                              className="flex-shrink-0"
                             >
-                              <User className="w-8 h-8 text-primary" />
+                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="w-8 h-8 text-primary" />
+                              </div>
                             </button>
                             <button
                               onClick={() => setSelectedDoctor(doc)}
@@ -408,16 +480,25 @@ export default function Booking() {
                             <div className="text-right flex flex-col items-end gap-2">
                               <p className="text-lg font-bold text-primary">Rs. {doc.fee}</p>
                               <p className="text-xs text-muted-foreground">per visit</p>
-                              <button
-                                onClick={() => {
-                                  setDetailsDoctor(doc);
-                                  setDetailsDialogOpen(true);
-                                }}
-                                className="flex items-center gap-1 text-xs text-primary hover:underline"
-                              >
-                                <Info className="w-3 h-3" />
-                                View Details
-                              </button>
+                              <div className="flex flex-col gap-1">
+                                <Link
+                                  to={`/doctor/${doc.user_id}`}
+                                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  Full Profile
+                                </Link>
+                                <button
+                                  onClick={() => {
+                                    setDetailsDoctor(doc);
+                                    setDetailsDialogOpen(true);
+                                  }}
+                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+                                >
+                                  <Info className="w-3 h-3" />
+                                  Quick View
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -426,7 +507,12 @@ export default function Booking() {
                       <div className="text-center py-12 text-muted-foreground">
                         <Stethoscope className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No doctors found for the selected criteria</p>
-                        <p className="text-sm">Try selecting a different location or specialty</p>
+                        <p className="text-sm">Try adjusting your filters or selecting a different specialty</p>
+                        {hasActiveFilters && (
+                          <Button variant="link" onClick={clearFilters} className="mt-2">
+                            Clear Filters
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
