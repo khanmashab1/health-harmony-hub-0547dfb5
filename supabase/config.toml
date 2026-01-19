@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.send-appointment-reminders]
 verify_jwt = false
+
+[functions.send-followup-reminders]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
