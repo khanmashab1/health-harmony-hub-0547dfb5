@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Printer, ArrowLeft, Stethoscope, Phone, Mail, MapPin, Pill, FlaskConical, FileText, Activity, CheckCircle } from "lucide-react";
+import { Printer, ArrowLeft, Stethoscope, Phone, Mail, MapPin, Pill, FlaskConical, FileText, Activity, CheckCircle, Send, Loader2, User, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 import {
   formatMedicinesForPrescription,
   frequencyLabels,
@@ -16,6 +19,9 @@ import {
 export default function PrescriptionPrint() {
   const { appointmentId } = useParams();
   const { siteName } = useSiteSettings();
+  const { toast } = useToast();
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   const { data: appointment, isLoading } = useQuery({
     queryKey: ["prescription", appointmentId],
     queryFn: async () => {
@@ -39,13 +45,132 @@ export default function PrescriptionPrint() {
         .eq("id", data.doctor_user_id)
         .single();
 
-      return { ...data, doctor, doctorProfile };
+      // Get patient profile for age and gender
+      let patientProfile = null;
+      if (data.patient_user_id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("age, gender")
+          .eq("id", data.patient_user_id)
+          .single();
+        patientProfile = profile;
+      }
+
+      return { ...data, doctor, doctorProfile, patientProfile };
     },
   });
 
   const handlePrint = () => {
     window.print();
   };
+
+  const sendPrescriptionEmail = useMutation({
+    mutationFn: async () => {
+      if (!appointment?.patient_email) {
+        throw new Error("No patient email found");
+      }
+
+      const medicines = formatMedicinesForPrescription(appointment.medicines || "");
+      const medicinesHtml = medicines.length > 0 
+        ? medicines.map((med, idx) => `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${idx + 1}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>${med.name}</strong>${med.instructions ? `<br><small>${med.instructions}</small>` : ''}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${med.dosage || '-'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${frequencyLabels[med.frequency] || med.frequency}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${durationLabels[med.duration] || med.duration}</td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="5" style="padding: 16px; text-align: center;">${appointment.medicines || 'No medicines prescribed'}</td></tr>`;
+
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #0EA5E9, #06B6D4); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">${siteName}</h1>
+            <p style="margin: 5px 0 0; opacity: 0.9;">Medical Prescription</p>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+              <div>
+                <h3 style="margin: 0 0 5px; color: #374151;">Dr. ${appointment.doctorProfile?.name}</h3>
+                <p style="margin: 0; color: #6b7280; font-size: 14px;">${appointment.doctor?.specialty || ''}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 0; font-size: 14px;"><strong>Date:</strong> ${format(new Date(appointment.appointment_date), "MMMM d, yyyy")}</p>
+                <p style="margin: 5px 0 0; font-size: 14px;"><strong>Token:</strong> #${appointment.token_number}</p>
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px; color: #374151;">Patient Information</h4>
+              <p style="margin: 0;"><strong>${appointment.patient_full_name}</strong></p>
+              ${appointment.patientProfile?.age ? `<p style="margin: 5px 0 0; font-size: 14px; color: #6b7280;">Age: ${appointment.patientProfile.age} years</p>` : ''}
+              ${appointment.patientProfile?.gender ? `<p style="margin: 5px 0 0; font-size: 14px; color: #6b7280;">Gender: ${appointment.patientProfile.gender}</p>` : ''}
+            </div>
+            
+            ${appointment.diagnosis ? `
+              <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px; color: #374151;">Diagnosis</h4>
+                <p style="margin: 0; color: #4b5563;">${appointment.diagnosis}</p>
+              </div>
+            ` : ''}
+            
+            <div style="margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px; color: #374151;">℞ Prescribed Medications</h4>
+              <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                <thead>
+                  <tr style="background: #f3f4f6;">
+                    <th style="padding: 10px; text-align: left; font-size: 12px;">#</th>
+                    <th style="padding: 10px; text-align: left; font-size: 12px;">Medicine</th>
+                    <th style="padding: 10px; text-align: left; font-size: 12px;">Dosage</th>
+                    <th style="padding: 10px; text-align: left; font-size: 12px;">Frequency</th>
+                    <th style="padding: 10px; text-align: left; font-size: 12px;">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${medicinesHtml}
+                </tbody>
+              </table>
+            </div>
+            
+            ${appointment.lab_tests ? `
+              <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px; color: #374151;">Recommended Lab Tests</h4>
+                <p style="margin: 0; color: #4b5563;">${appointment.lab_tests.replace(/\n/g, '<br>')}</p>
+              </div>
+            ` : ''}
+            
+            ${appointment.doctor_comments && !appointment.doctor_comments.startsWith("Payment") ? `
+              <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px; color: #374151;">Doctor's Notes</h4>
+                <p style="margin: 0; color: #4b5563;">${appointment.doctor_comments}</p>
+              </div>
+            ` : ''}
+          </div>
+          
+          <div style="background: #f3f4f6; padding: 15px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="margin: 0; font-size: 12px; color: #6b7280;">This prescription is valid for 30 days from the date of issue.</p>
+            <p style="margin: 5px 0 0; font-size: 12px; color: #6b7280;">For emergencies, please contact your healthcare provider immediately.</p>
+          </div>
+        </div>
+      `;
+
+      await supabase.functions.invoke("send-email", {
+        body: {
+          to: appointment.patient_email,
+          subject: `Your Prescription from Dr. ${appointment.doctorProfile?.name} - ${siteName}`,
+          html,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Prescription sent!", description: "Email sent to patient successfully" });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Failed to send", description: error.message });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -75,6 +200,7 @@ export default function PrescriptionPrint() {
 
   const medicines = formatMedicinesForPrescription(appointment.medicines || "");
   const clinicName = siteName;
+  const prescriptionUrl = `${window.location.origin}/prescription/${appointmentId}`;
 
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white">
@@ -86,10 +212,28 @@ export default function PrescriptionPrint() {
             Back
           </Button>
         </Link>
-        <Button onClick={handlePrint} size="sm" className="shadow-md">
-          <Printer className="w-4 h-4 mr-2" />
-          Print Prescription
-        </Button>
+        <div className="flex gap-2">
+          {appointment.patient_email && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white shadow-md"
+              onClick={() => sendPrescriptionEmail.mutate()}
+              disabled={sendPrescriptionEmail.isPending}
+            >
+              {sendPrescriptionEmail.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Email to Patient
+            </Button>
+          )}
+          <Button onClick={handlePrint} size="sm" className="shadow-md">
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+        </div>
       </div>
 
       {/* Prescription Page */}
@@ -141,11 +285,25 @@ export default function PrescriptionPrint() {
                 </div>
               </div>
 
-              {/* Patient Info */}
+              {/* Patient Info with Age & Gender */}
               <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Patient Details</h3>
                 <div className="space-y-1">
                   <p className="text-lg font-bold text-foreground">{appointment.patient_full_name}</p>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    {appointment.patientProfile?.age && (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" />
+                        {appointment.patientProfile.age} years
+                      </span>
+                    )}
+                    {appointment.patientProfile?.gender && (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        {appointment.patientProfile.gender}
+                      </span>
+                    )}
+                  </div>
                   {appointment.patient_phone && (
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <Phone className="w-3 h-3" />
@@ -258,7 +416,6 @@ export default function PrescriptionPrint() {
                 </div>
               </div>
             ) : appointment.medicines ? (
-              // Fallback for old text-based medicines
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Pill className="w-4 h-4 text-primary" />
@@ -298,8 +455,22 @@ export default function PrescriptionPrint() {
               </div>
             )}
 
-            {/* Signature Section */}
-            <div className="flex justify-end mt-12 pt-6">
+            {/* QR Code & Signature Section */}
+            <div className="flex justify-between items-end mt-12 pt-6">
+              {/* QR Code */}
+              <div className="flex flex-col items-center">
+                <QRCodeSVG 
+                  value={prescriptionUrl}
+                  size={80}
+                  level="M"
+                  className="border p-1 rounded bg-white"
+                />
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Scan to verify<br />prescription
+                </p>
+              </div>
+
+              {/* Signature */}
               <div className="text-center">
                 <div className="w-48 border-t-2 border-foreground pt-2 mb-1" />
                 <p className="font-semibold text-foreground">Dr. {appointment.doctorProfile?.name}</p>

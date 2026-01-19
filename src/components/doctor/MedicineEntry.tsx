@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Pill, Clock, Calendar } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Pill, Clock, Calendar, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface Medicine {
   name: string;
@@ -58,11 +61,9 @@ const parseMedicines = (value: string): Medicine[] => {
   if (!value) return [];
   
   try {
-    // Try to parse as JSON first
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed;
   } catch {
-    // Fall back to parsing text format
     if (!value.trim()) return [];
     const lines = value.split('\n').filter(l => l.trim());
     return lines.map(line => ({
@@ -76,29 +77,45 @@ const parseMedicines = (value: string): Medicine[] => {
   return [];
 };
 
-const formatMedicinesForDisplay = (medicines: Medicine[]): string => {
-  return medicines.map(m => {
-    const freq = frequencyOptions.find(f => f.value === m.frequency)?.label || m.frequency;
-    const timing = timingOptions.find(t => t.value === m.timing)?.label || m.timing;
-    const duration = durationOptions.find(d => d.value === m.duration)?.label || m.duration;
-    
-    let line = `${m.name}`;
-    if (m.dosage) line += ` (${m.dosage})`;
-    line += ` - ${freq}, ${timing}`;
-    if (m.duration) line += ` for ${duration}`;
-    if (m.instructions) line += ` | ${m.instructions}`;
-    return line;
-  }).join('\n');
-};
-
 export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
   const [medicines, setMedicines] = useState<Medicine[]>(() => parseMedicines(value));
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Fetch medicines from database
+  const { data: medicinesList } = useQuery({
+    queryKey: ["medicines-catalog", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) return [];
+      const { data, error } = await supabase
+        .from("medicines")
+        .select("*")
+        .or(`name.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%`)
+        .eq("is_active", true)
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+    enabled: searchTerm.length >= 2,
+  });
 
   useEffect(() => {
-    // Store as JSON for proper parsing later, but keep text format for display
     const jsonStr = JSON.stringify(medicines);
     onChange(jsonStr);
   }, [medicines, onChange]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const addMedicine = () => {
     setMedicines([
@@ -111,16 +128,35 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
         timing: "after_meal",
       },
     ]);
+    setActiveIndex(medicines.length);
   };
 
   const removeMedicine = (index: number) => {
     setMedicines(medicines.filter((_, i) => i !== index));
+    if (activeIndex === index) {
+      setActiveIndex(null);
+      setSearchTerm("");
+    }
   };
 
   const updateMedicine = (index: number, field: keyof Medicine, val: string) => {
     setMedicines(
       medicines.map((m, i) => (i === index ? { ...m, [field]: val } : m))
     );
+    if (field === "name") {
+      setSearchTerm(val);
+      setActiveIndex(index);
+      setShowSuggestions(true);
+    }
+  };
+
+  const selectMedicine = (index: number, medicineName: string, form?: string) => {
+    const dosageHint = form ? `1 ${form.toLowerCase()}` : "";
+    setMedicines(
+      medicines.map((m, i) => (i === index ? { ...m, name: medicineName, dosage: dosageHint || m.dosage } : m))
+    );
+    setShowSuggestions(false);
+    setSearchTerm("");
   };
 
   return (
@@ -165,31 +201,59 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Medicine Name */}
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs text-muted-foreground">
-                      Medicine Name
+                  {/* Medicine Name with Autocomplete */}
+                  <div className="sm:col-span-2 relative" ref={activeIndex === index ? suggestionRef : null}>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Search className="w-3 h-3" />
+                      Medicine Name (type to search)
                     </Label>
                     <Input
                       value={medicine.name}
-                      onChange={(e) =>
-                        updateMedicine(index, "name", e.target.value)
-                      }
+                      onChange={(e) => updateMedicine(index, "name", e.target.value)}
+                      onFocus={() => {
+                        setActiveIndex(index);
+                        if (medicine.name.length >= 2) setShowSuggestions(true);
+                      }}
                       placeholder="e.g., Paracetamol 500mg"
                       className="mt-1 border-border/50"
                     />
+                    
+                    {/* Autocomplete Suggestions */}
+                    {showSuggestions && activeIndex === index && medicinesList && medicinesList.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {medicinesList.map((med) => (
+                          <button
+                            key={med.id}
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-accent flex items-center justify-between gap-2 text-sm"
+                            onClick={() => selectMedicine(index, med.name, med.form || undefined)}
+                          >
+                            <div>
+                              <p className="font-medium">{med.name}</p>
+                              {med.generic_name && (
+                                <p className="text-xs text-muted-foreground">{med.generic_name}</p>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              {med.category && (
+                                <Badge variant="outline" className="text-xs">{med.category}</Badge>
+                              )}
+                              {med.form && (
+                                <Badge variant="secondary" className="text-xs">{med.form}</Badge>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Dosage */}
                   <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Dosage
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">Dosage</Label>
                     <Input
                       value={medicine.dosage}
-                      onChange={(e) =>
-                        updateMedicine(index, "dosage", e.target.value)
-                      }
+                      onChange={(e) => updateMedicine(index, "dosage", e.target.value)}
                       placeholder="e.g., 1 tablet"
                       className="mt-1 border-border/50"
                     />
@@ -203,9 +267,7 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
                     </Label>
                     <Select
                       value={medicine.frequency}
-                      onValueChange={(val) =>
-                        updateMedicine(index, "frequency", val)
-                      }
+                      onValueChange={(val) => updateMedicine(index, "frequency", val)}
                     >
                       <SelectTrigger className="mt-1 border-border/50">
                         <SelectValue />
@@ -222,14 +284,10 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
 
                   {/* Timing */}
                   <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Timing
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">Timing</Label>
                     <Select
                       value={medicine.timing}
-                      onValueChange={(val) =>
-                        updateMedicine(index, "timing", val)
-                      }
+                      onValueChange={(val) => updateMedicine(index, "timing", val)}
                     >
                       <SelectTrigger className="mt-1 border-border/50">
                         <SelectValue />
@@ -252,9 +310,7 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
                     </Label>
                     <Select
                       value={medicine.duration}
-                      onValueChange={(val) =>
-                        updateMedicine(index, "duration", val)
-                      }
+                      onValueChange={(val) => updateMedicine(index, "duration", val)}
                     >
                       <SelectTrigger className="mt-1 border-border/50">
                         <SelectValue />
@@ -276,9 +332,7 @@ export function MedicineEntry({ value, onChange }: MedicineEntryProps) {
                     </Label>
                     <Input
                       value={medicine.instructions || ""}
-                      onChange={(e) =>
-                        updateMedicine(index, "instructions", e.target.value)
-                      }
+                      onChange={(e) => updateMedicine(index, "instructions", e.target.value)}
                       placeholder="e.g., Take with warm water"
                       className="mt-1 border-border/50"
                     />
@@ -310,7 +364,6 @@ export const formatMedicinesForPrescription = (value: string): Medicine[] => {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed;
   } catch {
-    // Return empty if can't parse
     return [];
   }
   return [];
