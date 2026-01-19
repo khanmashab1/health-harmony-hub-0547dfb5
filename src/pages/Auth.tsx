@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight } from "lucide-react";
+import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -32,22 +33,49 @@ const resetSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
+const newPasswordSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
 type ResetFormData = z.infer<typeof resetSchema>;
+type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
-type AuthMode = "login" | "signup" | "reset";
+type AuthMode = "login" | "signup" | "reset" | "new-password";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>(searchParams.get("mode") === "signup" ? "signup" : "login");
+  const [mode, setMode] = useState<AuthMode>(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "signup") return "signup";
+    if (modeParam === "reset") return "reset";
+    return "login";
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const { signIn, signUp, user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check for password recovery token in URL hash
   useEffect(() => {
-    if (user && profile) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get("type");
+    const accessToken = hashParams.get("access_token");
+    
+    if (type === "recovery" && accessToken) {
+      setMode("new-password");
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only redirect authenticated users if they're NOT in new-password mode
+    if (user && profile && mode !== "new-password") {
       const redirectMap: Record<string, string> = {
         patient: "/profile",
         doctor: "/doctor",
@@ -56,7 +84,7 @@ export default function Auth() {
       };
       navigate(redirectMap[profile.role] || "/profile");
     }
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, mode]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -73,16 +101,26 @@ export default function Auth() {
     defaultValues: { email: "" },
   });
 
+  const newPasswordForm = useForm<NewPasswordFormData>({
+    resolver: zodResolver(newPasswordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
   const onLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     const { error } = await signIn(data.email, data.password);
     setIsLoading(false);
 
     if (error) {
+      let message = error.message;
+      // Check if email not verified
+      if (message.includes("Email not confirmed")) {
+        message = "Please verify your email before logging in. Check your inbox for the verification link.";
+      }
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: error.message || "Invalid email or password",
+        description: message,
       });
     } else {
       toast({
@@ -108,10 +146,9 @@ export default function Auth() {
         description: message,
       });
     } else {
-      toast({
-        title: "Account created!",
-        description: "Welcome to MediCare+. You can now access your dashboard.",
-      });
+      // Show success message and switch to login mode
+      setSignupSuccess(true);
+      setMode("login");
     }
   };
 
@@ -129,7 +166,7 @@ export default function Auth() {
 
       toast({
         title: "Check your email",
-        description: "We've sent you a password reset link.",
+        description: "If this email exists, a password reset link has been sent.",
       });
       setMode("login");
     } catch (error: any) {
@@ -137,6 +174,38 @@ export default function Auth() {
         variant: "destructive",
         title: "Reset failed",
         description: error.message || "Failed to send reset email. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onNewPassword = async (data: NewPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password reset successfully!",
+        description: "You can now log in with your new password.",
+      });
+      
+      // Sign out to force re-login with new password
+      await supabase.auth.signOut();
+      
+      // Clear the hash from URL
+      window.history.replaceState(null, "", window.location.pathname);
+      
+      setMode("login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Password reset failed",
+        description: error.message || "Failed to reset password. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -225,6 +294,8 @@ export default function Auth() {
                   ? "Create an Account" 
                   : mode === "reset" 
                   ? "Reset Password"
+                  : mode === "new-password"
+                  ? "Set New Password"
                   : "Welcome Back"}
               </CardTitle>
               <CardDescription className="text-base">
@@ -232,10 +303,22 @@ export default function Auth() {
                   ? "Join MediCare+ to start booking appointments"
                   : mode === "reset"
                   ? "Enter your email to receive a password reset link"
+                  : mode === "new-password"
+                  ? "Enter your new password below"
                   : "Sign in to access your health dashboard"}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
+              {/* Signup Success Alert */}
+              {signupSuccess && mode === "login" && (
+                <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-700 dark:text-green-400">
+                    Account created successfully! Please check your email to verify your account before logging in.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {mode === "signup" ? (
                 <Form {...signupForm}>
                   <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
@@ -351,6 +434,53 @@ export default function Auth() {
                           Send Reset Link
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              ) : mode === "new-password" ? (
+                <Form {...newPasswordForm}>
+                  <form onSubmit={newPasswordForm.handleSubmit(onNewPassword)} className="space-y-4">
+                    <FormField
+                      control={newPasswordForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>New Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                              <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={newPasswordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                              <Input type="password" placeholder="••••••••" className="pl-10 h-12" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Resetting Password...
+                        </>
+                      ) : (
+                        "Reset Password"
                       )}
                     </Button>
                   </form>
