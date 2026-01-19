@@ -485,6 +485,42 @@ export type Database = {
           },
         ]
       }
+      medicines: {
+        Row: {
+          category: string | null
+          created_at: string
+          form: string | null
+          generic_name: string | null
+          id: string
+          is_active: boolean | null
+          manufacturer: string | null
+          name: string
+          strength: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          form?: string | null
+          generic_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          manufacturer?: string | null
+          name: string
+          strength?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          form?: string | null
+          generic_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          manufacturer?: string | null
+          name?: string
+          strength?: string | null
+        }
+        Relationships: []
+      }
       pa_assignments: {
         Row: {
           created_at: string
