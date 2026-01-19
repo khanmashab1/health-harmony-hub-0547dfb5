@@ -662,7 +662,7 @@ export default function DoctorDashboard() {
 
               {/* Settings */}
               <TabsContent value="settings">
-                <DoctorSettingsPanel doctorInfo={doctorInfo} userId={user?.id} />
+                <DoctorSettingsPanel doctorInfo={doctorInfo} userId={user?.id} profileName={profile?.name} />
               </TabsContent>
             </Tabs>
           </motion.div>

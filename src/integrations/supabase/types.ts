@@ -619,6 +619,7 @@ export type Database = {
           comment: string | null
           created_at: string
           display_name: string
+          doctor_user_id: string | null
           id: string
           patient_user_id: string | null
           rating: number
@@ -629,6 +630,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           display_name: string
+          doctor_user_id?: string | null
           id?: string
           patient_user_id?: string | null
           rating: number
@@ -639,6 +641,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           display_name?: string
+          doctor_user_id?: string | null
           id?: string
           patient_user_id?: string | null
           rating?: number
@@ -646,6 +649,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_patient_user_id_fkey"
             columns: ["patient_user_id"]
