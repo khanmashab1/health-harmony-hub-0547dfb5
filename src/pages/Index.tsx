@@ -118,14 +118,24 @@ export default function Index() {
       <HeroSlider />
 
       {/* Specialties Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
+            <motion.span 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              Our Specialties
+            </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Find Doctors by <span className="gradient-text">Specialty</span>
             </h2>
@@ -139,17 +149,26 @@ export default function Index() {
             {specialties.map((specialty, index) => (
               <motion.div
                 key={specialty.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 40, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ 
+                  delay: index * 0.08,
+                  duration: 0.5,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 <Link to={`/booking?specialty=${encodeURIComponent(specialty.name)}`}>
-                  <Card variant="interactive" className="text-center p-6 h-full bg-card">
-                    <div className={`w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br ${specialty.color} flex items-center justify-center mb-4 shadow-lg`}>
+                  <Card variant="interactive" className="text-center p-6 h-full bg-card group">
+                    <motion.div 
+                      className={`w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br ${specialty.color} flex items-center justify-center mb-4 shadow-lg`}
+                      whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                      transition={{ duration: 0.4 }}
+                    >
                       <specialty.icon className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-sm">{specialty.name}</h3>
+                    </motion.div>
+                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{specialty.name}</h3>
                   </Card>
                 </Link>
               </motion.div>
@@ -159,14 +178,24 @@ export default function Index() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20">
+      <section className="py-20 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
+            <motion.span 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              Simple Process
+            </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               How It <span className="gradient-text">Works</span>
             </h2>
@@ -179,38 +208,80 @@ export default function Index() {
             {howItWorks.map((item, index) => (
               <motion.div
                 key={item.step}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ 
+                  delay: index * 0.15,
+                  duration: 0.6,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
                 className="relative"
               >
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-brand flex items-center justify-center text-2xl font-bold text-white mb-4 shadow-lg">
+                  <motion.div 
+                    className="w-16 h-16 mx-auto rounded-2xl bg-gradient-brand flex items-center justify-center text-2xl font-bold text-white mb-4 shadow-lg"
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 + 0.2, duration: 0.5, type: "spring" }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  >
                     {item.step}
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </motion.div>
+                  <motion.h3 
+                    className="font-semibold text-lg mb-2"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 + 0.3 }}
+                  >
+                    {item.title}
+                  </motion.h3>
+                  <motion.p 
+                    className="text-sm text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 + 0.4 }}
+                  >
+                    {item.description}
+                  </motion.p>
                 </div>
                 {index < howItWorks.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
+                  <motion.div 
+                    className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent"
+                    initial={{ scaleX: 0, originX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 + 0.5, duration: 0.5 }}
+                  />
                 )}
               </motion.div>
             ))}
           </div>
-
         </div>
       </section>
 
       {/* Patients Section */}
-      <section className="py-20">
+      <section className="py-20 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
+            <motion.span 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              Community
+            </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Our <span className="gradient-text">Patients</span>
             </h2>
@@ -239,18 +310,28 @@ export default function Index() {
               {patients.map((patient, index) => (
                 <motion.div
                   key={patient.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ 
+                    delay: index * 0.08,
+                    duration: 0.5,
+                    ease: [0.25, 0.46, 0.45, 0.94]
+                  }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
-                  <Card className="p-4 text-center hover:shadow-lg transition-all">
-                    <Avatar className="w-16 h-16 mx-auto mb-3 border-2 border-primary/20">
-                      <AvatarImage src={patient.avatar_path || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                        {patient.name?.charAt(0)?.toUpperCase() || <User className="w-6 h-6" />}
-                      </AvatarFallback>
-                    </Avatar>
+                  <Card className="p-4 text-center hover:shadow-lg transition-all group">
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Avatar className="w-16 h-16 mx-auto mb-3 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
+                        <AvatarImage src={patient.avatar_path || undefined} />
+                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                          {patient.name?.charAt(0)?.toUpperCase() || <User className="w-6 h-6" />}
+                        </AvatarFallback>
+                      </Avatar>
+                    </motion.div>
                     <p className="font-semibold text-sm truncate">{patient.name || "Patient"}</p>
                     <p className="text-xs text-muted-foreground">
                       {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || patient.city || "Member"}
@@ -260,28 +341,47 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+            <motion.div 
+              className="text-center py-12"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+            >
+              <motion.div 
+                className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
                 <Users className="w-10 h-10 text-muted-foreground" />
-              </div>
+              </motion.div>
               <p className="text-muted-foreground">No patients yet. Be the first to join!</p>
               <Link to="/auth?mode=signup" className="mt-4 inline-block">
                 <Button variant="hero">Create Account</Button>
               </Link>
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
 
       {/* Reviews Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
+            <motion.span 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              Testimonials
+            </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               What Patients <span className="gradient-text">Say</span>
             </h2>
@@ -289,14 +389,20 @@ export default function Index() {
               Real reviews from our satisfied patients
             </p>
             {stats && stats.totalReviews > 0 && (
-              <div className="flex items-center justify-center gap-4 mt-4">
+              <motion.div 
+                className="flex items-center justify-center gap-4 mt-4"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+              >
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
                   <span className="font-bold text-lg">{stats.rating}</span>
                 </div>
                 <span className="text-muted-foreground">•</span>
                 <span className="text-muted-foreground">{stats.totalReviews} reviews</span>
-              </div>
+              </motion.div>
             )}
           </motion.div>
 
@@ -322,13 +428,25 @@ export default function Index() {
                 {reviews.map((review, index) => (
                   <motion.div
                     key={review.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 40, rotateX: 15 }}
+                    whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ 
+                      delay: index * 0.1,
+                      duration: 0.6,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
                   >
-                    <Card className="p-6 h-full">
-                      <Quote className="w-8 h-8 text-primary/20 mb-4" />
+                    <Card className="p-6 h-full hover:shadow-xl transition-all">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                      >
+                        <Quote className="w-8 h-8 text-primary/20 mb-4" />
+                      </motion.div>
                       <p className="text-muted-foreground mb-4 line-clamp-3">
                         {review.comment || "Great experience with the doctor and staff!"}
                       </p>
@@ -337,14 +455,21 @@ export default function Index() {
                           <p className="font-semibold">{review.display_name}</p>
                           <div className="flex gap-0.5">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
+                              <motion.div
                                 key={i}
-                                className={`w-4 h-4 ${
-                                  i < review.rating
-                                    ? "text-amber-500 fill-amber-500"
-                                    : "text-gray-200"
-                                }`}
-                              />
+                                initial={{ opacity: 0, scale: 0 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 + 0.3 + i * 0.05 }}
+                              >
+                                <Star
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? "text-amber-500 fill-amber-500"
+                                      : "text-gray-200"
+                                  }`}
+                                />
+                              </motion.div>
                             ))}
                           </div>
                         </div>
@@ -353,22 +478,37 @@ export default function Index() {
                   </motion.div>
                 ))}
               </div>
-              <div className="text-center mt-8">
+              <motion.div 
+                className="text-center mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+              >
                 <Link to="/reviews">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2 group">
                     View All Reviews
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             </>
           ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+            <motion.div 
+              className="text-center py-12"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+            >
+              <motion.div 
+                className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
                 <Star className="w-10 h-10 text-muted-foreground" />
-              </div>
+              </motion.div>
               <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
