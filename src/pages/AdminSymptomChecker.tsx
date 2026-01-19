@@ -43,16 +43,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const REQUIRED_COLUMNS = ["symptom", "description", "severity", "advice", "red_flags"];
-
+// CSV format: title, symptom_keywords, symptom_keywords (duplicate), recommendation
 interface CSVRow {
-  symptom: string;
-  description: string;
-  severity: string;
-  advice: string;
-  red_flags: string;
-  when_to_seek_help?: string;
-  source?: string;
+  title: string;
+  symptom_keywords: string;
+  recommendation: string;
 }
 
 export default function AdminSymptomChecker() {
@@ -66,12 +61,12 @@ export default function AdminSymptomChecker() {
   const [parsedRows, setParsedRows] = useState<CSVRow[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Fetch symptom knowledge stats
+  // Fetch disease symptoms stats
   const { data: knowledgeStats, isLoading: loadingStats } = useQuery({
-    queryKey: ["symptom-knowledge-stats"],
+    queryKey: ["disease-symptoms-stats"],
     queryFn: async () => {
       const { data, error, count } = await supabase
-        .from("symptom_knowledge")
+        .from("disease_symptoms")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .limit(10);
@@ -87,39 +82,48 @@ export default function AdminSymptomChecker() {
     },
   });
 
-  // Parse CSV file
+  // Parse CSV file - format: title, symptom_keywords, symptom_keywords (duplicate), recommendation
   const parseCSV = (content: string): CSVRow[] => {
     const lines = content.trim().split("\n");
     if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
     
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
+    const rows: CSVRow[] = [];
     
-    // Validate required columns
-    const missingColumns = REQUIRED_COLUMNS.filter(col => !headers.includes(col));
-    if (missingColumns.length > 0) {
-      throw new Error(`Missing required columns: ${missingColumns.join(", ")}`);
+    // Skip header row
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      // Parse CSV considering quoted fields with commas
+      const fields: string[] = [];
+      let currentField = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          fields.push(currentField.trim().replace(/^"|"$/g, ''));
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+      fields.push(currentField.trim().replace(/^"|"$/g, ''));
+      
+      // CSV format: title, symptom_keywords, symptom_keywords (duplicate), recommendation
+      if (fields.length >= 3) {
+        rows.push({
+          title: fields[0] || '',
+          symptom_keywords: fields[1] || fields[2] || '', // Use first symptom_keywords column
+          recommendation: fields[3] || ''
+        });
+      }
     }
     
-    const rows: CSVRow[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-      const cleanValues = values.map(v => v.replace(/^"|"$/g, "").trim());
-      
-      if (cleanValues.length < REQUIRED_COLUMNS.length) continue;
-      
-      const row: any = {};
-      headers.forEach((header, index) => {
-        row[header] = cleanValues[index] || "";
-      });
-      
-      // Validate severity
-      if (!["low", "medium", "high"].includes(row.severity?.toLowerCase())) {
-        row.severity = "medium"; // Default
-      } else {
-        row.severity = row.severity.toLowerCase();
-      }
-      
-      rows.push(row as CSVRow);
+    if (rows.length === 0) {
+      throw new Error("No valid data rows found in CSV");
     }
     
     return rows;
@@ -146,7 +150,7 @@ export default function AdminSymptomChecker() {
         const rows = parseCSV(content);
         setParsedRows(rows);
         setShowPreview(true);
-        toast({ title: `Parsed ${rows.length} rows from CSV` });
+        toast({ title: `Parsed ${rows.length} diseases from CSV` });
       } catch (error: any) {
         setParseError(error.message);
       }
@@ -159,7 +163,7 @@ export default function AdminSymptomChecker() {
     mutationFn: async (rows: CSVRow[]) => {
       // Delete existing data
       const { error: deleteError } = await supabase
-        .from("symptom_knowledge")
+        .from("disease_symptoms")
         .delete()
         .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all
       
@@ -169,22 +173,18 @@ export default function AdminSymptomChecker() {
       const batchSize = 100;
       for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize).map(row => ({
-          symptom: row.symptom,
-          description: row.description,
-          severity: row.severity as "low" | "medium" | "high",
-          advice: row.advice,
-          red_flags: row.red_flags,
-          when_to_seek_help: row.when_to_seek_help || null,
-          source: row.source || null,
+          title: row.title,
+          symptom_keywords: row.symptom_keywords,
+          recommendation: row.recommendation || null,
         }));
         
-        const { error } = await supabase.from("symptom_knowledge").insert(batch);
+        const { error } = await supabase.from("disease_symptoms").insert(batch);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["symptom-knowledge-stats"] });
-      toast({ title: "Dataset uploaded successfully", description: `${parsedRows.length} symptoms indexed` });
+      queryClient.invalidateQueries({ queryKey: ["disease-symptoms-stats"] });
+      toast({ title: "Dataset uploaded successfully", description: `${parsedRows.length} diseases indexed` });
       setParsedRows([]);
       setShowPreview(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -198,29 +198,30 @@ export default function AdminSymptomChecker() {
   const clearMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from("symptom_knowledge")
+        .from("disease_symptoms")
         .delete()
         .neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["symptom-knowledge-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["disease-symptoms-stats"] });
       toast({ title: "Dataset cleared" });
     },
   });
 
   // Download sample CSV
   const downloadSampleCSV = () => {
-    const sample = `symptom,description,severity,advice,red_flags,when_to_seek_help,source
-Headache,Pain or discomfort in the head or face area,low,"Rest, stay hydrated, take OTC pain relievers if needed",Sudden severe headache;Vision changes;Confusion,Seek immediate help if headache is sudden and severe or accompanied by fever and stiff neck,Medical guidelines
-Fever,Elevated body temperature above 38°C (100.4°F),medium,"Rest, stay hydrated, take fever-reducing medication",Fever above 39.4°C (103°F);Difficulty breathing;Severe headache,See a doctor if fever persists more than 3 days or is very high,CDC guidelines
-Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call for help if severe",Pressure or squeezing sensation;Pain radiating to arm or jaw;Shortness of breath,Call emergency services immediately if chest pain is severe or accompanied by shortness of breath,AHA guidelines`;
+    const sample = `title,symptom_keywords,symptom_keywords,recommendation,
+Gestational Cholestasis,"Itchy skin, particularly on the hands and feet","Itchy skin, particularly on the hands and feet",,
+Common Cold,"Cough, sore throat, runny nose, sneezing, mild fever","Cough, sore throat, runny nose, sneezing, mild fever","Rest, fluids, over-the-counter medication",
+Migraine,"Severe headache, nausea, sensitivity to light, visual disturbances","Severe headache, nausea, sensitivity to light, visual disturbances","Pain relievers, preventive medications, rest in dark room",
+Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of breath","Persistent cough with mucus, chest congestion, fatigue, shortness of breath","Rest, fluids, over-the-counter cough suppressants, inhalers",`;
     
     const blob = new Blob([sample], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "symptom-checker-template.csv";
+    link.download = "Diseases_Symptoms_Template.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -254,8 +255,8 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
               <Database className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Symptom Checker Dataset</h1>
-              <p className="text-muted-foreground">Manage the RAG knowledge base for symptom analysis</p>
+              <h1 className="text-3xl font-bold">Disease & Symptoms Dataset</h1>
+              <p className="text-muted-foreground">Manage the RAG knowledge base for AI symptom analysis</p>
             </div>
           </motion.div>
 
@@ -274,7 +275,7 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                   </div>
                   <div>
                     <p className="text-3xl font-bold">{loadingStats ? "-" : knowledgeStats?.totalRows}</p>
-                    <p className="text-sm text-muted-foreground">Total Symptoms</p>
+                    <p className="text-sm text-muted-foreground">Total Diseases</p>
                   </div>
                 </div>
               </CardContent>
@@ -287,7 +288,9 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                     <CheckCircle2 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-green-600">Indexed</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {knowledgeStats?.totalRows && knowledgeStats.totalRows > 0 ? "Active" : "Empty"}
+                    </p>
                     <p className="text-sm text-muted-foreground">RAG Status</p>
                   </div>
                 </div>
@@ -327,7 +330,7 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                   Upload CSV Dataset
                 </CardTitle>
                 <CardDescription>
-                  Upload a CSV file with symptom data. Required columns: symptom, description, severity, advice, red_flags
+                  Upload a CSV file with disease data. Format: title, symptom_keywords, symptom_keywords, recommendation
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -360,7 +363,7 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-muted-foreground">
-                        Preview: {parsedRows.length} rows parsed
+                        Preview: {parsedRows.length} diseases parsed
                       </p>
                       <div className="flex gap-2">
                         <Button 
@@ -396,24 +399,17 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Symptom</TableHead>
-                            <TableHead>Severity</TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead>Disease Title</TableHead>
+                            <TableHead>Symptoms</TableHead>
+                            <TableHead>Recommendation</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {parsedRows.slice(0, 5).map((row, i) => (
                             <TableRow key={i}>
-                              <TableCell className="font-medium">{row.symptom}</TableCell>
-                              <TableCell>
-                                <Badge variant={
-                                  row.severity === "high" ? "destructive" :
-                                  row.severity === "medium" ? "default" : "secondary"
-                                }>
-                                  {row.severity}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="truncate max-w-xs">{row.description}</TableCell>
+                              <TableCell className="font-medium">{row.title}</TableCell>
+                              <TableCell className="truncate max-w-xs">{row.symptom_keywords}</TableCell>
+                              <TableCell className="truncate max-w-xs">{row.recommendation || '-'}</TableCell>
                             </TableRow>
                           ))}
                           {parsedRows.length > 5 && (
@@ -443,7 +439,7 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Current Dataset</CardTitle>
-                    <CardDescription>Recent entries in the symptom knowledge base</CardDescription>
+                    <CardDescription>Recent entries in the disease knowledge base</CardDescription>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -454,16 +450,19 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Clear all symptom data?</AlertDialogTitle>
+                        <AlertDialogTitle>Clear Dataset?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will permanently delete all {knowledgeStats?.totalRows} symptom entries. 
-                          The symptom checker will not work until new data is uploaded.
+                          This will remove all {knowledgeStats?.totalRows} disease entries from the knowledge base. 
+                          The symptom checker will use fallback data until new data is uploaded.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => clearMutation.mutate()}>
-                          Delete All
+                        <AlertDialogAction
+                          onClick={() => clearMutation.mutate()}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Clear All Data
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -472,48 +471,42 @@ Chest Pain,Discomfort or pain in the chest area,high,"Stop activity, rest, call 
               </CardHeader>
               <CardContent>
                 {loadingStats ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}
+                  <div className="space-y-2">
+                    {[1, 2, 3].map(i => (
+                      <Skeleton key={i} className="h-12" />
+                    ))}
                   </div>
                 ) : knowledgeStats?.recentEntries && knowledgeStats.recentEntries.length > 0 ? (
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Symptom</TableHead>
-                          <TableHead>Severity</TableHead>
-                          <TableHead>Advice</TableHead>
-                          <TableHead>Red Flags</TableHead>
+                          <TableHead>Disease Title</TableHead>
+                          <TableHead>Symptoms</TableHead>
+                          <TableHead>Recommendation</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {knowledgeStats.recentEntries.map((entry: any) => (
                           <TableRow key={entry.id}>
-                            <TableCell className="font-medium">{entry.symptom}</TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                entry.severity === "high" ? "destructive" :
-                                entry.severity === "medium" ? "default" : "secondary"
-                              }>
-                                {entry.severity}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="truncate max-w-xs">{entry.advice}</TableCell>
-                            <TableCell className="truncate max-w-xs text-muted-foreground">
-                              {entry.red_flags || "-"}
-                            </TableCell>
+                            <TableCell className="font-medium">{entry.title}</TableCell>
+                            <TableCell className="truncate max-w-xs">{entry.symptom_keywords}</TableCell>
+                            <TableCell className="truncate max-w-xs">{entry.recommendation || '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
+                    {knowledgeStats.totalRows > 10 && (
+                      <div className="p-3 text-center text-sm text-muted-foreground border-t">
+                        Showing 10 of {knowledgeStats.totalRows} entries
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <FileSpreadsheet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No symptom data uploaded yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Upload a CSV file to populate the RAG knowledge base
-                    </p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No disease data uploaded yet</p>
+                    <p className="text-sm">Upload a CSV file to populate the symptom checker knowledge base</p>
                   </div>
                 )}
               </CardContent>

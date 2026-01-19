@@ -186,6 +186,30 @@ export type Database = {
           },
         ]
       }
+      disease_symptoms: {
+        Row: {
+          created_at: string
+          id: string
+          recommendation: string | null
+          symptom_keywords: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recommendation?: string | null
+          symptom_keywords: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recommendation?: string | null
+          symptom_keywords?: string
+          title?: string
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           bio: string | null
