@@ -19,6 +19,7 @@ import { ProfileEditForm } from "@/components/patient/ProfileEditForm";
 import { HealthMetrics } from "@/components/patient/HealthMetrics";
 import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimeline";
 import { WriteReviewDialog } from "@/components/patient/WriteReviewDialog";
+import { PrescriptionHistory } from "@/components/patient/PrescriptionHistory";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PatientDashboard() {
@@ -334,19 +335,14 @@ export default function PatientDashboard() {
 
               <TabsContent value="records">
                 <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10">
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="w-5 h-5 text-purple-600" />
-                      Medical Records
+                      Prescription History
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="text-center py-16">
-                      <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mb-4">
-                        <FileText className="w-10 h-10 text-muted-foreground" />
-                      </div>
-                      <p className="text-muted-foreground">Your medical records will appear here</p>
-                    </div>
+                    {user && <PrescriptionHistory userId={user.id} />}
                   </CardContent>
                 </Card>
               </TabsContent>
