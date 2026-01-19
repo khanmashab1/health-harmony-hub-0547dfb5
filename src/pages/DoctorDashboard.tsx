@@ -256,7 +256,7 @@ export default function DoctorDashboard() {
               {/* Today's Appointments */}
               <TabsContent value="today">
                 <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-brand-500" />
                       Today's Appointments
@@ -272,12 +272,12 @@ export default function DoctorDashboard() {
                           <motion.div
                             key={apt.id}
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:bg-white hover:shadow-md transition-all cursor-pointer"
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-accent/50 hover:shadow-md transition-all cursor-pointer"
                             onClick={() => setSelectedAppointment(apt)}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                                <span className="text-xl font-bold text-brand-600">#{apt.token_number}</span>
+                              <div className="w-14 h-14 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                                <span className="text-xl font-bold text-primary">#{apt.token_number}</span>
                               </div>
                               <div>
                                 <p className="font-semibold text-foreground">{apt.patient_full_name || "Patient"}</p>
@@ -308,7 +308,7 @@ export default function DoctorDashboard() {
               {/* All Appointments */}
               <TabsContent value="all">
                 <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="w-5 h-5 text-brand-500" />
                       All Appointments
@@ -321,12 +321,12 @@ export default function DoctorDashboard() {
                           <motion.div
                             key={apt.id}
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:bg-white hover:shadow-md transition-all cursor-pointer"
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-accent/50 hover:shadow-md transition-all cursor-pointer"
                             onClick={() => setSelectedAppointment(apt)}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                                <span className="text-lg font-bold text-brand-600">#{apt.token_number}</span>
+                              <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                                <span className="text-lg font-bold text-primary">#{apt.token_number}</span>
                               </div>
                               <div>
                                 <p className="font-semibold">{apt.patient_full_name || "Patient"}</p>
@@ -356,7 +356,7 @@ export default function DoctorDashboard() {
               <TabsContent value="availability">
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
                       <CardTitle className="flex items-center gap-2">
                         <Plus className="w-5 h-5 text-brand-500" />
                         Block a Slot
@@ -368,7 +368,7 @@ export default function DoctorDashboard() {
                         mode="single"
                         selected={blockDate}
                         onSelect={setBlockDate}
-                        className="rounded-xl border border-border/50 bg-white/50 mb-4"
+                        className="rounded-xl border border-border/50 bg-card mb-4"
                       />
                       {blockDate && (
                         <motion.div 
@@ -394,7 +394,7 @@ export default function DoctorDashboard() {
                   </Card>
 
                   <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-red-50/50 to-transparent">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-destructive/5 to-transparent dark:from-destructive/10">
                       <CardTitle className="flex items-center gap-2">
                         <CalendarX className="w-5 h-5 text-red-500" />
                         Blocked Dates
@@ -404,7 +404,7 @@ export default function DoctorDashboard() {
                       {blockedSlots && blockedSlots.length > 0 ? (
                         <div className="space-y-3">
                           {blockedSlots.map((slot) => (
-                            <div key={slot.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50">
+                            <div key={slot.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card">
                               <div>
                                 <p className="font-semibold">
                                   {format(new Date(slot.blocked_date), "EEEE, MMM d, yyyy")}
@@ -438,7 +438,7 @@ export default function DoctorDashboard() {
               {/* Settings */}
               <TabsContent value="settings">
                 <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="w-5 h-5 text-brand-500" />
                       Doctor Settings
@@ -452,7 +452,7 @@ export default function DoctorDashboard() {
                         { label: "Experience", value: `${doctorInfo?.experience_years || 0} years`, icon: Activity },
                         { label: "Rating", value: `${doctorInfo?.rating || 4.0} ⭐`, icon: CheckCircle2 },
                       ].map((item) => (
-                        <div key={item.label} className="p-4 rounded-xl border border-border/50 bg-white/50">
+                        <div key={item.label} className="p-4 rounded-xl border border-border/50 bg-card">
                           <div className="flex items-center gap-2 mb-2">
                             <item.icon className="w-4 h-4 text-brand-500" />
                             <p className="text-sm text-muted-foreground font-medium">{item.label}</p>
@@ -471,7 +471,7 @@ export default function DoctorDashboard() {
 
       {/* Appointment Detail Sheet */}
       <Sheet open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-gradient-to-b from-white to-brand-50/30">
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-gradient-to-b from-background to-muted/30">
           {selectedAppointment && (
             <AppointmentDetail
               appointment={selectedAppointment}
@@ -528,14 +528,14 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
   return (
     <div className="space-y-6 pt-6">
       {/* Patient Info Header */}
-      <div className="p-4 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200">
+      <div className="p-4 rounded-xl bg-primary/10 dark:bg-primary/20">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-white/80 flex items-center justify-center">
-            <span className="text-xl font-bold text-brand-600">#{appointment.token_number}</span>
+          <div className="w-14 h-14 rounded-xl bg-background flex items-center justify-center">
+            <span className="text-xl font-bold text-primary">#{appointment.token_number}</span>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-brand-900">{appointment.patient_full_name}</h3>
-            <p className="text-brand-700">{appointment.patient_phone}</p>
+            <h3 className="text-xl font-bold text-foreground">{appointment.patient_full_name}</h3>
+            <p className="text-muted-foreground">{appointment.patient_phone}</p>
           </div>
         </div>
       </div>
