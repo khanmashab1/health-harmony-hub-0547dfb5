@@ -952,10 +952,13 @@ export default function PADashboard() {
                   </CardHeader>
                   <CardContent className="p-6">
                     {(() => {
+                      const todayStr = format(new Date(), "yyyy-MM-dd");
+                      // Show today's upcoming appointments that are ready for vitals
+                      // Include: Upcoming status with confirmed payment OR cash payment
                       const todayAppts = appointments?.filter(
-                        (a) => a.appointment_date === format(new Date(), "yyyy-MM-dd") && 
+                        (a) => a.appointment_date === todayStr && 
                                a.status === "Upcoming" &&
-                               (a.payment_status === "Confirmed" || a.payment_method === "Cash")
+                               (a.payment_status === "Confirmed" || a.payment_status === "NA" || a.payment_method === "Cash")
                       ) || [];
                       
                       if (todayAppts.length === 0) {
