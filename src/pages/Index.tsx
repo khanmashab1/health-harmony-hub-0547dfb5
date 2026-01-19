@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
+import doctorConsultationImg from "@/assets/doctor-consultation.png";
 
 const specialties = [
   { name: "General Physician", icon: Stethoscope, color: "from-primary to-primary/70" },
@@ -113,8 +114,103 @@ export default function Index() {
 
   return (
     <Layout>
-      {/* Top Doctors Slider */}
-      <TopDoctorsSlider />
+      {/* Hero Section - Dark themed */}
+      <section className="relative min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-[#0a1628]">
+        {/* Subtle background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            animate={{ x: [0, 20, 0], y: [0, -10, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" 
+          />
+          <motion.div 
+            animate={{ x: [0, -20, 0], y: [0, 10, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-20 left-10 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" 
+          />
+        </div>
+
+        <div className="container mx-auto px-4 py-16 lg:py-24 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="space-y-6"
+            >
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-white">
+                Your Health, Our <span className="text-primary">Priority</span>
+              </h1>
+
+              <p className="text-lg text-gray-300 max-w-lg leading-relaxed">
+                Book appointments with top doctors, track your health metrics, and get expert medical advice.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Link to="/booking">
+                  <Button variant="hero" size="xl" className="w-full sm:w-auto gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Book Appointment
+                  </Button>
+                </Link>
+                <Link to="/symptoms">
+                  <Button variant="outline" size="xl" className="w-full sm:w-auto gap-2 border-primary/50 text-primary hover:bg-primary/10">
+                    <Activity className="w-5 h-5" />
+                    Check Symptoms
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="flex flex-wrap gap-8 pt-6">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-white">{stats?.doctors || 0}+</p>
+                  <p className="text-sm text-gray-400">Expert Doctors</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-white">{stats?.patients || 0}+</p>
+                  <p className="text-sm text-gray-400">Happy Patients</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    <p className="text-3xl font-bold text-white">{stats?.rating || "4.8"}</p>
+                  </div>
+                  <p className="text-sm text-gray-400">Average Rating</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right - Hero Image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 50 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative hidden lg:flex justify-center"
+            >
+              <div className="relative">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-cyan-500/10 rounded-3xl blur-3xl opacity-60 scale-110" />
+                
+                {/* Image */}
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative z-10"
+                >
+                  <img 
+                    src={doctorConsultationImg} 
+                    alt="Doctor consulting with patient" 
+                    className="w-full max-w-lg rounded-3xl shadow-2xl border-4 border-white/10"
+                  />
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       {/* Specialties Section */}
       <section className="py-20 bg-muted/30 overflow-hidden">
@@ -528,6 +624,9 @@ export default function Index() {
           </div>
         </section>
       )}
+
+      {/* Top Doctors Slider - Moved to bottom */}
+      <TopDoctorsSlider />
 
       {/* CTA Section */}
       <section className="py-20">
