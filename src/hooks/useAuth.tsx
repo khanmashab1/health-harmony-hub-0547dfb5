@@ -69,8 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => {
             fetchProfile(session.user.id).then(setProfile);
           }, 0);
+          // Mark session as active for security - when tab closes, we'll sign out
+          sessionStorage.setItem("session_active", "true");
         } else {
           setProfile(null);
+          sessionStorage.removeItem("session_active");
         }
         setLoading(false);
       }
@@ -82,9 +85,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id).then(setProfile);
+        // Mark session as active
+        sessionStorage.setItem("session_active", "true");
       }
       setLoading(false);
     });
+
+    // Security: Check if this is a fresh browser session
+    // If there was a previous session but sessionStorage is empty, sign out
+    const checkSessionSecurity = async () => {
+      const wasActive = sessionStorage.getItem("session_active");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && !wasActive) {
+        // This is a new browser session but old auth exists - sign out for security
+        console.log("Security: New browser session detected, signing out...");
+        await supabase.auth.signOut();
+      }
+    };
+    
+    checkSessionSecurity();
 
     return () => subscription.unsubscribe();
   }, []);

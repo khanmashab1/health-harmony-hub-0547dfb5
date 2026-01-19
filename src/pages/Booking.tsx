@@ -332,7 +332,11 @@ export default function Booking() {
                     {SPECIALTIES.map((s) => (
                       <button
                         key={s.name}
-                        onClick={() => setSpecialty(s.name)}
+                        onClick={() => {
+                          setSpecialty(s.name);
+                          // Auto-advance to next step
+                          setTimeout(() => setStep(3), 200);
+                        }}
                         className={`p-4 rounded-xl border-2 transition-all text-left ${
                           specialty === s.name
                             ? "border-primary bg-primary/5"

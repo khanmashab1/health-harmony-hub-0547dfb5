@@ -86,7 +86,7 @@ export default function PatientDashboard() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20">
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20 dark:from-background dark:via-background dark:to-background">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div 
@@ -156,29 +156,29 @@ export default function PatientDashboard() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="appointments" className="space-y-6">
-              <TabsList className="bg-white/80 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
-                <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+              <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Appointments</span>
                   <span className="sm:hidden">Appts</span>
                 </TabsTrigger>
-                <TabsTrigger value="history" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="history" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <History className="w-4 h-4 mr-1 sm:mr-2" />
                   History
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
                   Profile
                 </TabsTrigger>
-                <TabsTrigger value="health" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="health" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Activity className="w-4 h-4 mr-1 sm:mr-2" />
                   Health
                 </TabsTrigger>
-                <TabsTrigger value="records" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="records" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                   Records
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-500 data-[state=active]:to-brand-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+                <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Star className="w-4 h-4 mr-1 sm:mr-2" />
                   Reviews
                 </TabsTrigger>
