@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, startOfMonth, endOfMonth, eachWeekOfInterval } from "date-fns";
 import {
@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { MedicineEntry } from "@/components/doctor/MedicineEntry";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -810,15 +811,10 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       </div>
 
       {/* Medicines */}
-      <div className="space-y-2">
-        <Label className="font-semibold">Medicines</Label>
-        <Textarea
-          value={medicines}
-          onChange={(e) => setMedicines(e.target.value)}
-          placeholder="Enter medicines (one per line)..."
-          className="border-border/50 min-h-[80px]"
-        />
-      </div>
+      <MedicineEntry 
+        value={medicines}
+        onChange={setMedicines}
+      />
 
       {/* Lab Tests */}
       <div className="space-y-2">
