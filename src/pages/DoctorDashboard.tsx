@@ -153,25 +153,20 @@ export default function DoctorDashboard() {
     navigate("/");
   };
 
-  if (loading) {
-    return (
-      <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20">
-          <div className="container mx-auto px-4 py-8">
-            <Skeleton className="h-12 w-64 mb-8" />
-            <div className="grid md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
+  // All useMemo hooks MUST be called before any conditional returns
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const todayAppointments = appointments?.filter(a => a.appointment_date === todayStr && a.status !== "Cancelled") || [];
-  const upcomingAppointments = appointments?.filter(a => a.appointment_date >= todayStr && a.status === "Upcoming") || [];
-  const completedAppointments = appointments?.filter(a => a.status === "Completed") || [];
+  
+  const todayAppointments = useMemo(() => {
+    return appointments?.filter(a => a.appointment_date === todayStr && a.status !== "Cancelled") || [];
+  }, [appointments, todayStr]);
+
+  const upcomingAppointments = useMemo(() => {
+    return appointments?.filter(a => a.appointment_date >= todayStr && a.status === "Upcoming") || [];
+  }, [appointments, todayStr]);
+
+  const completedAppointments = useMemo(() => {
+    return appointments?.filter(a => a.status === "Completed") || [];
+  }, [appointments]);
 
   // Filter appointments by search term
   const filteredAppointments = useMemo(() => {
@@ -227,6 +222,22 @@ export default function DoctorDashboard() {
     }
     return weeks;
   }, [appointments]);
+
+  // Loading state AFTER all hooks
+  if (loading) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20">
+          <div className="container mx-auto px-4 py-8">
+            <Skeleton className="h-12 w-64 mb-8" />
+            <div className="grid md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showFooter={false}>
