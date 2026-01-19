@@ -1,46 +1,49 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface DiseaseEntry {
+  title: string;
+  symptoms: string;
+  recommendation: string;
+}
+
 // Parse CSV content into structured data
-function parseCSV(csvContent: string): Array<{ title: string; symptoms: string; recommendation: string }> {
+function parseCSV(csvContent: string): DiseaseEntry[] {
   const lines = csvContent.split('\n').filter(line => line.trim());
-  const results: Array<{ title: string; symptoms: string; recommendation: string }> = [];
+  const results: DiseaseEntry[] = [];
   
   // Skip header row
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    // Parse CSV considering quoted fields with commas
-    const matches = line.match(/("([^"]*)"|[^,]*)(,("([^"]*)"|[^,]*))*/g);
-    if (matches) {
-      // Split by comma but respect quoted strings
-      const fields: string[] = [];
-      let currentField = '';
-      let inQuotes = false;
-      
-      for (let j = 0; j < line.length; j++) {
-        const char = line[j];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          fields.push(currentField.trim().replace(/^"|"$/g, ''));
-          currentField = '';
-        } else {
-          currentField += char;
-        }
+    const fields: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        fields.push(currentField.trim().replace(/^"|"$/g, ''));
+        currentField = '';
+      } else {
+        currentField += char;
       }
-      fields.push(currentField.trim().replace(/^"|"$/g, ''));
-      
-      if (fields.length >= 4) {
-        results.push({
-          title: fields[0] || '',
-          symptoms: fields[1] || fields[2] || '', // Use first symptom_keywords column
-          recommendation: fields[3] || ''
-        });
-      }
+    }
+    fields.push(currentField.trim().replace(/^"|"$/g, ''));
+    
+    // CSV format: title, symptom_keywords, symptom_keywords (duplicate), recommendation
+    if (fields.length >= 3) {
+      results.push({
+        title: fields[0] || '',
+        symptoms: fields[1] || fields[2] || '',
+        recommendation: fields[3] || ''
+      });
     }
   }
   
@@ -49,9 +52,9 @@ function parseCSV(csvContent: string): Array<{ title: string; symptoms: string; 
 
 // Search for matching conditions based on symptoms
 function searchConditions(
-  data: Array<{ title: string; symptoms: string; recommendation: string }>,
+  data: DiseaseEntry[],
   searchTerms: string
-): Array<{ title: string; symptoms: string; recommendation: string; score: number }> {
+): Array<DiseaseEntry & { score: number }> {
   const searchWords = searchTerms.toLowerCase().split(/[\s,]+/).filter(w => w.length > 2);
   
   const scored = data.map(item => {
@@ -86,6 +89,8 @@ serve(async (req) => {
     const { symptoms, age, gender, duration, severity, medicalHistory, selectedTags } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -99,23 +104,68 @@ serve(async (req) => {
 
     console.log("Searching disease database for:", searchTerms);
 
-    // Fetch and parse the CSV dataset
-    const csvUrl = "https://zfibmvdqnagcajgehqni.supabase.co/storage/v1/object/public/symptom-data/Diseases_Symptoms.csv";
-    let diseaseData: Array<{ title: string; symptoms: string; recommendation: string }> = [];
+    let diseaseData: DiseaseEntry[] = [];
     
-    try {
-      // Try to fetch from public URL first
-      const response = await fetch(csvUrl);
-      if (response.ok) {
-        const csvContent = await response.text();
-        diseaseData = parseCSV(csvContent);
-        console.log(`Loaded ${diseaseData.length} conditions from CSV`);
+    // First, try to fetch from symptom_knowledge table (admin uploaded data)
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: dbData, error } = await supabase
+          .from("symptom_knowledge")
+          .select("symptom, description, advice")
+          .limit(1000);
+        
+        if (!error && dbData && dbData.length > 0) {
+          diseaseData = dbData.map(row => ({
+            title: row.symptom,
+            symptoms: row.description,
+            recommendation: row.advice
+          }));
+          console.log(`Loaded ${diseaseData.length} conditions from symptom_knowledge table`);
+        }
+      } catch (dbError) {
+        console.log("Could not fetch from symptom_knowledge table:", dbError);
       }
-    } catch (fetchError) {
-      console.log("Could not fetch CSV from storage, using embedded data");
     }
 
-    // If CSV fetch failed, use a basic embedded dataset
+    // If no data from DB, try to fetch from disease_symptoms table
+    if (diseaseData.length === 0 && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: dbData, error } = await supabase
+          .from("disease_symptoms")
+          .select("title, symptom_keywords, recommendation")
+          .limit(1000);
+        
+        if (!error && dbData && dbData.length > 0) {
+          diseaseData = dbData.map(row => ({
+            title: row.title,
+            symptoms: row.symptom_keywords,
+            recommendation: row.recommendation || ''
+          }));
+          console.log(`Loaded ${diseaseData.length} conditions from disease_symptoms table`);
+        }
+      } catch (dbError) {
+        console.log("Could not fetch from disease_symptoms table:", dbError);
+      }
+    }
+
+    // Fallback: try to fetch from CSV in storage
+    if (diseaseData.length === 0) {
+      const csvUrl = `${SUPABASE_URL}/storage/v1/object/public/symptom-data/Diseases_Symptoms.csv`;
+      try {
+        const response = await fetch(csvUrl);
+        if (response.ok) {
+          const csvContent = await response.text();
+          diseaseData = parseCSV(csvContent);
+          console.log(`Loaded ${diseaseData.length} conditions from CSV storage`);
+        }
+      } catch (fetchError) {
+        console.log("Could not fetch CSV from storage");
+      }
+    }
+
+    // Final fallback: use embedded data
     if (diseaseData.length === 0) {
       diseaseData = [
         { title: "Common Cold", symptoms: "cough, sore throat, runny nose, sneezing", recommendation: "rest, fluids, over-the-counter medication" },
@@ -129,6 +179,7 @@ serve(async (req) => {
         { title: "Insomnia", symptoms: "difficulty falling asleep, waking up frequently, daytime fatigue", recommendation: "Sleep hygiene, cognitive behavioral therapy, medications" },
         { title: "Depression", symptoms: "persistent sadness, loss of interest, fatigue, changes in appetite", recommendation: "Therapy, medications (antidepressants), lifestyle changes" }
       ];
+      console.log("Using fallback embedded data");
     }
 
     // Search for matching conditions
@@ -196,7 +247,7 @@ Provide your analysis in JSON format. ${matchedConditions.length > 0 ? `Referenc
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage }
@@ -255,13 +306,14 @@ Provide your analysis in JSON format. ${matchedConditions.length > 0 ? `Referenc
       };
     }
 
-    console.log(`Symptom analysis completed successfully. Matched ${matchedConditions.length} conditions.`);
+    console.log(`Symptom analysis completed successfully. Matched ${matchedConditions.length} conditions from database.`);
 
     return new Response(JSON.stringify({ 
       analysis,
       rag_info: {
         entries_found: matchedConditions.length,
-        citations: citations
+        citations: citations,
+        source: diseaseData.length > 0 ? "database" : "fallback"
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
