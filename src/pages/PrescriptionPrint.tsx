@@ -174,8 +174,8 @@ export default function PrescriptionPrint() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-        <div className="w-full max-w-4xl bg-white p-8 shadow-lg">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-4xl bg-card p-8 shadow-lg rounded-xl border border-border">
           <Skeleton className="h-8 w-48 mx-auto mb-6" />
           <Skeleton className="h-6 w-full mb-4" />
           <Skeleton className="h-32 w-full mb-4" />
@@ -187,9 +187,9 @@ export default function PrescriptionPrint() {
 
   if (!appointment) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-        <div className="bg-white p-8 text-center shadow-lg rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Prescription Not Found</h2>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="bg-card p-8 text-center shadow-lg rounded-xl border border-border">
+          <h2 className="text-xl font-bold mb-4 text-foreground">Prescription Not Found</h2>
           <Link to="/profile">
             <Button>Go to Dashboard</Button>
           </Link>
@@ -203,11 +203,11 @@ export default function PrescriptionPrint() {
   const prescriptionUrl = `${window.location.origin}/prescription/${appointmentId}`;
 
   return (
-    <div className="min-h-screen bg-gray-100 print:bg-white">
+    <div className="min-h-screen bg-background print:bg-white">
       {/* Action Buttons - Hidden on print */}
       <div className="fixed top-4 left-4 right-4 flex justify-between z-50 no-print">
         <Link to="/profile">
-          <Button variant="outline" size="sm" className="bg-white shadow-md">
+          <Button variant="outline" size="sm" className="bg-card shadow-md border-primary text-primary hover:bg-primary/5">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
@@ -217,7 +217,7 @@ export default function PrescriptionPrint() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="bg-white shadow-md"
+              className="bg-card shadow-md border-primary text-primary hover:bg-primary/5"
               onClick={() => sendPrescriptionEmail.mutate()}
               disabled={sendPrescriptionEmail.isPending}
             >
@@ -238,9 +238,9 @@ export default function PrescriptionPrint() {
 
       {/* Prescription Page */}
       <div className="max-w-4xl mx-auto py-16 px-4 print:py-0 print:px-0">
-        <div className="bg-white shadow-2xl print:shadow-none prescription-page relative overflow-hidden">
+        <div className="bg-card shadow-2xl print:shadow-none prescription-page relative overflow-hidden rounded-xl border border-border">
           {/* Decorative Border */}
-          <div className="absolute inset-0 border-[2px] border-primary/20 m-1.5 pointer-events-none print:border-primary/30" />
+          <div className="absolute inset-0 border-[2px] border-primary/20 m-1.5 pointer-events-none print:border-primary/30 rounded-lg" />
           
           {/* Header - Compact */}
           <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-6 py-4 print:bg-primary print:py-3">

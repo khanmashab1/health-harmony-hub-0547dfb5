@@ -20,6 +20,7 @@ import { HealthMetrics } from "@/components/patient/HealthMetrics";
 import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimeline";
 import { WriteReviewDialog } from "@/components/patient/WriteReviewDialog";
 import { PrescriptionHistory } from "@/components/patient/PrescriptionHistory";
+import { LiveQueuePosition } from "@/components/patient/LiveQueuePosition";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -252,61 +253,74 @@ export default function PatientDashboard() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-accent/10 hover:shadow-md transition-all dark:bg-card/80 dark:border-border/30 dark:hover:bg-accent/5"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40 flex items-center justify-center">
-                                <span className="text-xl font-bold text-primary">#{apt.token_number}</span>
-                              </div>
-                              <div>
-                                <p className="font-semibold">{apt.department}</p>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
-                                    {format(new Date(apt.appointment_date), "MMM d, yyyy")}
-                                  </span>
-                                  {/* Live indicator for upcoming appointments */}
-                                  {(apt.status === "Upcoming" || apt.status === "In Progress") && (
-                                    <span className="flex items-center gap-1 text-green-500">
-                                      <Radio className="w-3 h-3 animate-pulse" />
-                                      <span className="text-xs">Live</span>
+                            <motion.div
+                              whileHover={{ scale: 1.01 }}
+                              className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-accent/10 hover:shadow-md transition-all dark:bg-card/80 dark:border-border/30 dark:hover:bg-accent/5"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40 flex items-center justify-center">
+                                  <span className="text-xl font-bold text-primary">#{apt.token_number}</span>
+                                </div>
+                                <div>
+                                  <p className="font-semibold">{apt.department}</p>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {format(new Date(apt.appointment_date), "MMM d, yyyy")}
                                     </span>
-                                  )}
+                                    {/* Live indicator for upcoming appointments */}
+                                    {(apt.status === "Upcoming" || apt.status === "In Progress") && (
+                                      <span className="flex items-center gap-1 text-green-500">
+                                        <Radio className="w-3 h-3 animate-pulse" />
+                                        <span className="text-xs">Live</span>
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge className={
-                                apt.status === "Completed" ? "status-completed" :
-                                apt.status === "Upcoming" ? "status-upcoming" :
-                                apt.status === "In Progress" ? "bg-emerald-500 text-white animate-pulse" :
-                                apt.status === "Pending" ? "status-pending" : "status-cancelled"
-                              }>
-                                {apt.status}
-                              </Badge>
-                              {apt.status === "Completed" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setReviewDoctorId(apt.doctor_user_id);
-                                    setEditingReview(null);
-                                    setWriteReviewOpen(true);
-                                  }}
-                                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                                >
-                                  <Star className="w-4 h-4 mr-1" />
-                                  Review
-                                </Button>
-                              )}
-                              <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
-                                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-                                  <ChevronRight className="w-5 h-5" />
-                                </Button>
-                              </Link>
-                            </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={
+                                  apt.status === "Completed" ? "status-completed" :
+                                  apt.status === "Upcoming" ? "status-upcoming" :
+                                  apt.status === "In Progress" ? "bg-emerald-500 text-white animate-pulse" :
+                                  apt.status === "Pending" ? "status-pending" : "status-cancelled"
+                                }>
+                                  {apt.status}
+                                </Badge>
+                                {apt.status === "Completed" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReviewDoctorId(apt.doctor_user_id);
+                                      setEditingReview(null);
+                                      setWriteReviewOpen(true);
+                                    }}
+                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                                  >
+                                    <Star className="w-4 h-4 mr-1" />
+                                    Review
+                                  </Button>
+                                )}
+                                <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
+                                  <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+                                    <ChevronRight className="w-5 h-5" />
+                                  </Button>
+                                </Link>
+                              </div>
+                            </motion.div>
+                            
+                            {/* Live Queue Position for today's appointments */}
+                            {(apt.status === "Upcoming" || apt.status === "In Progress") && (
+                              <LiveQueuePosition
+                                doctorId={apt.doctor_user_id}
+                                patientTokenNumber={apt.token_number}
+                                appointmentDate={apt.appointment_date}
+                                appointmentStatus={apt.status}
+                              />
+                            )}
                           </motion.div>
                         ))}
                       </div>

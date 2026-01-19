@@ -18,7 +18,8 @@ import {
   Settings,
   TrendingUp,
   Search,
-  BarChart3
+  BarChart3,
+  Radio
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { MedicineEntry } from "@/components/doctor/MedicineEntry";
 import { DoctorSettingsPanel } from "@/components/doctor/DoctorSettingsPanel";
+import { QueueManagementPanel } from "@/components/doctor/QueueManagementPanel";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -305,8 +307,12 @@ export default function DoctorDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Tabs defaultValue="today" className="space-y-6">
+            <Tabs defaultValue="queue" className="space-y-6">
               <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
+                <TabsTrigger value="queue" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Radio className="w-4 h-4 mr-1 sm:mr-2" />
+                  Queue
+                </TabsTrigger>
                 <TabsTrigger value="today" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
                   Today
@@ -330,6 +336,11 @@ export default function DoctorDashboard() {
                   Settings
                 </TabsTrigger>
               </TabsList>
+
+              {/* Queue Management Tab */}
+              <TabsContent value="queue">
+                {user && <QueueManagementPanel doctorId={user.id} />}
+              </TabsContent>
 
               {/* Today's Appointments */}
               <TabsContent value="today">
