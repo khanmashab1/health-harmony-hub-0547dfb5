@@ -215,12 +215,14 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string
+          degree: string | null
           easypaisa_number: string | null
           experience_years: number | null
           fee: number
           image_path: string | null
           max_patients_per_day: number
           province: string | null
+          qualifications: string | null
           rating: number | null
           specialty: string
           updated_at: string
@@ -230,12 +232,14 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          degree?: string | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
           image_path?: string | null
           max_patients_per_day?: number
           province?: string | null
+          qualifications?: string | null
           rating?: number | null
           specialty: string
           updated_at?: string
@@ -245,12 +249,14 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          degree?: string | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
           image_path?: string | null
           max_patients_per_day?: number
           province?: string | null
+          qualifications?: string | null
           rating?: number | null
           specialty?: string
           updated_at?: string
@@ -395,6 +401,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hero_slides: {
+        Row: {
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          id: string
+          image_path: string
+          is_active: boolean | null
+          sort_order: number | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          image_path: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          image_path?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       medical_records: {
         Row: {
