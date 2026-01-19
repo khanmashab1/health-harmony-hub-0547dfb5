@@ -528,6 +528,7 @@ export type Database = {
           blood_type: string | null
           city: string | null
           created_at: string
+          first_login_welcomed: boolean | null
           gender: string | null
           id: string
           name: string | null
@@ -543,6 +544,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           created_at?: string
+          first_login_welcomed?: boolean | null
           gender?: string | null
           id: string
           name?: string | null
@@ -558,6 +560,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           created_at?: string
+          first_login_welcomed?: boolean | null
           gender?: string | null
           id?: string
           name?: string | null

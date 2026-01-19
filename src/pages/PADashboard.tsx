@@ -511,7 +511,7 @@ export default function PADashboard() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Assigned Doctors</h2>
               <div className="flex flex-wrap gap-2">
                 {assignments.map((a: any) => (
-                  <Badge key={a.id} variant="secondary" className="py-2 px-4 bg-gradient-to-r from-purple-100 to-brand-100 text-purple-700 border-0">
+                  <Badge key={a.id} variant="secondary" className="py-2 px-4 bg-gradient-to-r from-purple-100 to-brand-100 dark:from-purple-900/30 dark:to-primary/20 text-purple-700 dark:text-purple-300 border-0">
                     Dr. {a.doctorProfile?.name || "Unknown"} — {a.doctorInfo?.specialty || "Specialist"}
                   </Badge>
                 ))}
@@ -538,7 +538,7 @@ export default function PADashboard() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
               >
-                <Card variant="glass" className="border-white/50 hover:shadow-lg transition-all">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 hover:shadow-lg transition-all dark:bg-card/50">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
@@ -595,10 +595,10 @@ export default function PADashboard() {
 
               {/* Pending Payments */}
               <TabsContent value="payments">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent dark:from-yellow-900/10 dark:to-transparent">
                     <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-yellow-600" />
+                      <CreditCard className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
                       Pending Payment Confirmations
                     </CardTitle>
                     <CardDescription>Review and confirm online payments</CardDescription>
@@ -612,11 +612,11 @@ export default function PADashboard() {
                           <motion.div 
                             key={payment.id} 
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
-                                <CreditCard className="w-6 h-6 text-yellow-600" />
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30 flex items-center justify-center">
+                                <CreditCard className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
                               </div>
                               <div>
                                 <p className="font-semibold">{payment.patient_full_name}</p>
@@ -669,12 +669,12 @@ export default function PADashboard() {
 
               {/* Payment History */}
               <TabsContent value="history">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-900/10 dark:to-transparent">
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="flex items-center gap-2">
-                          <History className="w-5 h-5 text-green-600" />
+                          <History className="w-5 h-5 text-green-600 dark:text-green-400" />
                           Payment History
                         </CardTitle>
                         <CardDescription>Recent payment confirmations and rejections with notes</CardDescription>
@@ -864,10 +864,10 @@ export default function PADashboard() {
               </TabsContent>
 
               <TabsContent value="appointments">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
                     <CardTitle className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-blue-600" />
+                      <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       All Appointments
                     </CardTitle>
                   </CardHeader>
@@ -878,11 +878,11 @@ export default function PADashboard() {
                           <motion.div 
                             key={apt.id} 
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                                <span className="font-bold text-brand-600">#{apt.token_number}</span>
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/10 dark:to-primary/20 flex items-center justify-center">
+                                <span className="font-bold text-primary">#{apt.token_number}</span>
                               </div>
                               <div>
                                 <p className="font-semibold">{apt.patient_full_name}</p>
@@ -942,10 +942,10 @@ export default function PADashboard() {
 
               {/* Vitals Entry Tab */}
               <TabsContent value="vitals">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-pink-50/50 to-transparent">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-pink-50/50 to-transparent dark:from-pink-900/10 dark:to-transparent">
                     <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-pink-600" />
+                      <Activity className="w-5 h-5 text-pink-600 dark:text-pink-400" />
                       Patient Vitals Entry
                     </CardTitle>
                     <CardDescription>Record vitals for patients before their consultation</CardDescription>
@@ -975,13 +975,13 @@ export default function PADashboard() {
                               <motion.div 
                                 key={apt.id}
                                 whileHover={{ scale: 1.01 }}
-                                className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:shadow-md transition-all"
+                                className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                               >
                                 <div className="flex items-center gap-4">
                                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                                     hasVitals 
-                                      ? "bg-gradient-to-br from-green-100 to-green-200" 
-                                      : "bg-gradient-to-br from-yellow-100 to-yellow-200"
+                                      ? "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30" 
+                                      : "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30"
                                   }`}>
                                     <span className="font-bold text-foreground">#{apt.token_number}</span>
                                   </div>
@@ -1025,10 +1025,10 @@ export default function PADashboard() {
               {/* Blocked Slots */}
               <TabsContent value="slots">
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent">
+                  <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10 dark:to-transparent">
                       <CardTitle className="flex items-center gap-2">
-                        <CalendarX className="w-5 h-5 text-purple-600" />
+                        <CalendarX className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                         Block a Date
                       </CardTitle>
                     </CardHeader>
@@ -1037,7 +1037,7 @@ export default function PADashboard() {
                         mode="single"
                         selected={blockDate}
                         onSelect={setBlockDate}
-                        className="rounded-xl border border-border/50 bg-white/50 mb-4"
+                        className="rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 mb-4"
                       />
                       {blockDate && assignments && assignments.length > 0 && (
                         <motion.div 
@@ -1060,7 +1060,7 @@ export default function PADashboard() {
                                 key={a.id}
                                 onClick={() => blockSlot.mutate(a.doctor_user_id)}
                                 variant="outline"
-                                className="w-full justify-start hover:bg-purple-50"
+                                className="w-full justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20"
                               >
                                 Block for Dr. {a.doctorProfile?.name}
                               </Button>
@@ -1071,10 +1071,10 @@ export default function PADashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card variant="glass" className="border-white/50">
-                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-red-50/50 to-transparent">
+                  <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-red-50/50 to-transparent dark:from-red-900/10 dark:to-transparent">
                       <CardTitle className="flex items-center gap-2">
-                        <CalendarX className="w-5 h-5 text-red-500" />
+                        <CalendarX className="w-5 h-5 text-red-500 dark:text-red-400" />
                         Current Blocked Dates
                       </CardTitle>
                     </CardHeader>

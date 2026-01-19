@@ -50,6 +50,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Error fetching profile:", error);
         return null;
       }
+      
+      // Send welcome email on first verified login
+      if (data && !data.first_login_welcomed) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email_confirmed_at) {
+          // User is verified, send welcome email
+          supabase.functions.invoke("send-welcome-email", {
+            body: {
+              userId: data.id,
+              email: user.email,
+              name: data.name,
+            },
+          }).catch(err => console.error("Failed to send welcome email:", err));
+        }
+      }
+      
       return data as Profile | null;
     } catch (err) {
       console.error("Error in fetchProfile:", err);
