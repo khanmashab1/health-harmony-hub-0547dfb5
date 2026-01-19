@@ -15,7 +15,8 @@ import {
   Clock,
   Banknote,
   Smartphone,
-  Loader2
+  Loader2,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
+import { DoctorDetailsDialog } from "@/components/booking/DoctorDetailsDialog";
 
 interface Doctor {
   user_id: string;
@@ -41,6 +43,9 @@ interface Doctor {
   city: string | null;
   province: string | null;
   max_patients_per_day: number;
+  bio: string | null;
+  degree: string | null;
+  qualifications: string | null;
   profile?: { name: string | null };
 }
 
@@ -67,6 +72,8 @@ export default function Booking() {
   const [patientPhone, setPatientPhone] = useState("");
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsDoctor, setDetailsDoctor] = useState<Doctor | null>(null);
 
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
@@ -359,22 +366,30 @@ export default function Booking() {
                       </div>
                     ) : doctors && doctors.length > 0 ? (
                       doctors.map((doc) => (
-                        <button
+                        <div
                           key={doc.user_id}
-                          onClick={() => setSelectedDoctor(doc)}
-                          className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                          className={`p-4 rounded-xl border-2 transition-all ${
                             selectedDoctor?.user_id === doc.user_id
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
                           }`}
                         >
                           <div className="flex items-start gap-4">
-                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <button
+                              onClick={() => setSelectedDoctor(doc)}
+                              className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"
+                            >
                               <User className="w-8 h-8 text-primary" />
-                            </div>
-                            <div className="flex-1">
+                            </button>
+                            <button
+                              onClick={() => setSelectedDoctor(doc)}
+                              className="flex-1 text-left"
+                            >
                               <h3 className="font-semibold text-lg">Dr. {doc.profile?.name || "Doctor"}</h3>
                               <p className="text-sm text-muted-foreground">{doc.specialty}</p>
+                              {doc.degree && (
+                                <p className="text-xs text-primary font-medium mt-1">{doc.degree}</p>
+                              )}
                               <div className="flex items-center gap-4 mt-2 text-sm">
                                 <span className="flex items-center gap-1">
                                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -389,13 +404,23 @@ export default function Booking() {
                                   {doc.city}
                                 </span>
                               </div>
-                            </div>
-                            <div className="text-right">
+                            </button>
+                            <div className="text-right flex flex-col items-end gap-2">
                               <p className="text-lg font-bold text-primary">Rs. {doc.fee}</p>
                               <p className="text-xs text-muted-foreground">per visit</p>
+                              <button
+                                onClick={() => {
+                                  setDetailsDoctor(doc);
+                                  setDetailsDialogOpen(true);
+                                }}
+                                className="flex items-center gap-1 text-xs text-primary hover:underline"
+                              >
+                                <Info className="w-3 h-3" />
+                                View Details
+                              </button>
                             </div>
                           </div>
-                        </button>
+                        </div>
                       ))
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
@@ -599,6 +624,14 @@ export default function Booking() {
           </div>
         </div>
       </div>
+
+      {/* Doctor Details Dialog */}
+      <DoctorDetailsDialog
+        doctor={detailsDoctor}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onSelect={(doc) => setSelectedDoctor(doc as Doctor)}
+      />
     </Layout>
   );
 }

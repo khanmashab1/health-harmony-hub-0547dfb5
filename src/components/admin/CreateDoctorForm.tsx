@@ -45,6 +45,8 @@ const createDoctorSchema = z.object({
   bio: z.string().max(1000).optional(),
   maxPatientsPerDay: z.coerce.number().min(1).max(100).optional(),
   easypaisaNumber: z.string().max(20).optional(),
+  degree: z.string().max(100).optional(),
+  qualifications: z.string().max(500).optional(),
 });
 
 type CreateDoctorFormValues = z.infer<typeof createDoctorSchema>;
@@ -72,6 +74,8 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
       bio: "",
       maxPatientsPerDay: 30,
       easypaisaNumber: "",
+      degree: "",
+      qualifications: "",
     },
   });
 
@@ -123,6 +127,8 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
         bio: values.bio || null,
         max_patients_per_day: values.maxPatientsPerDay || 30,
         easypaisa_number: values.easypaisaNumber || null,
+        degree: values.degree || null,
+        qualifications: values.qualifications || null,
       });
 
       if (doctorError) throw doctorError;
@@ -399,6 +405,38 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
           </div>
 
           {/* Bio */}
+          <FormField
+            control={form.control}
+            name="degree"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Degree (e.g., MBBS, MD)</FormLabel>
+                <FormControl>
+                  <Input placeholder="MBBS, FCPS" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="qualifications"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Qualifications</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Board certifications, specialized training..."
+                    className="min-h-[60px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="bio"
