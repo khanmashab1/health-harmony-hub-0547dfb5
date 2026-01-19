@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, 
-  ChevronRight, LogOut, Edit, History, Heart, PenSquare, Pencil
+  ChevronRight, LogOut, Edit, History, Heart, PenSquare, Pencil, Radio
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +21,14 @@ import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimel
 import { WriteReviewDialog } from "@/components/patient/WriteReviewDialog";
 import { PrescriptionHistory } from "@/components/patient/PrescriptionHistory";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PatientDashboard() {
   const { user, profile, loading, refreshProfile } = useRequireAuth(["patient"]);
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
@@ -46,6 +48,47 @@ export default function PatientDashboard() {
     },
     enabled: !!user,
   });
+
+  // Subscribe to realtime appointment updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('patient-appointments-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `patient_user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Realtime appointment update:', payload);
+          
+          // Invalidate the query to refetch data
+          queryClient.invalidateQueries({ queryKey: ["patient-appointments", user.id] });
+          
+          // Show toast notification for status changes
+          if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
+            const newStatus = (payload.new as any).status;
+            const oldStatus = (payload.old as any).status;
+            
+            if (newStatus !== oldStatus) {
+              toast({
+                title: "Appointment Updated",
+                description: `Your appointment status changed to ${newStatus}`,
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient, toast]);
 
   // Fetch patient's reviews
   const { data: myReviews, isLoading: loadingReviews } = useQuery({
@@ -187,10 +230,10 @@ export default function PatientDashboard() {
               </TabsList>
 
               <TabsContent value="appointments">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
                     <CardTitle className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-brand-500" />
+                      <Calendar className="w-5 h-5 text-primary" />
                       Your Appointments
                     </CardTitle>
                   </CardHeader>
@@ -210,11 +253,11 @@ export default function PatientDashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 hover:bg-white hover:shadow-md transition-all"
+                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-accent/10 hover:shadow-md transition-all dark:bg-card/80 dark:border-border/30 dark:hover:bg-accent/5"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
-                                <span className="text-xl font-bold text-brand-600">#{apt.token_number}</span>
+                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40 flex items-center justify-center">
+                                <span className="text-xl font-bold text-primary">#{apt.token_number}</span>
                               </div>
                               <div>
                                 <p className="font-semibold">{apt.department}</p>
@@ -223,6 +266,13 @@ export default function PatientDashboard() {
                                     <Calendar className="w-3 h-3" />
                                     {format(new Date(apt.appointment_date), "MMM d, yyyy")}
                                   </span>
+                                  {/* Live indicator for upcoming appointments */}
+                                  {(apt.status === "Upcoming" || apt.status === "In Progress") && (
+                                    <span className="flex items-center gap-1 text-green-500">
+                                      <Radio className="w-3 h-3 animate-pulse" />
+                                      <span className="text-xs">Live</span>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -230,6 +280,7 @@ export default function PatientDashboard() {
                               <Badge className={
                                 apt.status === "Completed" ? "status-completed" :
                                 apt.status === "Upcoming" ? "status-upcoming" :
+                                apt.status === "In Progress" ? "bg-emerald-500 text-white animate-pulse" :
                                 apt.status === "Pending" ? "status-pending" : "status-cancelled"
                               }>
                                 {apt.status}
@@ -244,14 +295,14 @@ export default function PatientDashboard() {
                                     setEditingReview(null);
                                     setWriteReviewOpen(true);
                                   }}
-                                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
                                 >
                                   <Star className="w-4 h-4 mr-1" />
                                   Review
                                 </Button>
                               )}
                               <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
-                                <Button variant="ghost" size="icon" className="hover:bg-brand-50">
+                                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
                                   <ChevronRight className="w-5 h-5" />
                                 </Button>
                               </Link>
@@ -279,14 +330,14 @@ export default function PatientDashboard() {
               </TabsContent>
 
               <TabsContent value="profile">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-brand-50/50 to-transparent flex flex-row items-center justify-between">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10 flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      <User className="w-5 h-5 text-brand-500" />
+                      <User className="w-5 h-5 text-primary" />
                       Profile Information
                     </CardTitle>
                     {!isEditingProfile && (
-                      <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="hover:bg-brand-50">
+                      <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="hover:bg-primary/10">
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Profile
                       </Button>
@@ -306,9 +357,9 @@ export default function PatientDashboard() {
                       <div className="flex flex-col md:flex-row gap-8">
                         {/* Avatar */}
                         <div className="flex flex-col items-center gap-3">
-                          <Avatar className="w-28 h-28 border-4 border-white shadow-xl">
+                          <Avatar className="w-28 h-28 border-4 border-border/20 shadow-xl dark:border-border/30">
                             <AvatarImage src={profile?.avatar_path || undefined} />
-                            <AvatarFallback className="bg-gradient-to-br from-brand-100 to-brand-200 text-3xl font-bold text-brand-600">
+                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/30 text-3xl font-bold text-primary">
                               {profile?.name?.charAt(0)?.toUpperCase() || <User className="w-12 h-12" />}
                             </AvatarFallback>
                           </Avatar>
@@ -324,7 +375,7 @@ export default function PatientDashboard() {
                             { label: "Blood Type", value: profile?.blood_type },
                             { label: "Location", value: profile?.city && profile?.province ? `${profile.city}, ${profile.province}` : null },
                           ].map((item) => (
-                            <div key={item.label} className="p-4 rounded-xl border border-border/50 bg-white/50">
+                            <div key={item.label} className="p-4 rounded-xl border border-border/50 bg-card dark:bg-card/80">
                               <p className="text-sm text-muted-foreground font-medium">{item.label}</p>
                               <p className="font-semibold text-lg">{item.value || "-"}</p>
                             </div>
@@ -337,10 +388,10 @@ export default function PatientDashboard() {
               </TabsContent>
 
               <TabsContent value="health">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-100/50 to-transparent dark:from-green-900/20">
                     <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-green-600" />
+                      <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
                       Health Metrics
                     </CardTitle>
                   </CardHeader>
@@ -351,10 +402,10 @@ export default function PatientDashboard() {
               </TabsContent>
 
               <TabsContent value="records">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-100/50 to-transparent dark:from-purple-900/20">
                     <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-purple-600" />
+                      <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       Prescription History
                     </CardTitle>
                   </CardHeader>
@@ -366,10 +417,10 @@ export default function PatientDashboard() {
 
               {/* Reviews Tab */}
               <TabsContent value="reviews">
-                <Card variant="glass" className="border-white/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-amber-50/50 to-transparent flex flex-row items-center justify-between">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-amber-100/50 to-transparent dark:from-amber-900/20 flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-amber-600" />
+                      <Star className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                       My Reviews
                     </CardTitle>
                     <Button variant="hero" size="sm" onClick={() => setWriteReviewOpen(true)}>
@@ -392,7 +443,7 @@ export default function PatientDashboard() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="p-4 rounded-xl border border-border/50 bg-white/50"
+                            className="p-4 rounded-xl border border-border/50 bg-card dark:bg-card/80"
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
