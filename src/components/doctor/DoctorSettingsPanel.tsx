@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,17 +21,21 @@ interface DoctorSettingsPanelProps {
     fee?: number;
     experience_years?: number;
     rating?: number;
+    image_path?: string | null;
   } | null | undefined;
   userId: string | undefined;
+  profileName?: string | null;
 }
 
-export function DoctorSettingsPanel({ doctorInfo, userId }: DoctorSettingsPanelProps) {
+export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorSettingsPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [degree, setDegree] = useState(doctorInfo?.degree || "");
   const [qualifications, setQualifications] = useState(doctorInfo?.qualifications || "");
   const [bio, setBio] = useState(doctorInfo?.bio || "");
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -55,6 +60,55 @@ export function DoctorSettingsPanel({ doctorInfo, userId }: DoctorSettingsPanelP
     },
   });
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Validate file
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file type", description: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please upload an image under 5MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+
+    try {
+      // Upload to avatars bucket with doctor prefix
+      const fileExt = file.name.split(".").pop();
+      const fileName = `doctor-${userId}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+      // Update doctors table with image path
+      const { error: updateError } = await supabase
+        .from("doctors")
+        .update({ image_path: urlData.publicUrl })
+        .eq("user_id", userId);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["doctor-info"] });
+      toast({ title: "Profile photo updated successfully" });
+    } catch (error: any) {
+      console.error("Photo upload error:", error);
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const handleCancel = () => {
     setDegree(doctorInfo?.degree || "");
     setQualifications(doctorInfo?.qualifications || "");
@@ -64,6 +118,64 @@ export function DoctorSettingsPanel({ doctorInfo, userId }: DoctorSettingsPanelP
 
   return (
     <div className="space-y-6">
+      {/* Profile Photo Card */}
+      <Card variant="glass" className="border-white/50">
+        <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+          <CardTitle className="flex items-center gap-2">
+            <Camera className="w-5 h-5 text-brand-500" />
+            Profile Photo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
+                <AvatarImage src={doctorInfo?.image_path || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-brand-100 to-brand-200 text-2xl font-bold text-brand-600">
+                  {profileName?.charAt(0)?.toUpperCase() || "D"}
+                </AvatarFallback>
+              </Avatar>
+              {isUploadingPhoto && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Update your profile photo</h3>
+              <p className="text-sm text-muted-foreground">
+                This photo will be displayed to patients when they book appointments.
+              </p>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+              >
+                {isUploadingPhoto ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 mr-2" />
+                    Upload Photo
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Card */}
       <Card variant="glass" className="border-white/50">
         <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">

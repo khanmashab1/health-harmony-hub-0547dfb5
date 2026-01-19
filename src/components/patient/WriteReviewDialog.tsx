@@ -30,6 +30,7 @@ interface WriteReviewDialogProps {
   onOpenChange: (open: boolean) => void;
   userId: string;
   userName: string;
+  doctorId?: string | null;
   editReview?: {
     id: string;
     rating: number;
@@ -37,7 +38,7 @@ interface WriteReviewDialogProps {
   } | null;
 }
 
-export function WriteReviewDialog({ open, onOpenChange, userId, userName, editReview }: WriteReviewDialogProps) {
+export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctorId, editReview }: WriteReviewDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [rating, setRating] = useState(5);
@@ -100,6 +101,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, editRe
       } else {
         const { error } = await supabase.from("reviews").insert({
           patient_user_id: userId,
+          doctor_user_id: doctorId || null,
           display_name: userName || "Anonymous",
           rating,
           comment: comment.trim(),

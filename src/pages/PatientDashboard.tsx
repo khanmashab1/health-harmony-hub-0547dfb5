@@ -30,6 +30,7 @@ export default function PatientDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
+  const [reviewDoctorId, setReviewDoctorId] = useState<string | null>(null);
 
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", user?.id],
@@ -225,7 +226,7 @@ export default function PatientDashboard() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                               <Badge className={
                                 apt.status === "Completed" ? "status-completed" :
                                 apt.status === "Upcoming" ? "status-upcoming" :
@@ -233,6 +234,22 @@ export default function PatientDashboard() {
                               }>
                                 {apt.status}
                               </Badge>
+                              {apt.status === "Completed" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReviewDoctorId(apt.doctor_user_id);
+                                    setEditingReview(null);
+                                    setWriteReviewOpen(true);
+                                  }}
+                                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                >
+                                  <Star className="w-4 h-4 mr-1" />
+                                  Review
+                                </Button>
+                              )}
                               <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
                                 <Button variant="ghost" size="icon" className="hover:bg-brand-50">
                                   <ChevronRight className="w-5 h-5" />
@@ -451,10 +468,14 @@ export default function PatientDashboard() {
               open={writeReviewOpen}
               onOpenChange={(open) => {
                 setWriteReviewOpen(open);
-                if (!open) setEditingReview(null);
+                if (!open) {
+                  setEditingReview(null);
+                  setReviewDoctorId(null);
+                }
               }}
               userId={user.id}
               userName={profile.name || "Anonymous"}
+              doctorId={reviewDoctorId}
               editReview={editingReview}
             />
           )}

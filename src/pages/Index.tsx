@@ -29,8 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { HeroSlider } from "@/components/home/HeroSlider";
-import medicareLogo from "@/assets/medicare-logo.png";
+import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
 
 const specialties = [
   { name: "General Physician", icon: Stethoscope, color: "from-primary to-primary/70" },
@@ -114,8 +113,8 @@ export default function Index() {
 
   return (
     <Layout>
-      {/* Hero Slider */}
-      <HeroSlider />
+      {/* Top Doctors Slider */}
+      <TopDoctorsSlider />
 
       {/* Specialties Section */}
       <section className="py-20 bg-muted/30 overflow-hidden">
