@@ -71,6 +71,7 @@ import { AssignPAForm } from "@/components/admin/AssignPAForm";
 import { DoctorCard } from "@/components/admin/DoctorCard";
 import { BackupPanel } from "@/components/admin/BackupPanel";
 import { HeroSlidesPanel } from "@/components/admin/HeroSlidesPanel";
+import { BrandingPanel } from "@/components/admin/BrandingPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -373,11 +374,15 @@ export default function AdminDashboard() {
                 <TabsTrigger value="slides" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   Slides
                 </TabsTrigger>
+                <TabsTrigger value="branding" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Palette className="w-4 h-4 mr-1 sm:mr-2" />Branding
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
               <TabsContent value="performance"><DoctorPerformancePanel /></TabsContent>
               <TabsContent value="slides"><HeroSlidesPanel /></TabsContent>
+              <TabsContent value="branding"><BrandingPanel /></TabsContent>
 
               {/* Users Tab */}
               <TabsContent value="users">

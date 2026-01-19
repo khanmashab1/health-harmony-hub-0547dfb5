@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, startOfMonth, endOfMonth, eachWeekOfInterval } from "date-fns";
 import {
   Stethoscope,
   Calendar,
@@ -16,7 +16,9 @@ import {
   LogOut,
   ChevronRight,
   Settings,
-  TrendingUp
+  TrendingUp,
+  Search,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, Link } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -48,6 +51,8 @@ export default function DoctorDashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [blockDate, setBlockDate] = useState<Date | undefined>();
   const [blockReason, setBlockReason] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [chartView, setChartView] = useState<"weekly" | "monthly">("weekly");
 
   // Fetch doctor info
   const { data: doctorInfo } = useQuery({
@@ -167,6 +172,61 @@ export default function DoctorDashboard() {
   const upcomingAppointments = appointments?.filter(a => a.appointment_date >= todayStr && a.status === "Upcoming") || [];
   const completedAppointments = appointments?.filter(a => a.status === "Completed") || [];
 
+  // Filter appointments by search term
+  const filteredAppointments = useMemo(() => {
+    if (!searchTerm || !appointments) return appointments;
+    const term = searchTerm.toLowerCase();
+    return appointments.filter(apt => 
+      apt.patient_full_name?.toLowerCase().includes(term) ||
+      apt.patient_phone?.includes(term)
+    );
+  }, [appointments, searchTerm]);
+
+  // Chart data - weekly
+  const weeklyChartData = useMemo(() => {
+    if (!appointments) return [];
+    const today = new Date();
+    const days = eachDayOfInterval({
+      start: subDays(today, 6),
+      end: today
+    });
+    
+    return days.map(day => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      const dayAppts = appointments.filter(a => a.appointment_date === dateStr);
+      return {
+        name: format(day, "EEE"),
+        date: format(day, "MMM d"),
+        completed: dayAppts.filter(a => a.status === "Completed").length,
+        upcoming: dayAppts.filter(a => a.status === "Upcoming").length,
+        total: dayAppts.filter(a => a.status !== "Cancelled").length,
+      };
+    });
+  }, [appointments]);
+
+  // Chart data - monthly (last 4 weeks)
+  const monthlyChartData = useMemo(() => {
+    if (!appointments) return [];
+    const today = new Date();
+    const weeks = [];
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = startOfWeek(subWeeks(today, i));
+      const weekEnd = endOfWeek(subWeeks(today, i));
+      const weekAppts = appointments.filter(a => {
+        const aptDate = new Date(a.appointment_date);
+        return aptDate >= weekStart && aptDate <= weekEnd;
+      });
+      weeks.push({
+        name: `Week ${4 - i}`,
+        date: `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`,
+        completed: weekAppts.filter(a => a.status === "Completed").length,
+        upcoming: weekAppts.filter(a => a.status === "Upcoming").length,
+        total: weekAppts.filter(a => a.status !== "Cancelled").length,
+      });
+    }
+    return weeks;
+  }, [appointments]);
+
   return (
     <Layout showFooter={false}>
       <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20 dark:from-background dark:via-background dark:to-background">
@@ -242,6 +302,11 @@ export default function DoctorDashboard() {
                   <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                   All
                 </TabsTrigger>
+                <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Analytics</span>
+                  <span className="sm:hidden">Stats</span>
+                </TabsTrigger>
                 <TabsTrigger value="availability" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Availability</span>
@@ -309,15 +374,31 @@ export default function DoctorDashboard() {
               <TabsContent value="all">
                 <Card variant="glass" className="border-white/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-brand-500" />
-                      All Appointments
-                    </CardTitle>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-brand-500" />
+                        All Appointments
+                      </CardTitle>
+                      <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="Search by name or phone..." 
+                          value={searchTerm} 
+                          onChange={(e) => setSearchTerm(e.target.value)} 
+                          className="pl-9 border-border/50" 
+                        />
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-6">
-                    {appointments && appointments.length > 0 ? (
+                    {filteredAppointments && filteredAppointments.length > 0 ? (
                       <div className="space-y-3">
-                        {appointments.map((apt) => (
+                        {searchTerm && (
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Found {filteredAppointments.length} result{filteredAppointments.length !== 1 ? 's' : ''} for "{searchTerm}"
+                          </p>
+                        )}
+                        {filteredAppointments.map((apt) => (
                           <motion.div
                             key={apt.id}
                             whileHover={{ scale: 1.01 }}
@@ -331,7 +412,7 @@ export default function DoctorDashboard() {
                               <div>
                                 <p className="font-semibold">{apt.patient_full_name || "Patient"}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {format(new Date(apt.appointment_date), "MMM d, yyyy")}
+                                  {format(new Date(apt.appointment_date), "MMM d, yyyy")} • {apt.patient_phone || "No phone"}
                                 </p>
                               </div>
                             </div>
@@ -345,11 +426,142 @@ export default function DoctorDashboard() {
                           </motion.div>
                         ))}
                       </div>
+                    ) : searchTerm ? (
+                      <div className="text-center py-12">
+                        <Search className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">No patients found matching "{searchTerm}"</p>
+                        <Button variant="ghost" size="sm" className="mt-2" onClick={() => setSearchTerm("")}>
+                          Clear search
+                        </Button>
+                      </div>
                     ) : (
                       <p className="text-center py-12 text-muted-foreground">No appointments</p>
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Analytics Tab */}
+              <TabsContent value="analytics">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card variant="glass" className="border-white/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-brand-500" />
+                          Appointment Trends
+                        </CardTitle>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant={chartView === "weekly" ? "default" : "outline"}
+                            onClick={() => setChartView("weekly")}
+                          >
+                            Weekly
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant={chartView === "monthly" ? "default" : "outline"}
+                            onClick={() => setChartView("monthly")}
+                          >
+                            Monthly
+                          </Button>
+                        </div>
+                      </div>
+                      <CardDescription>
+                        {chartView === "weekly" ? "Last 7 days" : "Last 4 weeks"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartView === "weekly" ? weeklyChartData : monthlyChartData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="name" className="text-xs" />
+                            <YAxis className="text-xs" />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--card))', 
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                              }} 
+                            />
+                            <Bar dataKey="completed" fill="hsl(142, 76%, 36%)" name="Completed" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="upcoming" fill="hsl(217, 91%, 60%)" name="Upcoming" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card variant="glass" className="border-white/50">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-brand-500" />
+                        Patient Volume
+                      </CardTitle>
+                      <CardDescription>Total appointments over time</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartView === "weekly" ? weeklyChartData : monthlyChartData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis dataKey="name" className="text-xs" />
+                            <YAxis className="text-xs" />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--card))', 
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                              }} 
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="total" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={2}
+                              dot={{ fill: 'hsl(var(--primary))' }}
+                              name="Total Patients"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Stats */}
+                  <Card variant="glass" className="border-white/50 md:col-span-2">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+                      <CardTitle className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-brand-500" />
+                        Performance Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                          <p className="text-3xl font-bold text-primary">{appointments?.length || 0}</p>
+                          <p className="text-sm text-muted-foreground">Total Appointments</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                          <p className="text-3xl font-bold text-green-600">{completedAppointments.length}</p>
+                          <p className="text-sm text-muted-foreground">Completed</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                          <p className="text-3xl font-bold text-blue-600">{upcomingAppointments.length}</p>
+                          <p className="text-sm text-muted-foreground">Upcoming</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                          <p className="text-3xl font-bold text-amber-600">
+                            {appointments?.length ? Math.round((completedAppointments.length / appointments.length) * 100) : 0}%
+                          </p>
+                          <p className="text-sm text-muted-foreground">Completion Rate</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               {/* Availability */}
