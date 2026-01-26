@@ -19,9 +19,7 @@ interface DoctorWithReviews {
   experience_years: number | null;
   fee: number;
   image_path: string | null;
-  profile: {
-    name: string | null;
-  } | null;
+  name: string | null;
   reviews: {
     id: string;
     rating: number;
@@ -39,7 +37,7 @@ export function TopDoctorsSlider() {
   const { data: doctors, isLoading } = useQuery({
     queryKey: ["top-doctors-with-reviews"],
     queryFn: async () => {
-      // First get all doctors
+      // Get all doctors
       const { data: doctorsData, error: doctorsError } = await supabase
         .from("doctors")
         .select(`
@@ -51,17 +49,24 @@ export function TopDoctorsSlider() {
           rating,
           experience_years,
           fee,
-          image_path,
-          profile:profiles!doctors_user_id_fkey(name)
+          image_path
         `)
         .order("rating", { ascending: false })
         .limit(5);
 
       if (doctorsError) throw doctorsError;
 
-      // Get reviews for each doctor
-      const doctorsWithReviews = await Promise.all(
+      // Get doctor names from profiles and reviews
+      const doctorsWithDetails = await Promise.all(
         (doctorsData || []).map(async (doctor) => {
+          // Fetch profile name
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("id", doctor.user_id)
+            .maybeSingle();
+
+          // Fetch reviews
           const { data: reviews } = await supabase
             .from("reviews")
             .select("id, rating, comment, display_name, created_at")
@@ -72,12 +77,13 @@ export function TopDoctorsSlider() {
 
           return {
             ...doctor,
+            name: profileData?.name || null,
             reviews: reviews || [],
           };
         })
       );
 
-      return doctorsWithReviews as DoctorWithReviews[];
+      return doctorsWithDetails as DoctorWithReviews[];
     },
   });
 
@@ -109,7 +115,7 @@ export function TopDoctorsSlider() {
 
   return (
     <section 
-      className="relative min-h-[auto] lg:min-h-[calc(100vh-72px)] flex items-center overflow-hidden py-12 lg:py-0"
+      className="relative flex items-center overflow-hidden py-10 md:py-14 lg:py-16"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -129,8 +135,8 @@ export function TopDoctorsSlider() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           {/* Doctor Photo - Shows first on mobile */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -151,13 +157,13 @@ export function TopDoctorsSlider() {
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                   className="relative z-10"
                 >
-                  <Avatar className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-72 lg:h-72 border-4 md:border-8 border-white shadow-2xl">
+                  <Avatar className="w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 lg:w-52 lg:h-52 border-4 md:border-6 border-white shadow-2xl">
                     <AvatarImage 
                       src={currentDoctor.image_path || undefined} 
                       className="object-cover"
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-3xl md:text-5xl lg:text-6xl font-bold text-primary">
-                      {currentDoctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-2xl md:text-4xl lg:text-5xl font-bold text-primary">
+                      {currentDoctor.name?.charAt(0)?.toUpperCase() || "D"}
                     </AvatarFallback>
                   </Avatar>
                 </motion.div>
@@ -187,7 +193,7 @@ export function TopDoctorsSlider() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 50 }}
               transition={{ duration: 0.5 }}
-              className="space-y-4 md:space-y-6 text-center lg:text-left order-last lg:order-first"
+              className="space-y-3 md:space-y-4 text-center lg:text-left order-last lg:order-first"
             >
               <motion.span 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -197,8 +203,8 @@ export function TopDoctorsSlider() {
                 Top Rated Doctor
               </motion.span>
 
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] tracking-tight">
-                Meet <span className="gradient-text">Dr. {currentDoctor.profile?.name || "Our Expert"}</span>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-[1.1] tracking-tight">
+                Meet <span className="gradient-text">Dr. {currentDoctor.name || "Our Expert"}</span>
               </h1>
 
               <div className="flex flex-wrap items-center gap-2 md:gap-4 justify-center lg:justify-start">
