@@ -117,59 +117,7 @@ export default function Booking() {
     enabled: !!doctorIdParam,
   });
 
-  // Auto-select doctor and skip to date step when doctor is preloaded
-  useEffect(() => {
-    if (preSelectedDoctor && !doctorPreloaded) {
-      setSelectedDoctor(preSelectedDoctor);
-      setProvince(preSelectedDoctor.province || "");
-      setCity(preSelectedDoctor.city || "");
-      setSpecialty(preSelectedDoctor.specialty || "");
-      setStep(4); // Skip directly to date selection
-      setDoctorPreloaded(true);
-    }
-  }, [preSelectedDoctor, doctorPreloaded]);
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!loading && !user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to book an appointment",
-      });
-      const redirectUrl = doctorIdParam 
-        ? `/booking?doctorId=${doctorIdParam}` 
-        : "/booking";
-      navigate(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
-    }
-  }, [user, loading, navigate, toast, doctorIdParam]);
-
-  useEffect(() => {
-    if (profile) {
-      setPatientName(profile.name || "");
-      setPatientPhone(profile.phone || "");
-    }
-    if (user) {
-      setPatientEmail(user.email || "");
-    }
-  }, [profile, user]);
-
-  // Show loading while checking auth or preloading doctor
-  if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
-    return (
-      <Layout showFooter={false}>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Don't render if not authenticated
-  if (!user) {
-    return null;
-  }
-
-  // Fetch doctors based on filters
+  // Fetch doctors based on filters - MUST be called unconditionally (before any returns)
   const { data: doctors, isLoading: loadingDoctors } = useQuery({
     queryKey: ["doctors", province, city, specialty],
     queryFn: async () => {
@@ -200,58 +148,7 @@ export default function Booking() {
     enabled: step >= 3,
   });
 
-  // Filter and sort doctors
-  const filteredDoctors = useMemo(() => {
-    if (!doctors) return [];
-    
-    let filtered = [...doctors];
-    
-    // Search by name
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(doc => 
-        doc.profile?.name?.toLowerCase().includes(query) ||
-        doc.specialty.toLowerCase().includes(query)
-      );
-    }
-    
-    // Filter by minimum rating
-    if (minRating > 0) {
-      filtered = filtered.filter(doc => (doc.rating || 0) >= minRating);
-    }
-    
-    // Sort
-    switch (sortBy) {
-      case "rating":
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-      case "experience":
-        filtered.sort((a, b) => (b.experience_years || 0) - (a.experience_years || 0));
-        break;
-      case "fee-low":
-        filtered.sort((a, b) => a.fee - b.fee);
-        break;
-      case "fee-high":
-        filtered.sort((a, b) => b.fee - a.fee);
-        break;
-      case "name":
-        filtered.sort((a, b) => 
-          (a.profile?.name || "").localeCompare(b.profile?.name || "")
-        );
-        break;
-    }
-    
-    return filtered;
-  }, [doctors, searchQuery, minRating, sortBy]);
-
-  const hasActiveFilters = searchQuery !== "" || minRating > 0;
-
-  const clearFilters = () => {
-    setSearchQuery("");
-    setMinRating(0);
-  };
-
-  // Fetch available slots for selected doctor and date
+  // Fetch available slots for selected doctor and date - MUST be called unconditionally
   const { data: availableSlots } = useQuery({
     queryKey: ["slots", selectedDoctor?.user_id, selectedDate?.toISOString()],
     queryFn: async () => {
@@ -268,7 +165,7 @@ export default function Booking() {
     enabled: !!selectedDoctor && !!selectedDate,
   });
 
-  // Create appointment mutation
+  // Create appointment mutation - MUST be called unconditionally
   const createAppointment = useMutation({
     mutationFn: async () => {
       if (!selectedDoctor || !selectedDate || !user) {
@@ -330,6 +227,109 @@ export default function Booking() {
       });
     },
   });
+
+  // Auto-select doctor and skip to date step when doctor is preloaded
+  useEffect(() => {
+    if (preSelectedDoctor && !doctorPreloaded) {
+      setSelectedDoctor(preSelectedDoctor);
+      setProvince(preSelectedDoctor.province || "");
+      setCity(preSelectedDoctor.city || "");
+      setSpecialty(preSelectedDoctor.specialty || "");
+      setStep(4); // Skip directly to date selection
+      setDoctorPreloaded(true);
+    }
+  }, [preSelectedDoctor, doctorPreloaded]);
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to book an appointment",
+      });
+      const redirectUrl = doctorIdParam 
+        ? `/booking?doctorId=${doctorIdParam}` 
+        : "/booking";
+      navigate(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
+    }
+  }, [user, loading, navigate, toast, doctorIdParam]);
+
+  useEffect(() => {
+    if (profile) {
+      setPatientName(profile.name || "");
+      setPatientPhone(profile.phone || "");
+    }
+    if (user) {
+      setPatientEmail(user.email || "");
+    }
+  }, [profile, user]);
+
+  // Show loading while checking auth or preloading doctor
+  if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
+
+  // Filter and sort doctors
+  const filteredDoctors = useMemo(() => {
+    if (!doctors) return [];
+    
+    let filtered = [...doctors];
+    
+    // Search by name
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(doc => 
+        doc.profile?.name?.toLowerCase().includes(query) ||
+        doc.specialty.toLowerCase().includes(query)
+      );
+    }
+    
+    // Filter by minimum rating
+    if (minRating > 0) {
+      filtered = filtered.filter(doc => (doc.rating || 0) >= minRating);
+    }
+    
+    // Sort
+    switch (sortBy) {
+      case "rating":
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "experience":
+        filtered.sort((a, b) => (b.experience_years || 0) - (a.experience_years || 0));
+        break;
+      case "fee-low":
+        filtered.sort((a, b) => a.fee - b.fee);
+        break;
+      case "fee-high":
+        filtered.sort((a, b) => b.fee - a.fee);
+        break;
+      case "name":
+        filtered.sort((a, b) => 
+          (a.profile?.name || "").localeCompare(b.profile?.name || "")
+        );
+        break;
+    }
+    
+    return filtered;
+  }, [doctors, searchQuery, minRating, sortBy]);
+
+  const hasActiveFilters = searchQuery !== "" || minRating > 0;
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setMinRating(0);
+  };
 
   const handleNext = () => {
     if (step < 6) setStep(step + 1);
