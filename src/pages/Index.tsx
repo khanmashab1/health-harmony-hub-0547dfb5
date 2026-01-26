@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
-import heroDoctor from "@/assets/hero-doctor.png";
+import heroMainImage from "@/assets/hero-main.png";
 
 const specialties = [
   { name: "General Physician", icon: Stethoscope, color: "from-primary to-primary/70" },
@@ -201,7 +201,7 @@ export default function Index() {
                   className="relative z-10"
                 >
                   <img 
-                    src={heroDoctor} 
+                    src={heroMainImage} 
                     alt="Doctor consulting with patient" 
                     className="w-full max-w-lg rounded-3xl shadow-2xl border-4 border-white/10"
                   />
