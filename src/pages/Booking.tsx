@@ -62,6 +62,7 @@ const steps = [
 
 export default function Booking() {
   const [searchParams] = useSearchParams();
+  const doctorIdParam = searchParams.get("doctorId");
   const [step, setStep] = useState(1);
   const [province, setProvince] = useState("");
   const [city, setCity] = useState("");
@@ -76,6 +77,7 @@ export default function Booking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsDoctor, setDetailsDoctor] = useState<Doctor | null>(null);
+  const [doctorPreloaded, setDoctorPreloaded] = useState(false);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,6 +88,47 @@ export default function Booking() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Pre-fetch doctor if doctorId is provided in URL
+  const { data: preSelectedDoctor, isLoading: loadingPreSelectedDoctor } = useQuery({
+    queryKey: ["preselected-doctor", doctorIdParam],
+    queryFn: async () => {
+      if (!doctorIdParam) return null;
+      
+      const { data: doctorData, error } = await supabase
+        .from("doctors")
+        .select("*")
+        .eq("user_id", doctorIdParam)
+        .single();
+      
+      if (error) throw error;
+
+      // Fetch profile name
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .eq("id", doctorIdParam)
+        .single();
+
+      return {
+        ...doctorData,
+        profile: profileData
+      } as Doctor;
+    },
+    enabled: !!doctorIdParam,
+  });
+
+  // Auto-select doctor and skip to date step when doctor is preloaded
+  useEffect(() => {
+    if (preSelectedDoctor && !doctorPreloaded) {
+      setSelectedDoctor(preSelectedDoctor);
+      setProvince(preSelectedDoctor.province || "");
+      setCity(preSelectedDoctor.city || "");
+      setSpecialty(preSelectedDoctor.specialty || "");
+      setStep(4); // Skip directly to date selection
+      setDoctorPreloaded(true);
+    }
+  }, [preSelectedDoctor, doctorPreloaded]);
+
   // Redirect to auth if not logged in
   useEffect(() => {
     if (!loading && !user) {
@@ -93,9 +136,12 @@ export default function Booking() {
         title: "Sign in required",
         description: "Please sign in to book an appointment",
       });
-      navigate("/auth?redirect=/booking");
+      const redirectUrl = doctorIdParam 
+        ? `/booking?doctorId=${doctorIdParam}` 
+        : "/booking";
+      navigate(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
     }
-  }, [user, loading, navigate, toast]);
+  }, [user, loading, navigate, toast, doctorIdParam]);
 
   useEffect(() => {
     if (profile) {
@@ -107,8 +153,8 @@ export default function Booking() {
     }
   }, [profile, user]);
 
-  // Show loading while checking auth
-  if (loading) {
+  // Show loading while checking auth or preloading doctor
+  if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
     return (
       <Layout showFooter={false}>
         <div className="min-h-screen flex items-center justify-center">
