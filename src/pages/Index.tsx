@@ -115,80 +115,80 @@ export default function Index() {
   return (
     <Layout>
       {/* Hero Section - Dark themed */}
-      <section className="relative min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-[#0a1628]">
+      <section className="relative min-h-[calc(100vh-72px)] md:min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-[#0a1628]">
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
             animate={{ x: [0, 20, 0], y: [0, -10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" 
+            className="absolute top-20 right-10 w-48 md:w-72 h-48 md:h-72 bg-primary/10 rounded-full blur-3xl" 
           />
           <motion.div 
             animate={{ x: [0, -20, 0], y: [0, 10, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-20 left-10 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" 
+            className="absolute bottom-20 left-10 w-64 md:w-96 h-64 md:h-96 bg-cyan-500/5 rounded-full blur-3xl" 
           />
         </div>
 
-        <div className="container mx-auto px-4 py-16 lg:py-24 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="container mx-auto px-4 py-10 md:py-16 lg:py-24 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left Content */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="space-y-6"
+              className="space-y-4 md:space-y-6 text-center lg:text-left"
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-white">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-white">
                 Your Health, Our <span className="text-primary">Priority</span>
               </h1>
 
-              <p className="text-lg text-gray-300 max-w-lg leading-relaxed">
+              <p className="text-base md:text-lg text-gray-300 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Book appointments with top doctors, track your health metrics, and get expert medical advice.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-2 md:pt-4 justify-center lg:justify-start">
                 <Link to="/booking">
-                  <Button variant="hero" size="xl" className="w-full sm:w-auto gap-2">
-                    <Calendar className="w-5 h-5" />
+                  <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2">
+                    <Calendar className="w-4 h-4 md:w-5 md:h-5" />
                     Book Appointment
                   </Button>
                 </Link>
                 <Link to="/symptoms">
-                  <Button variant="outline" size="xl" className="w-full sm:w-auto gap-2 border-primary/50 text-primary hover:bg-primary/10">
-                    <Activity className="w-5 h-5" />
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 border-primary/50 text-primary hover:bg-primary/10">
+                    <Activity className="w-4 h-4 md:w-5 md:h-5" />
                     Check Symptoms
                   </Button>
                 </Link>
               </div>
 
               {/* Quick Stats */}
-              <div className="flex flex-wrap gap-8 pt-6">
+              <div className="flex flex-wrap gap-4 md:gap-8 pt-4 md:pt-6 justify-center lg:justify-start">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-white">{stats?.doctors || 0}+</p>
-                  <p className="text-sm text-gray-400">Expert Doctors</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white">{stats?.doctors || 0}+</p>
+                  <p className="text-xs md:text-sm text-gray-400">Expert Doctors</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-white">{stats?.patients || 0}+</p>
-                  <p className="text-sm text-gray-400">Happy Patients</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white">{stats?.patients || 0}+</p>
+                  <p className="text-xs md:text-sm text-gray-400">Happy Patients</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                    <p className="text-3xl font-bold text-white">{stats?.rating || "4.8"}</p>
+                    <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
+                    <p className="text-2xl md:text-3xl font-bold text-white">{stats?.rating || "4.8"}</p>
                   </div>
-                  <p className="text-sm text-gray-400">Average Rating</p>
+                  <p className="text-xs md:text-sm text-gray-400">Average Rating</p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Right - Hero Image */}
+            {/* Right - Hero Image - Now visible on mobile too */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, x: 50 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative hidden lg:flex justify-center"
+              className="relative flex justify-center mt-8 lg:mt-0"
             >
               <div className="relative">
                 {/* Glow Effect */}
@@ -203,7 +203,7 @@ export default function Index() {
                   <img 
                     src={doctorConsultationImg} 
                     alt="Doctor consulting with patient" 
-                    className="w-full max-w-lg rounded-3xl shadow-2xl border-4 border-white/10"
+                    className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl border-4 border-white/10"
                   />
                 </motion.div>
               </div>
