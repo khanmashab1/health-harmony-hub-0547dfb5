@@ -566,30 +566,70 @@ export default function Booking() {
 
                 {/* Step 4: Date Selection */}
                 {step === 4 && (
-                  <div className="flex flex-col items-center">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      disabled={(date) => isBefore(date, startOfToday())}
-                      className="rounded-lg border"
-                    />
-                    {selectedDate && (
-                      <div className="mt-4 p-4 rounded-lg bg-muted w-full max-w-sm">
-                        <p className="text-center">
-                          <span className="font-medium">Selected: </span>
-                          {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                        </p>
-                        {availableSlots !== undefined && (
-                          <p className={`text-center mt-2 ${availableSlots > 0 ? "text-green-600" : "text-red-600"}`}>
-                            {availableSlots > 0 
-                              ? `${availableSlots} slots available`
-                              : "No slots available for this date"
-                            }
+                  <div className="space-y-6">
+                    {/* Selected Doctor Summary Card */}
+                    {selectedDoctor && (
+                      <div className="flex items-center gap-4 p-4 rounded-xl border bg-muted/50">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <User className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate">
+                            Dr. {selectedDoctor.profile?.name || "Doctor"}
                           </p>
-                        )}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Stethoscope className="w-3.5 h-3.5" />
+                              {selectedDoctor.specialty}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                              {selectedDoctor.rating || 4.0}
+                            </span>
+                            <span className="font-medium text-primary">
+                              Rs. {selectedDoctor.fee}
+                            </span>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setDoctorPreloaded(false);
+                            setStep(3);
+                          }}
+                        >
+                          Change
+                        </Button>
                       </div>
                     )}
+
+                    {/* Calendar */}
+                    <div className="flex flex-col items-center">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => isBefore(date, startOfToday())}
+                        className="rounded-lg border"
+                      />
+                      {selectedDate && (
+                        <div className="mt-4 p-4 rounded-lg bg-muted w-full max-w-sm">
+                          <p className="text-center">
+                            <span className="font-medium">Selected: </span>
+                            {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                          </p>
+                          {availableSlots !== undefined && (
+                            <p className={`text-center mt-2 ${availableSlots > 0 ? "text-green-600" : "text-red-600"}`}>
+                              {availableSlots > 0 
+                                ? `${availableSlots} slots available`
+                                : "No slots available for this date"
+                              }
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
