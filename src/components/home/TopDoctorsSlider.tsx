@@ -131,7 +131,55 @@ export function TopDoctorsSlider() {
 
       <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-          {/* Left Content - Doctor Info */}
+          {/* Doctor Photo - Shows first on mobile */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`photo-${currentIndex}`}
+              initial={{ opacity: 0, scale: 0.9, y: -30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ duration: 0.5 }}
+              className="relative flex justify-center order-first lg:order-last"
+            >
+              <div className="relative">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-60 scale-90" />
+                
+                {/* Floating Image */}
+                <motion.div
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative z-10"
+                >
+                  <Avatar className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-72 lg:h-72 border-4 md:border-8 border-white shadow-2xl">
+                    <AvatarImage 
+                      src={currentDoctor.image_path || undefined} 
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-3xl md:text-5xl lg:text-6xl font-bold text-primary">
+                      {currentDoctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
+                    </AvatarFallback>
+                  </Avatar>
+                </motion.div>
+
+                {/* Floating Badge */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  className="absolute -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-card rounded-full px-3 md:px-5 py-1.5 md:py-2 shadow-xl border"
+                >
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <Star className="w-3 h-3 md:w-4 md:h-4 text-amber-500 fill-amber-500" />
+                    <span className="font-bold text-sm md:text-base">{currentDoctor.rating?.toFixed(1) || "4.5"}</span>
+                    <span className="text-muted-foreground text-[10px] md:text-xs">Rating</span>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Doctor Info */}
           <AnimatePresence mode="wait">
             <motion.div
               key={`doctor-${currentIndex}`}
@@ -139,7 +187,7 @@ export function TopDoctorsSlider() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 50 }}
               transition={{ duration: 0.5 }}
-              className="space-y-4 md:space-y-6 text-center lg:text-left"
+              className="space-y-4 md:space-y-6 text-center lg:text-left order-last lg:order-first"
             >
               <motion.span 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -241,102 +289,6 @@ export function TopDoctorsSlider() {
                     View All Doctors
                   </Button>
                 </Link>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Right - Doctor Photo */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`photo-${currentIndex}`}
-              initial={{ opacity: 0, scale: 0.9, x: 50 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.9, x: -50 }}
-              transition={{ duration: 0.5 }}
-              className="relative flex justify-center mt-6 lg:mt-0"
-            >
-              <div className="relative">
-                {/* Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-60 scale-90" />
-                
-                {/* Floating Image */}
-                <motion.div
-                  animate={{ y: [0, -15, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative z-10"
-                >
-                  <Avatar className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-80 lg:h-80 border-4 md:border-8 border-white shadow-2xl">
-                    <AvatarImage 
-                      src={currentDoctor.image_path || undefined} 
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-4xl md:text-6xl font-bold text-primary">
-                      {currentDoctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
-                    </AvatarFallback>
-                  </Avatar>
-                </motion.div>
-
-                {/* Floating Badge */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring" }}
-                  className="absolute -bottom-2 md:-bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-card rounded-full px-3 md:px-6 py-2 md:py-3 shadow-xl border"
-                >
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
-                    <span className="font-bold text-sm md:text-base">{currentDoctor.rating?.toFixed(1) || "4.5"}</span>
-                    <span className="text-muted-foreground text-xs md:text-sm">Rating</span>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Right - Doctor Photo */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`photo-${currentIndex}`}
-              initial={{ opacity: 0, scale: 0.9, x: 50 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.9, x: -50 }}
-              transition={{ duration: 0.5 }}
-              className="relative hidden lg:flex justify-center"
-            >
-              <div className="relative">
-                {/* Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-60 scale-90" />
-                
-                {/* Floating Image */}
-                <motion.div
-                  animate={{ y: [0, -15, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative z-10"
-                >
-                  <Avatar className="w-80 h-80 border-8 border-white shadow-2xl">
-                    <AvatarImage 
-                      src={currentDoctor.image_path || undefined} 
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-6xl font-bold text-primary">
-                      {currentDoctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
-                    </AvatarFallback>
-                  </Avatar>
-                </motion.div>
-
-                {/* Floating Badge */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring" }}
-                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-card rounded-full px-6 py-3 shadow-xl border"
-                >
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                    <span className="font-bold">{currentDoctor.rating?.toFixed(1) || "4.5"}</span>
-                    <span className="text-muted-foreground text-sm">Rating</span>
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
           </AnimatePresence>
