@@ -84,6 +84,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate plain text fallback
     const plainText = text || htmlToPlainText(fixedHtml);
 
+    // Minify HTML to prevent Quoted-Printable encoding issues (=20 artifacts)
+    // Remove excessive whitespace between tags but preserve content
+    const minifiedHtml = fixedHtml
+      .replace(/>\s+</g, '><')  // Remove whitespace between tags
+      .replace(/\n\s*/g, '')   // Remove newlines and leading whitespace
+      .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
+      .trim();
+
     console.log(`Sending email to: ${to}, subject: ${subject}, recipient: ${actualRecipientName}`);
 
     const client = new SMTPClient({
@@ -103,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
       to: to,
       subject: subject,
       content: plainText,
-      html: fixedHtml,
+      html: minifiedHtml,
     });
 
     await client.close();

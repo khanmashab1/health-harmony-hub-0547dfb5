@@ -79,6 +79,10 @@ export default function PADashboard() {
   const [historyDateRange, setHistoryDateRange] = useState<string>("all");
   const [historySearchTerm, setHistorySearchTerm] = useState("");
   
+  // Pending payments filter state
+  const [pendingSearchTerm, setPendingSearchTerm] = useState("");
+  const [pendingPaymentFilter, setPendingPaymentFilter] = useState<string>("all");
+  
   // Vitals dialog state
   const [vitalsDialogOpen, setVitalsDialogOpen] = useState(false);
   const [selectedVitalsAppointment, setSelectedVitalsAppointment] = useState<any>(null);
@@ -118,7 +122,7 @@ export default function PADashboard() {
 
   const assignedDoctorIds = assignments?.map(a => a.doctor_user_id) || [];
 
-  // Fetch pending payments
+  // Fetch pending payments (includes both Online and Cash pending)
   const { data: pendingPayments, isLoading: loadingPayments } = useQuery({
     queryKey: ["pa-pending-payments", assignedDoctorIds],
     queryFn: async () => {
@@ -128,8 +132,26 @@ export default function PADashboard() {
         .select("*")
         .in("doctor_user_id", assignedDoctorIds)
         .eq("payment_status", "Pending")
-        .eq("payment_method", "Online")
         .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: assignedDoctorIds.length > 0,
+  });
+
+  // Fetch completed payments for today (daily view)
+  const { data: completedPaymentsToday } = useQuery({
+    queryKey: ["pa-completed-payments-today", assignedDoctorIds],
+    queryFn: async () => {
+      if (assignedDoctorIds.length === 0) return [];
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("*")
+        .in("doctor_user_id", assignedDoctorIds)
+        .eq("appointment_date", todayStr)
+        .eq("status", "Completed")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -599,70 +621,230 @@ export default function PADashboard() {
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-yellow-50/50 to-transparent dark:from-yellow-900/10 dark:to-transparent">
                     <CardTitle className="flex items-center gap-2">
                       <CreditCard className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
-                      Pending Payment Confirmations
+                      Payment Management
                     </CardTitle>
-                    <CardDescription>Review and confirm online payments</CardDescription>
+                    <CardDescription>Review pending payments and daily completed transactions</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
-                    {loadingPayments ? (
-                      <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
-                    ) : pendingPayments && pendingPayments.length > 0 ? (
-                      <div className="space-y-4">
-                        {pendingPayments.map((payment) => (
-                          <motion.div 
-                            key={payment.id} 
-                            whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30 flex items-center justify-center">
-                                <CreditCard className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
-                              </div>
-                              <div>
-                                <p className="font-semibold">{payment.patient_full_name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {payment.receipt_path && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => loadReceipt(payment.receipt_path!)}
-                                  className="hover:bg-brand-50"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="hero"
-                                onClick={() => openConfirmDialog(payment)}
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Confirm
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => openRejectDialog(payment)}
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-16">
-                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center mb-4">
-                          <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+                    {/* Sub-tabs for Pending / Completed Today */}
+                    <Tabs defaultValue="pending" className="space-y-4">
+                      <TabsList className="bg-muted/60 dark:bg-muted/30 p-1 rounded-lg">
+                        <TabsTrigger value="pending" className="rounded-md text-sm data-[state=active]:bg-yellow-500 data-[state=active]:text-white">
+                          Pending
+                          {pendingPayments && pendingPayments.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300">
+                              {pendingPayments.length}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                        <TabsTrigger value="completed-today" className="rounded-md text-sm data-[state=active]:bg-green-500 data-[state=active]:text-white">
+                          Completed Today
+                          {completedPaymentsToday && completedPaymentsToday.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
+                              {completedPaymentsToday.length}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                      </TabsList>
+
+                      {/* Pending Payments Sub-Tab */}
+                      <TabsContent value="pending" className="space-y-4 mt-4">
+                        {/* Filters for pending */}
+                        <div className="flex flex-col md:flex-row gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
+                          <div className="flex items-center gap-2 flex-1">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Search by name or token ID..."
+                              value={pendingSearchTerm}
+                              onChange={(e) => setPendingSearchTerm(e.target.value)}
+                              className="flex-1 border-border/50"
+                            />
+                          </div>
+                          <Select value={pendingPaymentFilter} onValueChange={setPendingPaymentFilter}>
+                            <SelectTrigger className="w-[140px] border-border/50">
+                              <SelectValue placeholder="Payment Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Types</SelectItem>
+                              <SelectItem value="online">Online</SelectItem>
+                              <SelectItem value="cash">Cash</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <p className="text-muted-foreground font-medium">No pending payments</p>
-                      </div>
-                    )}
+
+                        {loadingPayments ? (
+                          <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
+                        ) : (() => {
+                          // Filter pending payments
+                          const filtered = (pendingPayments || []).filter((payment) => {
+                            // Payment type filter
+                            if (pendingPaymentFilter === "online" && payment.payment_method !== "Online") return false;
+                            if (pendingPaymentFilter === "cash" && payment.payment_method !== "Cash") return false;
+                            
+                            // Search filter (by name, token, or ID)
+                            if (pendingSearchTerm) {
+                              const term = pendingSearchTerm.toLowerCase();
+                              const nameMatch = payment.patient_full_name?.toLowerCase().includes(term);
+                              const tokenMatch = `#${payment.token_number}`.includes(term) || payment.token_number.toString().includes(term);
+                              const idMatch = payment.id.toLowerCase().includes(term);
+                              if (!nameMatch && !tokenMatch && !idMatch) return false;
+                            }
+                            
+                            return true;
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="text-center py-12">
+                                <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center mb-4">
+                                  <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                                </div>
+                                <p className="text-muted-foreground font-medium">
+                                  {pendingSearchTerm || pendingPaymentFilter !== "all" 
+                                    ? "No payments match your filters" 
+                                    : "No pending payments"}
+                                </p>
+                                {(pendingSearchTerm || pendingPaymentFilter !== "all") && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="mt-2"
+                                    onClick={() => {
+                                      setPendingSearchTerm("");
+                                      setPendingPaymentFilter("all");
+                                    }}
+                                  >
+                                    Clear Filters
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                Showing {filtered.length} of {pendingPayments?.length || 0} pending payments
+                              </p>
+                              {filtered.map((payment) => (
+                                <motion.div 
+                                  key={payment.id} 
+                                  whileHover={{ scale: 1.01 }}
+                                  className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                      payment.payment_method === "Online" 
+                                        ? "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30"
+                                        : "bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30"
+                                    }`}>
+                                      <CreditCard className={`w-6 h-6 ${
+                                        payment.payment_method === "Online" 
+                                          ? "text-yellow-600 dark:text-yellow-500" 
+                                          : "text-blue-600 dark:text-blue-500"
+                                      }`} />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-semibold">{payment.patient_full_name}</p>
+                                        <Badge variant="outline" className={`text-xs ${
+                                          payment.payment_method === "Online"
+                                            ? "border-yellow-500/50 text-yellow-600 dark:text-yellow-400"
+                                            : "border-blue-500/50 text-blue-600 dark:text-blue-400"
+                                        }`}>
+                                          {payment.payment_method}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground/70 font-mono">
+                                        ID: {payment.id.slice(0, 8)}...
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {payment.receipt_path && (
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => loadReceipt(payment.receipt_path!)}
+                                        className="hover:bg-brand-50"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="hero"
+                                      onClick={() => openConfirmDialog(payment)}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 mr-1" />
+                                      Confirm
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="icon"
+                                      onClick={() => openRejectDialog(payment)}
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </TabsContent>
+
+                      {/* Completed Today Sub-Tab */}
+                      <TabsContent value="completed-today" className="space-y-4 mt-4">
+                        {completedPaymentsToday && completedPaymentsToday.length > 0 ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">
+                              {completedPaymentsToday.length} completed payments today
+                            </p>
+                            {completedPaymentsToday.map((payment) => (
+                              <motion.div 
+                                key={payment.id} 
+                                whileHover={{ scale: 1.005 }}
+                                className="flex items-center justify-between p-4 rounded-xl border border-green-500/30 bg-green-50/50 dark:bg-green-900/10 hover:shadow-md transition-all"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center">
+                                    <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold">{payment.patient_full_name}</p>
+                                      <Badge className="status-completed text-xs">Completed</Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      Token #{payment.token_number} • {payment.payment_method}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                                    {payment.payment_status === "Confirmed" ? "Paid" : payment.payment_status}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(payment.updated_at), "h:mm a")}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-12">
+                            <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
+                              <Calendar className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <p className="text-muted-foreground font-medium">No completed payments today</p>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
                   </CardContent>
                 </Card>
               </TabsContent>
