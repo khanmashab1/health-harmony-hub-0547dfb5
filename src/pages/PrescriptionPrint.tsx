@@ -203,7 +203,7 @@ export default function PrescriptionPrint() {
   const prescriptionUrl = `${window.location.origin}/verify/${appointmentId}`;
 
   return (
-    <div className="min-h-screen bg-background print:bg-white">
+    <div className="min-h-screen bg-white text-gray-900 print:bg-white print:text-black">
       {/* Action Buttons - Hidden on print */}
       <div className="fixed top-4 left-4 right-4 flex justify-between z-50 no-print">
         <Link to="/profile">
@@ -238,12 +238,12 @@ export default function PrescriptionPrint() {
 
       {/* Prescription Page */}
       <div className="max-w-4xl mx-auto py-16 px-4 print:py-0 print:px-0">
-        <div className="bg-card shadow-2xl print:shadow-none prescription-page relative overflow-hidden rounded-xl border border-border">
+        <div className="bg-white shadow-2xl print:shadow-none prescription-page relative overflow-hidden rounded-xl border border-gray-200">
           {/* Decorative Border */}
-          <div className="absolute inset-0 border-[2px] border-primary/20 m-1.5 pointer-events-none print:border-primary/30 rounded-lg" />
+          <div className="absolute inset-0 border-[2px] border-teal-500/20 m-1.5 pointer-events-none rounded-lg" />
           
           {/* Header - Compact */}
-          <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-6 py-4 print:bg-primary print:py-3">
+          <header className="bg-gradient-to-r from-teal-600 to-teal-500 text-white px-6 py-4 print:py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center print:w-10 print:h-10">
@@ -251,12 +251,12 @@ export default function PrescriptionPrint() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold tracking-tight print:text-lg">{clinicName}</h1>
-                  <p className="text-primary-foreground/80 text-xs">Healthcare Excellence</p>
+                  <p className="text-white/80 text-xs">Healthcare Excellence</p>
                 </div>
               </div>
               <div className="text-right text-xs">
                 <p className="font-medium">Prescription #{appointment.token_number}</p>
-                <p className="text-primary-foreground/80">{format(new Date(appointment.appointment_date), "MMM d, yyyy")}</p>
+                <p className="text-white/80">{format(new Date(appointment.appointment_date), "MMM d, yyyy")}</p>
               </div>
             </div>
           </header>
@@ -265,19 +265,19 @@ export default function PrescriptionPrint() {
             {/* Doctor & Patient Details Row - Compact */}
             <div className="grid md:grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-3">
               {/* Doctor Info */}
-              <div className="bg-primary/5 rounded-lg p-3 border border-primary/10 print:p-2">
-                <h3 className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-2 print:mb-1">Prescribing Physician</h3>
+              <div className="bg-teal-50 rounded-lg p-3 border border-teal-100 print:p-2">
+                <h3 className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider mb-2 print:mb-1">Prescribing Physician</h3>
                 <div className="space-y-0.5">
-                  <p className="text-base font-bold text-foreground print:text-sm">Dr. {appointment.doctorProfile?.name}</p>
-                  <p className="text-xs text-muted-foreground">{appointment.doctor?.specialty}</p>
+                  <p className="text-base font-bold text-gray-900 print:text-sm">Dr. {appointment.doctorProfile?.name}</p>
+                  <p className="text-xs text-gray-600">{appointment.doctor?.specialty}</p>
                   {appointment.doctor?.degree && (
-                    <p className="text-[10px] text-muted-foreground">{appointment.doctor.degree}</p>
+                    <p className="text-[10px] text-gray-500">{appointment.doctor.degree}</p>
                   )}
                   {appointment.doctor?.qualifications && (
-                    <p className="text-[10px] text-muted-foreground">{appointment.doctor.qualifications}</p>
+                    <p className="text-[10px] text-gray-500">{appointment.doctor.qualifications}</p>
                   )}
                   {(appointment.doctor?.city || appointment.doctor?.province) && (
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                    <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-1">
                       <MapPin className="w-2.5 h-2.5" />
                       {[appointment.doctor.city, appointment.doctor.province].filter(Boolean).join(", ")}
                     </p>
@@ -286,26 +286,26 @@ export default function PrescriptionPrint() {
               </div>
 
               {/* Patient Info */}
-              <div className="bg-muted/50 rounded-lg p-3 border border-border/50 print:p-2">
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 print:mb-1">Patient Details</h3>
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 print:p-2">
+                <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 print:mb-1">Patient Details</h3>
                 <div className="space-y-0.5">
-                  <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
+                  <p className="text-base font-bold text-gray-900 print:text-sm">{appointment.patient_full_name}</p>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {appointment.patientProfile?.age && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs text-gray-600 flex items-center gap-1">
                         <CalendarDays className="w-2.5 h-2.5" />
                         {appointment.patientProfile.age} yrs
                       </span>
                     )}
                     {appointment.patientProfile?.gender && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs text-gray-600 flex items-center gap-1">
                         <User className="w-2.5 h-2.5" />
                         {appointment.patientProfile.gender}
                       </span>
                     )}
                   </div>
                   {appointment.patient_phone && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <p className="text-xs text-gray-600 flex items-center gap-1">
                       <Phone className="w-2.5 h-2.5" />
                       {appointment.patient_phone}
                     </p>
@@ -319,34 +319,34 @@ export default function PrescriptionPrint() {
 
             {/* Vitals - Compact */}
             {(appointment.vitals_weight || appointment.vitals_bp || appointment.vitals_temperature || appointment.vitals_heart_rate) && (
-              <div className="mb-4 p-3 rounded-lg border border-border/50 bg-muted/30 print:p-2 print:mb-3">
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1 print:mb-1">
+              <div className="mb-4 p-3 rounded-lg border border-gray-200 bg-gray-50 print:p-2 print:mb-3">
+                <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1 print:mb-1">
                   <Activity className="w-3 h-3" />
                   Recorded Vitals
                 </h3>
                 <div className="grid grid-cols-4 gap-2 print:gap-1">
                   {appointment.vitals_bp && (
-                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
-                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_bp}</p>
-                      <p className="text-[9px] text-muted-foreground">BP (mmHg)</p>
+                    <div className="text-center p-2 bg-white rounded border border-gray-200 print:p-1">
+                      <p className="text-base font-bold text-teal-600 print:text-sm">{appointment.vitals_bp}</p>
+                      <p className="text-[9px] text-gray-500">BP (mmHg)</p>
                     </div>
                   )}
                   {appointment.vitals_heart_rate && (
-                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
-                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_heart_rate}</p>
-                      <p className="text-[9px] text-muted-foreground">HR (bpm)</p>
+                    <div className="text-center p-2 bg-white rounded border border-gray-200 print:p-1">
+                      <p className="text-base font-bold text-teal-600 print:text-sm">{appointment.vitals_heart_rate}</p>
+                      <p className="text-[9px] text-gray-500">HR (bpm)</p>
                     </div>
                   )}
                   {appointment.vitals_temperature && (
-                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
-                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_temperature}°F</p>
-                      <p className="text-[9px] text-muted-foreground">Temp</p>
+                    <div className="text-center p-2 bg-white rounded border border-gray-200 print:p-1">
+                      <p className="text-base font-bold text-teal-600 print:text-sm">{appointment.vitals_temperature}°F</p>
+                      <p className="text-[9px] text-gray-500">Temp</p>
                     </div>
                   )}
                   {appointment.vitals_weight && (
-                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
-                      <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_weight} kg</p>
-                      <p className="text-[9px] text-muted-foreground">Weight</p>
+                    <div className="text-center p-2 bg-white rounded border border-gray-200 print:p-1">
+                      <p className="text-base font-bold text-teal-600 print:text-sm">{appointment.vitals_weight} kg</p>
+                      <p className="text-[9px] text-gray-500">Weight</p>
                     </div>
                   )}
                 </div>
@@ -356,53 +356,53 @@ export default function PrescriptionPrint() {
             {/* Diagnosis - Compact */}
             {appointment.diagnosis && (
               <div className="mb-4 print:mb-3">
-                <h3 className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5 border-b border-border/50 pb-1">
-                  <FileText className="w-3.5 h-3.5 text-primary" />
+                <h3 className="text-xs font-semibold text-gray-900 mb-1 flex items-center gap-1.5 border-b border-gray-200 pb-1">
+                  <FileText className="w-3.5 h-3.5 text-teal-600" />
                   Diagnosis
                 </h3>
-                <p className="text-xs text-muted-foreground whitespace-pre-wrap pl-5 print:text-[11px]">{appointment.diagnosis}</p>
+                <p className="text-xs text-gray-600 whitespace-pre-wrap pl-5 print:text-[11px]">{appointment.diagnosis}</p>
               </div>
             )}
 
             {/* Prescription Symbol */}
             <div className="flex items-center gap-2 mb-3 print:mb-2">
-              <div className="text-2xl font-serif text-primary font-bold print:text-xl">℞</div>
-              <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent" />
+              <div className="text-2xl font-serif text-teal-600 font-bold print:text-xl">℞</div>
+              <div className="flex-1 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
             </div>
 
             {/* Medicines Table - Compact */}
             {medicines.length > 0 ? (
               <div className="mb-4 print:mb-3">
-                <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5 print:mb-1">
-                  <Pill className="w-3.5 h-3.5 text-primary" />
+                <h3 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5 print:mb-1">
+                  <Pill className="w-3.5 h-3.5 text-teal-600" />
                   Prescribed Medications
                 </h3>
-                <div className="border rounded-lg overflow-hidden print:rounded">
+                <div className="border border-gray-200 rounded-lg overflow-hidden print:rounded">
                   <table className="w-full text-xs print:text-[10px]">
-                    <thead className="bg-primary/10">
+                    <thead className="bg-teal-50">
                       <tr>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">#</th>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Medicine</th>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Dosage</th>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Frequency</th>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Duration</th>
-                        <th className="text-left p-2 font-semibold text-foreground print:p-1">Timing</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">#</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">Medicine</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">Dosage</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">Frequency</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">Duration</th>
+                        <th className="text-left p-2 font-semibold text-gray-900 print:p-1">Timing</th>
                       </tr>
                     </thead>
                     <tbody>
                       {medicines.map((med, idx) => (
-                        <tr key={idx} className="border-t border-border/30">
-                          <td className="p-2 font-medium text-muted-foreground print:p-1">{idx + 1}.</td>
+                        <tr key={idx} className="border-t border-gray-200">
+                          <td className="p-2 font-medium text-gray-500 print:p-1">{idx + 1}.</td>
                           <td className="p-2 print:p-1">
-                            <span className="font-medium text-foreground">{med.name}</span>
+                            <span className="font-medium text-gray-900">{med.name}</span>
                             {med.instructions && (
-                              <p className="text-[9px] text-muted-foreground mt-0.5">{med.instructions}</p>
+                              <p className="text-[9px] text-gray-500 mt-0.5">{med.instructions}</p>
                             )}
                           </td>
-                          <td className="p-2 text-muted-foreground print:p-1">{med.dosage || "-"}</td>
-                          <td className="p-2 text-muted-foreground print:p-1">{frequencyLabels[med.frequency] || med.frequency}</td>
-                          <td className="p-2 text-muted-foreground print:p-1">{durationLabels[med.duration] || med.duration}</td>
-                          <td className="p-2 text-muted-foreground print:p-1">{timingLabels[med.timing] || med.timing}</td>
+                          <td className="p-2 text-gray-600 print:p-1">{med.dosage || "-"}</td>
+                          <td className="p-2 text-gray-600 print:p-1">{frequencyLabels[med.frequency] || med.frequency}</td>
+                          <td className="p-2 text-gray-600 print:p-1">{durationLabels[med.duration] || med.duration}</td>
+                          <td className="p-2 text-gray-600 print:p-1">{timingLabels[med.timing] || med.timing}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -411,12 +411,12 @@ export default function PrescriptionPrint() {
               </div>
             ) : appointment.medicines ? (
               <div className="mb-4 print:mb-3">
-                <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                  <Pill className="w-3.5 h-3.5 text-primary" />
+                <h3 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-teal-600" />
                   Prescribed Medications
                 </h3>
-                <div className="p-3 rounded-lg bg-muted/30 border border-border/30 print:p-2">
-                  <p className="whitespace-pre-wrap text-xs text-muted-foreground print:text-[10px]">{appointment.medicines}</p>
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 print:p-2">
+                  <p className="whitespace-pre-wrap text-xs text-gray-600 print:text-[10px]">{appointment.medicines}</p>
                 </div>
               </div>
             ) : null}
@@ -424,13 +424,13 @@ export default function PrescriptionPrint() {
             {/* Lab Tests - Compact */}
             {appointment.lab_tests && (
               <div className="mb-4 print:mb-3">
-                <h3 className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5 border-b border-border/50 pb-1">
-                  <FlaskConical className="w-3.5 h-3.5 text-primary" />
+                <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 border-b border-gray-200 pb-1">
+                  <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
                   Recommended Lab Tests
                 </h3>
                 <div className="pl-5 grid grid-cols-2 gap-x-4">
                   {appointment.lab_tests.split('\n').filter(Boolean).map((test: string, idx: number) => (
-                    <p key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground py-0.5 print:text-[10px]">
+                    <p key={idx} className="flex items-center gap-1.5 text-xs text-gray-600 py-0.5 print:text-[10px]">
                       <CheckCircle className="w-2.5 h-2.5 text-green-500 flex-shrink-0" />
                       {test}
                     </p>
@@ -442,10 +442,10 @@ export default function PrescriptionPrint() {
             {/* Doctor Comments - Compact */}
             {appointment.doctor_comments && !appointment.doctor_comments.startsWith("Payment") && (
               <div className="mb-4 print:mb-3">
-                <h3 className="text-xs font-semibold text-foreground mb-1 border-b border-border/50 pb-1">
+                <h3 className="text-xs font-semibold text-gray-900 mb-1 border-b border-gray-200 pb-1">
                   Additional Notes
                 </h3>
-                <p className="text-xs text-muted-foreground whitespace-pre-wrap pl-5 print:text-[10px]">{appointment.doctor_comments}</p>
+                <p className="text-xs text-gray-600 whitespace-pre-wrap pl-5 print:text-[10px]">{appointment.doctor_comments}</p>
               </div>
             )}
 
@@ -457,33 +457,33 @@ export default function PrescriptionPrint() {
                   value={prescriptionUrl}
                   size={60}
                   level="M"
-                  className="border p-0.5 rounded bg-white print:w-12 print:h-12"
+                  className="border border-gray-200 p-0.5 rounded bg-white print:w-12 print:h-12"
                 />
-                <p className="text-[9px] text-muted-foreground mt-1 text-center">
+                <p className="text-[9px] text-gray-500 mt-1 text-center">
                   Scan to verify
                 </p>
               </div>
 
               {/* Signature */}
               <div className="text-center">
-                <div className="w-40 border-t-2 border-foreground pt-1.5 mb-0.5 print:w-32" />
-                <p className="font-semibold text-foreground text-sm print:text-xs">Dr. {appointment.doctorProfile?.name}</p>
-                <p className="text-[10px] text-muted-foreground">{appointment.doctor?.specialty}</p>
+                <div className="w-40 border-t-2 border-gray-900 pt-1.5 mb-0.5 print:w-32" />
+                <p className="font-semibold text-gray-900 text-sm print:text-xs">Dr. {appointment.doctorProfile?.name}</p>
+                <p className="text-[10px] text-gray-600">{appointment.doctor?.specialty}</p>
                 {appointment.doctor?.degree && (
-                  <p className="text-[9px] text-muted-foreground">{appointment.doctor.degree}</p>
+                  <p className="text-[9px] text-gray-500">{appointment.doctor.degree}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Footer - Compact */}
-          <div className="bg-muted/50 px-5 py-2 border-t border-border/50 print:px-4 print:py-1.5">
-            <div className="flex justify-between items-center text-[9px] text-muted-foreground">
+          <div className="bg-gray-50 px-5 py-2 border-t border-gray-200 print:px-4 print:py-1.5">
+            <div className="flex justify-between items-center text-[9px] text-gray-500">
               <div>
                 <p>Valid for 30 days. For emergencies, contact your healthcare provider.</p>
               </div>
               <div className="text-right">
-                <p className="font-medium text-foreground">{clinicName}</p>
+                <p className="font-medium text-gray-900">{clinicName}</p>
               </div>
             </div>
           </div>
