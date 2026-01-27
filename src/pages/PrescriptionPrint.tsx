@@ -326,25 +326,25 @@ export default function PrescriptionPrint() {
                 </h3>
                 <div className="grid grid-cols-4 gap-2 print:gap-1">
                   {appointment.vitals_bp && (
-                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
                       <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_bp}</p>
                       <p className="text-[9px] text-muted-foreground">BP (mmHg)</p>
                     </div>
                   )}
                   {appointment.vitals_heart_rate && (
-                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
                       <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_heart_rate}</p>
                       <p className="text-[9px] text-muted-foreground">HR (bpm)</p>
                     </div>
                   )}
                   {appointment.vitals_temperature && (
-                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
                       <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_temperature}°F</p>
                       <p className="text-[9px] text-muted-foreground">Temp</p>
                     </div>
                   )}
                   {appointment.vitals_weight && (
-                    <div className="text-center p-2 bg-white rounded border border-border/30 print:p-1">
+                    <div className="text-center p-2 bg-card rounded border border-border print:p-1 print:bg-white">
                       <p className="text-base font-bold text-primary print:text-sm">{appointment.vitals_weight} kg</p>
                       <p className="text-[9px] text-muted-foreground">Weight</p>
                     </div>
