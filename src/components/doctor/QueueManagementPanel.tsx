@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
   Users, Play, CheckCircle2, SkipForward, XCircle, 
-  Radio, ChevronRight, Clock, Phone, User
+  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -64,6 +64,27 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     };
   }, [doctorId, todayStr, queryClient]);
 
+  // Send prescription email mutation
+  const sendPrescriptionEmail = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      const { data, error } = await supabase.functions.invoke("send-prescription-email", {
+        body: { appointmentId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ 
+        title: "Prescription Sent", 
+        description: "Email with prescription sent to patient" 
+      });
+    },
+    onError: (error: any) => {
+      console.error("Failed to send prescription email:", error);
+      // Don't show error toast - prescription email is optional
+    },
+  });
+
   // Update appointment status mutation
   const updateStatus = useMutation({
     mutationFn: async ({ appointmentId, status }: { appointmentId: string; status: string }) => {
@@ -73,13 +94,28 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
         .eq("id", appointmentId);
       
       if (error) throw error;
+      
+      // If completing, also send prescription email
+      if (status === "Completed") {
+        // Get appointment to check if patient has email
+        const { data: apt } = await supabase
+          .from("appointments")
+          .select("patient_email")
+          .eq("id", appointmentId)
+          .single();
+        
+        if (apt?.patient_email) {
+          // Fire and forget - don't await
+          sendPrescriptionEmail.mutate(appointmentId);
+        }
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["doctor-queue", doctorId, todayStr] });
       queryClient.invalidateQueries({ queryKey: ["doctor-appointments", doctorId] });
       toast({ 
         title: "Status Updated", 
-        description: `Patient marked as ${status}` 
+        description: `Patient marked as ${status}${status === "Completed" ? " - prescription email sent" : ""}` 
       });
     },
     onError: (error: any) => {
