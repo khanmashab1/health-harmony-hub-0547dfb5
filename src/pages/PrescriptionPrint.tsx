@@ -200,7 +200,7 @@ export default function PrescriptionPrint() {
 
   const medicines = formatMedicinesForPrescription(appointment.medicines || "");
   const clinicName = siteName;
-  const prescriptionUrl = `${window.location.origin}/prescription/${appointmentId}`;
+  const prescriptionUrl = `${window.location.origin}/verify/${appointmentId}`;
 
   return (
     <div className="min-h-screen bg-background print:bg-white">
