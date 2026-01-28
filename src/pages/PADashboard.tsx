@@ -1135,12 +1135,12 @@ export default function PADashboard() {
                   <CardContent className="p-6">
                     {(() => {
                       const todayStr = format(new Date(), "yyyy-MM-dd");
-                      // Show today's upcoming appointments that are ready for vitals
-                      // Include: Upcoming status with confirmed payment OR cash payment
+                      // Show today's appointments that are ready for vitals
+                      // Include: Upcoming status OR any Cash payment today
                       const todayAppts = appointments?.filter(
                         (a) => a.appointment_date === todayStr && 
-                               a.status === "Upcoming" &&
-                               (a.payment_status === "Confirmed" || a.payment_status === "NA" || a.payment_method === "Cash")
+                               (a.status === "Upcoming" || 
+                                (a.status === "Pending" && a.payment_method === "Cash"))
                       ) || [];
                       
                       if (todayAppts.length === 0) {
@@ -1148,6 +1148,9 @@ export default function PADashboard() {
                           <div className="text-center py-16">
                             <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                             <p className="text-muted-foreground">No patients waiting for vitals today</p>
+                            <p className="text-sm text-muted-foreground/70 mt-1">
+                              Patients with confirmed appointments will appear here
+                            </p>
                           </div>
                         );
                       }
