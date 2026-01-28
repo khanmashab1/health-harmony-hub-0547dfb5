@@ -2,18 +2,20 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Hash, Upload } from "lucide-react";
+import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Hash, Upload, Wallet, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReceiptUpload } from "@/components/booking/ReceiptUpload";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TokenPrint() {
   const { appointmentId } = useParams();
   const [showReceiptUpload, setShowReceiptUpload] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: appointment, isLoading } = useQuery({
     queryKey: ["appointment", appointmentId],
@@ -26,10 +28,10 @@ export default function TokenPrint() {
       
       if (error) throw error;
 
-      // Get doctor info
+      // Get doctor info including easypaisa number
       const { data: doctor } = await supabase
         .from("doctors")
-        .select("specialty, fee")
+        .select("specialty, fee, easypaisa_number")
         .eq("user_id", data.doctor_user_id)
         .single();
 
@@ -163,6 +165,33 @@ export default function TokenPrint() {
                 </div>
               </div>
 
+              {/* Easypaisa Payment Info for Online Payments */}
+              {appointment.payment_method === "Online" && appointment.doctor?.easypaisa_number && (
+                <div className="p-4 border-t bg-green-50/50 dark:bg-green-900/20">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Easypaisa Number</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-green-700 dark:text-green-400">{appointment.doctor.easypaisa_number}</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(appointment.doctor?.easypaisa_number || "");
+                            toast({ title: "Copied!", description: "Easypaisa number copied to clipboard" });
+                          }}
+                          className="p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded no-print"
+                        >
+                          <Copy className="w-3 h-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Send payment to this Easypaisa number and upload receipt</p>
+                </div>
+              )}
+
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Consultation Fee</span>
@@ -170,6 +199,26 @@ export default function TokenPrint() {
                     Rs. {appointment.doctor?.fee || 0}
                   </span>
                 </div>
+              </div>
+
+              {/* Unique Appointment ID for PA Search */}
+              <div className="p-3 border rounded-lg bg-muted/50 mt-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Appointment ID</p>
+                    <p className="font-mono text-sm font-bold text-foreground">{appointment.id.slice(0, 8).toUpperCase()}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(appointment.id.slice(0, 8).toUpperCase());
+                      toast({ title: "Copied!", description: "Appointment ID copied to clipboard" });
+                    }}
+                    className="p-2 hover:bg-muted rounded no-print"
+                  >
+                    <Copy className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Share this ID with PA for quick payment verification</p>
               </div>
 
               <div className="flex justify-between items-center text-sm">
