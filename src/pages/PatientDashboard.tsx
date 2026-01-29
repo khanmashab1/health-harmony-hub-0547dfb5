@@ -256,6 +256,9 @@ export default function PatientDashboard() {
                     setEditingReview(null);
                     setWriteReviewOpen(true);
                   }}
+                  currentUserId={user?.id}
+                  currentUserName={profile?.name}
+                  selectedManagedPatientId={selectedManagedPatientId}
                 />
               </TabsContent>
 

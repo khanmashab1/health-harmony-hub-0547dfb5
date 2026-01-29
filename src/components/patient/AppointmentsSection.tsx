@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format, isToday, isFuture, isPast, parseISO } from "date-fns";
 import { 
   Calendar, ChevronRight, Star, Radio, Clock, 
-  CheckCircle2, XCircle, CalendarClock, Search
+  CheckCircle2, XCircle, CalendarClock, Search, Users, X, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiveQueuePosition } from "./LiveQueuePosition";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Appointment {
   id: string;
@@ -23,21 +37,96 @@ interface Appointment {
   doctor_user_id: string;
   reason: string | null;
   patient_full_name: string | null;
+  patient_user_id: string | null;
+}
+
+interface ManagedPatient {
+  id: string;
+  patient_user_id: string;
+  patient_name: string;
+  relationship: string;
 }
 
 interface AppointmentsSectionProps {
   appointments: Appointment[] | undefined;
   isLoading: boolean;
   onWriteReview: (doctorId: string) => void;
+  currentUserId?: string;
+  currentUserName?: string | null;
+  selectedManagedPatientId?: string | null;
 }
 
 export function AppointmentsSection({ 
   appointments, 
   isLoading, 
-  onWriteReview 
+  onWriteReview,
+  currentUserId,
+  currentUserName,
+  selectedManagedPatientId
 }: AppointmentsSectionProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("today");
+  const [patientFilter, setPatientFilter] = useState<string>("all");
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState<Appointment | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Fetch managed patients for filter
+  const { data: managedPatients } = useQuery({
+    queryKey: ["managed-patients", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const { data, error } = await supabase
+        .from("managed_patients")
+        .select("*")
+        .eq("manager_user_id", currentUserId)
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data as ManagedPatient[];
+    },
+    enabled: !!currentUserId,
+  });
+
+  // Handle appointment cancellation
+  const handleCancelAppointment = async () => {
+    if (!appointmentToCancel) return;
+    
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "Cancelled" })
+        .eq("id", appointmentToCancel.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Appointment Cancelled",
+        description: `Token #${appointmentToCancel.token_number} has been cancelled successfully.`,
+      });
+
+      // Refresh appointments
+      queryClient.invalidateQueries({ queryKey: ["patient-appointments"] });
+    } catch (error: any) {
+      toast({
+        title: "Cancellation Failed",
+        description: error.message || "Could not cancel appointment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCancelling(false);
+      setCancelDialogOpen(false);
+      setAppointmentToCancel(null);
+    }
+  };
+
+  const openCancelDialog = (apt: Appointment) => {
+    setAppointmentToCancel(apt);
+    setCancelDialogOpen(true);
+  };
 
   // Categorize appointments
   const categorizeAppointments = () => {
@@ -76,16 +165,43 @@ export function AppointmentsSection({
 
   const { today, upcoming, completed, cancelled } = categorizeAppointments();
 
-  // Filter appointments based on search
+  // Filter appointments based on search and patient filter
   const filterAppointments = (apts: Appointment[]) => {
-    if (!searchQuery.trim()) return apts;
-    const query = searchQuery.toLowerCase();
-    return apts.filter(apt => 
-      apt.department?.toLowerCase().includes(query) ||
-      apt.token_number.toString().includes(query) ||
-      apt.id.slice(0, 8).toLowerCase().includes(query) ||
-      apt.reason?.toLowerCase().includes(query)
-    );
+    let filtered = apts;
+
+    // Filter by patient
+    if (patientFilter !== "all") {
+      if (patientFilter === "self") {
+        // Show only logged-in user's own appointments
+        filtered = filtered.filter(apt => 
+          apt.patient_user_id === currentUserId || 
+          apt.patient_full_name === currentUserName
+        );
+      } else {
+        // Filter by specific managed patient
+        const managedPatient = managedPatients?.find(p => p.id === patientFilter);
+        if (managedPatient) {
+          filtered = filtered.filter(apt => 
+            apt.patient_user_id === managedPatient.patient_user_id ||
+            apt.patient_full_name === managedPatient.patient_name
+          );
+        }
+      }
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(apt => 
+        apt.department?.toLowerCase().includes(query) ||
+        apt.token_number.toString().includes(query) ||
+        apt.id.slice(0, 8).toLowerCase().includes(query) ||
+        apt.reason?.toLowerCase().includes(query) ||
+        apt.patient_full_name?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
   };
 
   const getAppointmentsByTab = () => {
@@ -99,6 +215,7 @@ export function AppointmentsSection({
   };
 
   const currentAppointments = getAppointmentsByTab();
+  const hasPatients = managedPatients && managedPatients.length > 0;
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -200,6 +317,21 @@ export function AppointmentsSection({
                 <Badge className={getStatusBadgeClass(apt.status)}>
                   {apt.status}
                 </Badge>
+                {/* Cancel button for upcoming/pending appointments */}
+                {(apt.status === "Upcoming" || apt.status === "Pending") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCancelDialog(apt);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Cancel</span>
+                  </Button>
+                )}
                 {apt.status === "Completed" && (
                   <Button
                     variant="ghost"
@@ -251,26 +383,51 @@ export function AppointmentsSection({
   }
 
   return (
-    <Card variant="glass" className="border-border/30 dark:border-border/20">
-      <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Your Appointments
-          </CardTitle>
-          
-          {/* Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by dept, token, ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9"
-            />
+    <>
+      <Card variant="glass" className="border-border/30 dark:border-border/20">
+        <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Your Appointments
+              </CardTitle>
+              
+              {/* Search */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by dept, token, name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            </div>
+
+            {/* Patient Filter - Only show if there are managed patients */}
+            {hasPatients && (
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Filter by patient:</span>
+                <Select value={patientFilter} onValueChange={setPatientFilter}>
+                  <SelectTrigger className="w-[200px] h-9">
+                    <SelectValue placeholder="All Patients" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    <SelectItem value="all">All Patients</SelectItem>
+                    <SelectItem value="self">{currentUserName || "Myself"}</SelectItem>
+                    {managedPatients?.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.patient_name} ({patient.relationship})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
       <CardContent className="p-4 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -367,5 +524,41 @@ export function AppointmentsSection({
         </Tabs>
       </CardContent>
     </Card>
+
+    {/* Cancel Confirmation Dialog */}
+    <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+      <AlertDialogContent className="bg-background">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            Cancel Appointment
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this appointment?
+            {appointmentToCancel && (
+              <div className="mt-3 p-3 rounded-lg bg-muted/50 space-y-1">
+                <p><strong>Token:</strong> #{appointmentToCancel.token_number}</p>
+                <p><strong>Department:</strong> {appointmentToCancel.department || "General"}</p>
+                <p><strong>Date:</strong> {format(parseISO(appointmentToCancel.appointment_date), "MMM d, yyyy")}</p>
+                {appointmentToCancel.patient_full_name && (
+                  <p><strong>Patient:</strong> {appointmentToCancel.patient_full_name}</p>
+                )}
+              </div>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isCancelling}>Keep Appointment</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleCancelAppointment}
+            disabled={isCancelling}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }
