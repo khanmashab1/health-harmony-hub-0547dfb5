@@ -447,6 +447,41 @@ export type Database = {
         }
         Relationships: []
       }
+      managed_patients: {
+        Row: {
+          created_at: string
+          id: string
+          manager_user_id: string
+          patient_name: string
+          patient_user_id: string
+          relationship: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manager_user_id: string
+          patient_name: string
+          patient_user_id: string
+          relationship?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manager_user_id?: string
+          patient_name?: string
+          patient_user_id?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "managed_patients_patient_user_id_fkey"
+            columns: ["patient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medical_records: {
         Row: {
           comments: string | null

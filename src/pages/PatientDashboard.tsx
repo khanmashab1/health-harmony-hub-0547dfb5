@@ -21,6 +21,7 @@ import { MedicalHistoryTimeline } from "@/components/patient/MedicalHistoryTimel
 import { WriteReviewDialog } from "@/components/patient/WriteReviewDialog";
 import { PrescriptionHistory } from "@/components/patient/PrescriptionHistory";
 import { AppointmentsSection } from "@/components/patient/AppointmentsSection";
+import { PatientSwitcher } from "@/components/patient/PatientSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,6 +35,8 @@ export default function PatientDashboard() {
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
   const [reviewDoctorId, setReviewDoctorId] = useState<string | null>(null);
+  const [selectedManagedPatientId, setSelectedManagedPatientId] = useState<string | null>(null);
+  const [selectedManagedPatientName, setSelectedManagedPatientName] = useState<string | null>(null);
 
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["patient-appointments", user?.id],
@@ -146,17 +149,31 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold">
-                  Welcome, {profile?.name || "Patient"}
+                  Welcome, {selectedManagedPatientName || profile?.name || "Patient"}
                 </h1>
                 <p className="text-muted-foreground font-medium">Manage your health journey</p>
               </div>
             </div>
-            <Link to="/booking">
-              <Button variant="hero">
-                <Calendar className="w-4 h-4 mr-2" />
-                Book Appointment
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Patient Switcher */}
+              {user && (
+                <PatientSwitcher
+                  currentUserId={user.id}
+                  currentUserName={profile?.name || null}
+                  selectedPatientId={selectedManagedPatientId}
+                  onPatientChange={(patientId, patientName) => {
+                    setSelectedManagedPatientId(patientId);
+                    setSelectedManagedPatientName(patientName);
+                  }}
+                />
+              )}
+              <Link to="/booking">
+                <Button variant="hero">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Book Appointment
+                </Button>
+              </Link>
+            </div>
           </motion.div>
 
           {/* Quick Stats */}
