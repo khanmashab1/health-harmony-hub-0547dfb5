@@ -210,8 +210,23 @@ export default function PatientDashboard() {
     );
   }
 
-  const upcomingAppointments = appointments?.filter(a => a.status === "Upcoming" || a.status === "Pending") || [];
-  const completedAppointments = appointments?.filter(a => a.status === "Completed") || [];
+  // Filter appointments based on selected patient for stats
+  const getFilteredAppointments = () => {
+    if (!appointments) return [];
+    if (!selectedManagedPatientId) {
+      // Self - filter by patient_user_id or patient_full_name matching profile name
+      return appointments.filter(a => 
+        a.patient_user_id === user?.id || 
+        a.patient_full_name === profile?.name
+      );
+    }
+    // Managed patient - filter by patient_full_name
+    return appointments.filter(a => a.patient_full_name === selectedManagedPatientName);
+  };
+
+  const filteredAppointments = getFilteredAppointments();
+  const upcomingAppointments = filteredAppointments.filter(a => a.status === "Upcoming" || a.status === "Pending") || [];
+  const completedAppointments = filteredAppointments.filter(a => a.status === "Completed") || [];
 
   return (
     <Layout showFooter={false}>
@@ -221,38 +236,41 @@ export default function PatientDashboard() {
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+            className="flex flex-col gap-4 mb-6 sm:mb-8"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
-                <Heart className="w-7 h-7 text-white" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25 flex-shrink-0">
+                  <Heart className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
+                    Welcome, {selectedManagedPatientName || profile?.name || "Patient"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground font-medium">Manage your health journey</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold">
-                  Welcome, {selectedManagedPatientName || profile?.name || "Patient"}
-                </h1>
-                <p className="text-muted-foreground font-medium">Manage your health journey</p>
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                {/* Patient Switcher */}
+                {user && (
+                  <PatientSwitcher
+                    currentUserId={user.id}
+                    currentUserName={profile?.name || null}
+                    selectedPatientId={selectedManagedPatientId}
+                    onPatientChange={(patientId, patientName) => {
+                      setSelectedManagedPatientId(patientId);
+                      setSelectedManagedPatientName(patientName);
+                    }}
+                  />
+                )}
+                <Link to="/booking">
+                  <Button variant="hero" size="sm" className="sm:size-default">
+                    <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Book Appointment</span>
+                    <span className="sm:hidden">Book</span>
+                  </Button>
+                </Link>
               </div>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Patient Switcher */}
-              {user && (
-                <PatientSwitcher
-                  currentUserId={user.id}
-                  currentUserName={profile?.name || null}
-                  selectedPatientId={selectedManagedPatientId}
-                  onPatientChange={(patientId, patientName) => {
-                    setSelectedManagedPatientId(patientId);
-                    setSelectedManagedPatientName(patientName);
-                  }}
-                />
-              )}
-              <Link to="/booking">
-                <Button variant="hero">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book Appointment
-                </Button>
-              </Link>
             </div>
           </motion.div>
 
@@ -261,13 +279,13 @@ export default function PatientDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8"
           >
             {[
               { label: "Upcoming", value: upcomingAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600" },
               { label: "Completed", value: completedAppointments.length, icon: Activity, color: "from-green-500 to-green-600" },
-              { label: "Total Visits", value: appointments?.length || 0, icon: FileText, color: "from-purple-500 to-purple-600" },
-              { label: "Reviews", value: myReviews?.length || 0, icon: Star, color: "from-yellow-500 to-orange-500" },
+              { label: "Total Visits", value: filteredAppointments.length, icon: FileText, color: "from-purple-500 to-purple-600" },
+              { label: "Reviews", value: selectedManagedPatientId ? 0 : (myReviews?.length || 0), icon: Star, color: "from-yellow-500 to-orange-500" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -276,14 +294,14 @@ export default function PatientDashboard() {
                 transition={{ delay: 0.1 + index * 0.05 }}
               >
                 <Card variant="glass" className="border-white/50 hover:shadow-lg transition-all">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                        <stat.icon className="w-6 h-6 text-white" />
+                  <CardContent className="p-3 sm:p-5">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
+                        <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-3xl font-bold">{stat.value}</p>
-                        <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                      <div className="min-w-0">
+                        <p className="text-2xl sm:text-3xl font-bold truncate">{stat.value}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{stat.label}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -339,11 +357,15 @@ export default function PatientDashboard() {
                   currentUserId={user?.id}
                   currentUserName={profile?.name}
                   selectedManagedPatientId={selectedManagedPatientId}
+                  selectedManagedPatientName={selectedManagedPatientName}
                 />
               </TabsContent>
 
               <TabsContent value="history">
-                <MedicalHistoryTimeline />
+                <MedicalHistoryTimeline 
+                  selectedPatientName={selectedManagedPatientName}
+                  selectedPatientId={selectedManagedPatientId}
+                />
               </TabsContent>
 
               <TabsContent value="profile">
@@ -409,11 +431,17 @@ export default function PatientDashboard() {
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-100/50 to-transparent dark:from-green-900/20">
                     <CardTitle className="flex items-center gap-2">
                       <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      Health Metrics
+                      Health Metrics {selectedManagedPatientName && `- ${selectedManagedPatientName}`}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6">
-                    {user && <HealthMetrics userId={user.id} />}
+                  <CardContent className="p-4 sm:p-6">
+                    {user && (
+                      <HealthMetrics 
+                        userId={user.id} 
+                        selectedPatientName={selectedManagedPatientName}
+                        isViewingManagedPatient={!!selectedManagedPatientId}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -423,11 +451,17 @@ export default function PatientDashboard() {
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-100/50 to-transparent dark:from-purple-900/20">
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      Prescription History
+                      Prescription History {selectedManagedPatientName && `- ${selectedManagedPatientName}`}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6">
-                    {user && <PrescriptionHistory userId={user.id} />}
+                  <CardContent className="p-4 sm:p-6">
+                    {user && (
+                      <PrescriptionHistory 
+                        userId={user.id}
+                        selectedPatientName={selectedManagedPatientName}
+                        selectedPatientId={selectedManagedPatientId}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

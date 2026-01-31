@@ -16,16 +16,21 @@ import { motion } from "framer-motion";
 
 interface PrescriptionHistoryProps {
   userId: string;
+  selectedPatientName?: string | null;
+  selectedPatientId?: string | null;
 }
 
-export function PrescriptionHistory({ userId }: PrescriptionHistoryProps) {
+export function PrescriptionHistory({ userId, selectedPatientName, selectedPatientId }: PrescriptionHistoryProps) {
   const [activeTab, setActiveTab] = useState("all");
+  
+  // Determine if viewing managed patient
+  const isViewingManagedPatient = !!selectedPatientId;
 
   // Fetch completed appointments with prescriptions
   const { data: prescriptions, isLoading } = useQuery({
-    queryKey: ["patient-prescriptions", userId],
+    queryKey: ["patient-prescriptions", userId, selectedPatientId, selectedPatientName],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("appointments")
         .select(`
           *,
@@ -34,10 +39,18 @@ export function PrescriptionHistory({ userId }: PrescriptionHistoryProps) {
             name
           )
         `)
-        .eq("patient_user_id", userId)
         .eq("status", "Completed")
         .not("diagnosis", "is", null)
         .order("appointment_date", { ascending: false });
+
+      // Filter by patient - either by patient_user_id or patient_full_name for managed patients
+      if (isViewingManagedPatient && selectedPatientName) {
+        query = query.eq("patient_full_name", selectedPatientName);
+      } else {
+        query = query.eq("patient_user_id", userId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

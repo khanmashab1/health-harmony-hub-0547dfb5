@@ -54,6 +54,7 @@ interface AppointmentsSectionProps {
   currentUserId?: string;
   currentUserName?: string | null;
   selectedManagedPatientId?: string | null;
+  selectedManagedPatientName?: string | null;
 }
 
 export function AppointmentsSection({ 
@@ -62,7 +63,8 @@ export function AppointmentsSection({
   onWriteReview,
   currentUserId,
   currentUserName,
-  selectedManagedPatientId
+  selectedManagedPatientId,
+  selectedManagedPatientName
 }: AppointmentsSectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -169,22 +171,28 @@ export function AppointmentsSection({
   const filterAppointments = (apts: Appointment[]) => {
     let filtered = apts;
 
-    // Filter by patient
-    if (patientFilter !== "all") {
-      if (patientFilter === "self") {
-        // Show only logged-in user's own appointments
-        filtered = filtered.filter(apt => 
-          apt.patient_user_id === currentUserId || 
-          apt.patient_full_name === currentUserName
-        );
-      } else {
-        // Filter by specific managed patient
-        const managedPatient = managedPatients?.find(p => p.id === patientFilter);
-        if (managedPatient) {
+    // When a managed patient is selected from PatientSwitcher, only show their appointments
+    if (selectedManagedPatientId && selectedManagedPatientName) {
+      filtered = filtered.filter(apt => 
+        apt.patient_full_name === selectedManagedPatientName
+      );
+    } else if (!selectedManagedPatientId) {
+      // When viewing "self", filter based on the dropdown patientFilter
+      if (patientFilter !== "all") {
+        if (patientFilter === "self") {
+          // Show only logged-in user's own appointments
           filtered = filtered.filter(apt => 
-            apt.patient_user_id === managedPatient.patient_user_id ||
-            apt.patient_full_name === managedPatient.patient_name
+            apt.patient_user_id === currentUserId || 
+            apt.patient_full_name === currentUserName
           );
+        } else {
+          // Filter by specific managed patient from dropdown
+          const managedPatient = managedPatients?.find(p => p.id === patientFilter);
+          if (managedPatient) {
+            filtered = filtered.filter(apt => 
+              apt.patient_full_name === managedPatient.patient_name
+            );
+          }
         }
       }
     }
@@ -405,13 +413,15 @@ export function AppointmentsSection({
               </div>
             </div>
 
-            {/* Patient Filter - Only show if there are managed patients */}
-            {hasPatients && (
-              <div className="flex items-center gap-3">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filter by patient:</span>
+            {/* Patient Filter - Only show if there are managed patients AND no patient is selected from PatientSwitcher */}
+            {hasPatients && !selectedManagedPatientId && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Filter by patient:</span>
+                </div>
                 <Select value={patientFilter} onValueChange={setPatientFilter}>
-                  <SelectTrigger className="w-[200px] h-9">
+                  <SelectTrigger className="w-full sm:w-[200px] h-9">
                     <SelectValue placeholder="All Patients" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg z-50">
@@ -424,6 +434,15 @@ export function AppointmentsSection({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            
+            {/* Show active patient indicator when a managed patient is selected */}
+            {selectedManagedPatientId && selectedManagedPatientName && (
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="w-4 h-4 text-primary" />
+                <span className="text-muted-foreground">Showing appointments for:</span>
+                <span className="font-medium text-primary">{selectedManagedPatientName}</span>
               </div>
             )}
           </div>

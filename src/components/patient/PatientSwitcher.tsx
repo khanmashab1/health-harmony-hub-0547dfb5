@@ -170,18 +170,18 @@ export function PatientSwitcher({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="gap-2 border-primary/30 hover:bg-primary/10">
-            <Users className="w-4 h-4 text-primary" />
-            <span className="font-medium truncate max-w-[150px]">{getCurrentPatientName()}</span>
+          <Button variant="outline" className="gap-1.5 sm:gap-2 border-primary/30 hover:bg-primary/10 px-2 sm:px-3">
+            <Users className="w-4 h-4 text-primary flex-shrink-0" />
+            <span className="font-medium truncate max-w-[80px] sm:max-w-[150px]">{getCurrentPatientName()}</span>
             {selectedPatientId && (
-              <Badge variant="secondary" className="text-xs ml-1">
+              <Badge variant="secondary" className="text-[10px] sm:text-xs ml-1 hidden sm:inline-flex">
                 {getCurrentRelationship()}
               </Badge>
             )}
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuContent align="start" className="w-64 max-w-[calc(100vw-2rem)]">
           {/* Self option */}
           <DropdownMenuItem
             onClick={() => onPatientChange(null, null)}

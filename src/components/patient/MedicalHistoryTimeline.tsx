@@ -50,16 +50,25 @@ interface TimelineAppointment {
   doctor?: { name: string | null };
 }
 
-export function MedicalHistoryTimeline() {
+interface MedicalHistoryTimelineProps {
+  selectedPatientName?: string | null;
+  selectedPatientId?: string | null;
+}
+
+export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId }: MedicalHistoryTimelineProps = {}) {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  
+  // Determine if we're viewing a managed patient
+  const isViewingManagedPatient = !!selectedPatientId;
+  
   const { data: appointments, isLoading } = useQuery({
-    queryKey: ["medical-history", user?.id],
+    queryKey: ["medical-history", user?.id, selectedPatientId, selectedPatientName],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("appointments")
         .select(`
           id,
@@ -77,11 +86,20 @@ export function MedicalHistoryTimeline() {
           vitals_weight,
           vitals_heart_rate,
           token_number,
-          doctor_user_id
+          doctor_user_id,
+          patient_full_name
         `)
-        .eq("patient_user_id", user!.id)
         .in("status", ["Completed", "Upcoming", "Pending"])
         .order("appointment_date", { ascending: false });
+
+      // Filter by patient - either by patient_user_id or patient_full_name for managed patients
+      if (isViewingManagedPatient && selectedPatientName) {
+        query = query.eq("patient_full_name", selectedPatientName);
+      } else {
+        query = query.eq("patient_user_id", user!.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -106,8 +124,11 @@ export function MedicalHistoryTimeline() {
   });
 
   const { data: medicalRecords } = useQuery({
-    queryKey: ["medical-records", user?.id],
+    queryKey: ["medical-records", user?.id, selectedPatientId],
     queryFn: async () => {
+      // Medical records are only available for the logged-in user, not managed patients
+      if (isViewingManagedPatient) return [];
+      
       const { data, error } = await supabase
         .from("medical_records")
         .select("*")

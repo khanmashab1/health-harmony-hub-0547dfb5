@@ -38,9 +38,11 @@ type MetricFormValues = z.infer<typeof metricSchema>;
 
 interface HealthMetricsProps {
   userId: string;
+  selectedPatientName?: string | null;
+  isViewingManagedPatient?: boolean;
 }
 
-export function HealthMetrics({ userId }: HealthMetricsProps) {
+export function HealthMetrics({ userId, selectedPatientName, isViewingManagedPatient }: HealthMetricsProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -167,22 +169,43 @@ export function HealthMetrics({ userId }: HealthMetricsProps) {
     </Card>
   );
 
+  // If viewing managed patient, show info message since they don't have health metrics
+  if (isViewingManagedPatient) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Health Metrics for {selectedPatientName}</h3>
+            <p className="text-sm text-muted-foreground">Track health over time</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-2">Health metrics are only available for your own account</p>
+            <p className="text-sm text-muted-foreground">Switch to "Myself" to view and record your personal health metrics</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Add Button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">Health Metrics</h3>
           <p className="text-sm text-muted-foreground">Track your health over time</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Record Metrics
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>Record Health Metrics</DialogTitle>
               <DialogDescription>
