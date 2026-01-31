@@ -38,14 +38,15 @@ export default function PatientDashboard() {
   const [selectedManagedPatientId, setSelectedManagedPatientId] = useState<string | null>(null);
   const [selectedManagedPatientName, setSelectedManagedPatientName] = useState<string | null>(null);
 
-  const { data: appointments, isLoading: loadingAppointments } = useQuery({
-    queryKey: ["patient-appointments", user?.id],
+  // Fetch managed patients first to get all patient IDs
+  const { data: managedPatients } = useQuery({
+    queryKey: ["managed-patients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("appointments")
+        .from("managed_patients")
         .select("*")
-        .eq("patient_user_id", user!.id)
-        .order("appointment_date", { ascending: false });
+        .eq("manager_user_id", user!.id)
+        .order("created_at", { ascending: true });
       
       if (error) throw error;
       return data;
@@ -53,12 +54,58 @@ export default function PatientDashboard() {
     enabled: !!user,
   });
 
-  // Subscribe to realtime appointment updates
+  // Fetch appointments for self AND all managed patients
+  const { data: appointments, isLoading: loadingAppointments } = useQuery({
+    queryKey: ["patient-appointments", user?.id, managedPatients],
+    queryFn: async () => {
+      // Get managed patient names for filtering
+      const managedPatientNames = managedPatients?.map(p => p.patient_name) || [];
+      
+      // Fetch appointments for the logged-in user
+      const { data: selfAppointments, error: selfError } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("patient_user_id", user!.id)
+        .order("appointment_date", { ascending: false });
+      
+      if (selfError) throw selfError;
+
+      // Also fetch appointments made with managed patient names
+      let managedAppointments: any[] = [];
+      if (managedPatientNames.length > 0) {
+        const { data: managed, error: managedError } = await supabase
+          .from("appointments")
+          .select("*")
+          .in("patient_full_name", managedPatientNames)
+          .order("appointment_date", { ascending: false });
+        
+        if (managedError) throw managedError;
+        managedAppointments = managed || [];
+      }
+
+      // Combine and deduplicate by id
+      const allAppointments = [...(selfAppointments || []), ...managedAppointments];
+      const uniqueAppointments = allAppointments.filter((apt, index, self) =>
+        index === self.findIndex((a) => a.id === apt.id)
+      );
+
+      return uniqueAppointments.sort((a, b) => 
+        new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
+      );
+    },
+    enabled: !!user,
+  });
+
+  // Subscribe to realtime appointment updates for self AND managed patients
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('patient-appointments-realtime')
+    // Get managed patient names for realtime filtering
+    const managedPatientNames = managedPatients?.map(p => p.patient_name) || [];
+
+    // Subscribe to own appointments
+    const selfChannel = supabase
+      .channel('patient-appointments-self')
       .on(
         'postgres_changes',
         {
@@ -68,20 +115,18 @@ export default function PatientDashboard() {
           filter: `patient_user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Realtime appointment update:', payload);
+          console.log('Realtime own appointment update:', payload);
+          queryClient.invalidateQueries({ queryKey: ["patient-appointments", user.id, managedPatients] });
           
-          // Invalidate the query to refetch data
-          queryClient.invalidateQueries({ queryKey: ["patient-appointments", user.id] });
-          
-          // Show toast notification for status changes
           if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
             const newStatus = (payload.new as any).status;
             const oldStatus = (payload.old as any).status;
+            const patientName = (payload.new as any).patient_full_name;
             
             if (newStatus !== oldStatus) {
               toast({
                 title: "Appointment Updated",
-                description: `Your appointment status changed to ${newStatus}`,
+                description: `${patientName ? `${patientName}'s` : 'Your'} appointment status changed to ${newStatus}`,
               });
             }
           }
@@ -89,10 +134,45 @@ export default function PatientDashboard() {
       )
       .subscribe();
 
+    // Subscribe to all appointments (we'll filter by patient name in the handler)
+    const allChannel = supabase
+      .channel('patient-appointments-managed')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        (payload) => {
+          const patientName = (payload.new as any)?.patient_full_name;
+          
+          // Check if this is a managed patient's appointment
+          if (patientName && managedPatientNames.includes(patientName)) {
+            console.log('Realtime managed patient appointment update:', payload);
+            queryClient.invalidateQueries({ queryKey: ["patient-appointments", user.id, managedPatients] });
+            
+            if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
+              const newStatus = (payload.new as any).status;
+              const oldStatus = (payload.old as any).status;
+              
+              if (newStatus !== oldStatus) {
+                toast({
+                  title: "Managed Patient Update",
+                  description: `${patientName}'s appointment status changed to ${newStatus}`,
+                });
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(selfChannel);
+      supabase.removeChannel(allChannel);
     };
-  }, [user, queryClient, toast]);
+  }, [user, managedPatients, queryClient, toast]);
 
   // Fetch patient's reviews
   const { data: myReviews, isLoading: loadingReviews } = useQuery({

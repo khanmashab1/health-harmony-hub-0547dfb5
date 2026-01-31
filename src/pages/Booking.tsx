@@ -17,7 +17,8 @@ import {
   Smartphone,
   Loader2,
   Info,
-  ExternalLink
+  ExternalLink,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +79,7 @@ export default function Booking() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsDoctor, setDetailsDoctor] = useState<Doctor | null>(null);
   const [doctorPreloaded, setDoctorPreloaded] = useState(false);
+  const [selectedPatientType, setSelectedPatientType] = useState<"self" | string>("self");
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,6 +117,22 @@ export default function Booking() {
       } as Doctor;
     },
     enabled: !!doctorIdParam,
+  });
+
+  // Fetch managed patients for patient selection
+  const { data: managedPatients } = useQuery({
+    queryKey: ["managed-patients-booking", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("managed_patients")
+        .select("*")
+        .eq("manager_user_id", user!.id)
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
   });
 
   // Fetch doctors based on filters - MUST be called unconditionally (before any returns)
@@ -636,6 +654,53 @@ export default function Booking() {
                 {/* Step 5: Payment & Details */}
                 {step === 5 && (
                   <div className="space-y-6">
+                    {/* Patient Selection */}
+                    {managedPatients && managedPatients.length > 0 && (
+                      <div>
+                        <Label className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          Booking for
+                        </Label>
+                        <Select 
+                          value={selectedPatientType} 
+                          onValueChange={(value) => {
+                            setSelectedPatientType(value);
+                            if (value === "self") {
+                              setPatientName(profile?.name || "");
+                              setPatientPhone(profile?.phone || "");
+                            } else {
+                              const patient = managedPatients.find(p => p.id === value);
+                              if (patient) {
+                                setPatientName(patient.patient_name);
+                                // Keep phone from profile as managed patients don't have separate phones
+                                setPatientPhone(profile?.phone || "");
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select patient" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="self">
+                              <span className="flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                Myself ({profile?.name || "Self"})
+                              </span>
+                            </SelectItem>
+                            {managedPatients.map((patient) => (
+                              <SelectItem key={patient.id} value={patient.id}>
+                                <span className="flex items-center gap-2">
+                                  <Users className="w-4 h-4" />
+                                  {patient.patient_name} ({patient.relationship})
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div>
                       <Label>Payment Method</Label>
                       <RadioGroup
@@ -671,7 +736,7 @@ export default function Booking() {
                         <Input
                           value={patientName}
                           onChange={(e) => setPatientName(e.target.value)}
-                          placeholder="Your full name"
+                          placeholder="Patient full name"
                           className="mt-2"
                         />
                       </div>
