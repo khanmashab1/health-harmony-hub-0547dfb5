@@ -275,19 +275,19 @@ export function AppointmentsSection({
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-primary/60" />
           )}
           
-          <div className="p-4 pl-5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="p-3 sm:p-4 pl-4 sm:pl-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                 {/* Token Badge */}
-                <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center ${
+                <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center ${
                   isTodayAppointment && isActive
                     ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg"
                     : "bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40"
                 }`}>
-                  <span className={`text-xs font-medium ${isTodayAppointment && isActive ? "text-white/80" : "text-muted-foreground"}`}>
+                  <span className={`text-[10px] sm:text-xs font-medium ${isTodayAppointment && isActive ? "text-white/80" : "text-muted-foreground"}`}>
                     Token
                   </span>
-                  <span className={`text-lg font-bold ${isTodayAppointment && isActive ? "text-white" : "text-primary"}`}>
+                  <span className={`text-base sm:text-lg font-bold ${isTodayAppointment && isActive ? "text-white" : "text-primary"}`}>
                     #{apt.token_number}
                   </span>
                 </div>
@@ -295,7 +295,7 @@ export function AppointmentsSection({
                 {/* Appointment Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-foreground truncate">{apt.department || "General"}</p>
+                    <p className="font-semibold text-foreground text-sm sm:text-base truncate">{apt.department || "General"}</p>
                     {isTodayAppointment && isActive && (
                       <span className="flex items-center gap-1 text-green-500 text-xs">
                         <Radio className="w-3 h-3 animate-pulse" />
@@ -303,25 +303,20 @@ export function AppointmentsSection({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {isTodayAppointment ? "Today" : format(aptDate, "MMM d, yyyy")}
                     </span>
-                    {apt.reason && (
-                      <span className="truncate max-w-[150px]" title={apt.reason}>
-                        {apt.reason}
-                      </span>
-                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground/70 mt-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground/70 mt-0.5">
                     ID: {apt.id.slice(0, 8).toUpperCase()}
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 self-end sm:self-center">
                 <Badge className={getStatusBadgeClass(apt.status)}>
                   {apt.status}
                 </Badge>

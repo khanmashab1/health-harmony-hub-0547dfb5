@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
   Users, Play, CheckCircle2, SkipForward, XCircle, 
-  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2
+  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +12,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { MedicineEntry } from "@/components/doctor/MedicineEntry";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Link } from "react-router-dom";
 
 interface QueueManagementPanelProps {
   doctorId: string;
@@ -21,6 +42,18 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const todayStr = format(new Date(), "yyyy-MM-dd");
+  
+  // State for prescription sheet and cancel dialog
+  const [prescriptionAppointment, setPrescriptionAppointment] = useState<any>(null);
+  const [cancelAppointment, setCancelAppointment] = useState<any>(null);
+  
+  // Prescription form state
+  const [diagnosis, setDiagnosis] = useState("");
+  const [allergies, setAllergies] = useState("");
+  const [medicines, setMedicines] = useState("");  // JSON string for MedicineEntry
+  const [labTests, setLabTests] = useState("");
+  const [doctorComments, setDoctorComments] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
 
   // Fetch today's queue
   const { data: queueData, isLoading } = useQuery({
@@ -141,8 +174,62 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     updateStatus.mutate({ appointmentId: nextPatient.id, status: "In Progress" });
   };
 
-  const handleComplete = (appointmentId: string) => {
-    updateStatus.mutate({ appointmentId, status: "Completed" });
+  // Open prescription sheet instead of directly completing
+  const handleOpenPrescription = (appointment: any) => {
+    // Pre-fill form with existing data if any
+    setDiagnosis(appointment.diagnosis || "");
+    setAllergies(appointment.allergies || "");
+    setMedicines(appointment.medicines || "");  // Already a string
+    setLabTests(appointment.lab_tests || "");
+    setDoctorComments(appointment.doctor_comments || "");
+    setFollowUpDate(appointment.follow_up_date || "");
+    setPrescriptionAppointment(appointment);
+  };
+
+  // Save prescription and complete appointment
+  const handleSaveAndComplete = async () => {
+    if (!prescriptionAppointment) return;
+    
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        diagnosis,
+        allergies,
+        medicines,  // Already a JSON string from MedicineEntry
+        lab_tests: labTests,
+        doctor_comments: doctorComments,
+        follow_up_date: followUpDate || null,
+        status: "Completed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", prescriptionAppointment.id);
+    
+    if (error) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+      return;
+    }
+    
+    // Send prescription email if patient has email
+    if (prescriptionAppointment.patient_email) {
+      sendPrescriptionEmail.mutate(prescriptionAppointment.id);
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["doctor-queue", doctorId, todayStr] });
+    queryClient.invalidateQueries({ queryKey: ["doctor-appointments", doctorId] });
+    
+    toast({ 
+      title: "Appointment Completed", 
+      description: "Prescription saved and email sent to patient" 
+    });
+    
+    // Reset form
+    setPrescriptionAppointment(null);
+    setDiagnosis("");
+    setAllergies("");
+    setMedicines("");
+    setLabTests("");
+    setDoctorComments("");
+    setFollowUpDate("");
   };
 
   const handleSkip = (appointmentId: string) => {
@@ -152,6 +239,11 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
 
   const handleNoShow = (appointmentId: string) => {
     updateStatus.mutate({ appointmentId, status: "No Show" });
+  };
+
+  const handleCancelAppointment = (appointmentId: string) => {
+    updateStatus.mutate({ appointmentId, status: "Cancelled" });
+    setCancelAppointment(null);
   };
 
   if (isLoading) {
@@ -275,13 +367,23 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
                     No Show
                   </Button>
                   <Button
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleComplete(currentlyServing.id)}
+                    onClick={() => setCancelAppointment(currentlyServing)}
+                    disabled={updateStatus.isPending}
+                    className="hover:bg-red-500/10 hover:text-red-600 hover:border-red-500"
+                  >
+                    <Ban className="w-4 h-4 mr-1" />
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleOpenPrescription(currentlyServing)}
                     disabled={updateStatus.isPending}
                     className="bg-green-500 hover:bg-green-600"
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                    Complete
+                    <FileText className="w-4 h-4 mr-1" />
+                    Prescription
                   </Button>
                 </div>
               </motion.div>
@@ -361,9 +463,20 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setCancelAppointment(apt)}
+                      disabled={updateStatus.isPending}
+                      className="h-8 w-8 hover:bg-red-500/10 hover:text-red-500"
+                      title="Cancel Appointment"
+                    >
+                      <Ban className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleNoShow(apt.id)}
                       disabled={updateStatus.isPending}
                       className="h-8 w-8 hover:bg-red-500/10 hover:text-red-500"
+                      title="Mark No Show"
                     >
                       <XCircle className="w-4 h-4" />
                     </Button>
@@ -379,6 +492,146 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={!!cancelAppointment} onOpenChange={() => setCancelAppointment(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this appointment for{" "}
+              <strong>{cancelAppointment?.patient_full_name || "this patient"}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleCancelAppointment(cancelAppointment?.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Appointment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Prescription Sheet */}
+      <Sheet open={!!prescriptionAppointment} onOpenChange={() => setPrescriptionAppointment(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-gradient-to-b from-background to-muted/30">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Enter Prescription
+            </SheetTitle>
+            <p className="text-sm text-muted-foreground">
+              For: <strong>{prescriptionAppointment?.patient_full_name || "Patient"}</strong> (Token #{prescriptionAppointment?.token_number})
+            </p>
+          </SheetHeader>
+
+          <div className="space-y-6">
+            {/* Diagnosis */}
+            <div className="space-y-2">
+              <Label htmlFor="diagnosis">Diagnosis</Label>
+              <Textarea
+                id="diagnosis"
+                value={diagnosis}
+                onChange={(e) => setDiagnosis(e.target.value)}
+                placeholder="Enter diagnosis..."
+                className="min-h-[80px]"
+              />
+            </div>
+
+            {/* Allergies */}
+            <div className="space-y-2">
+              <Label htmlFor="allergies">Allergies</Label>
+              <Input
+                id="allergies"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+                placeholder="Known allergies..."
+              />
+            </div>
+
+            {/* Medicines */}
+            <div className="space-y-2">
+              <Label>Medicines</Label>
+              <MedicineEntry
+                value={medicines}
+                onChange={setMedicines}
+              />
+            </div>
+
+            {/* Lab Tests */}
+            <div className="space-y-2">
+              <Label htmlFor="labTests">Lab Tests</Label>
+              <Textarea
+                id="labTests"
+                value={labTests}
+                onChange={(e) => setLabTests(e.target.value)}
+                placeholder="Recommended lab tests..."
+                className="min-h-[60px]"
+              />
+            </div>
+
+            {/* Doctor Comments */}
+            <div className="space-y-2">
+              <Label htmlFor="doctorComments">Doctor's Notes</Label>
+              <Textarea
+                id="doctorComments"
+                value={doctorComments}
+                onChange={(e) => setDoctorComments(e.target.value)}
+                placeholder="Additional notes..."
+                className="min-h-[60px]"
+              />
+            </div>
+
+            {/* Follow-up Date */}
+            <div className="space-y-2">
+              <Label htmlFor="followUpDate">Follow-up Date (Optional)</Label>
+              <Input
+                id="followUpDate"
+                type="date"
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
+                min={format(new Date(), "yyyy-MM-dd")}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPrescriptionAppointment(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-green-500 hover:bg-green-600"
+                onClick={handleSaveAndComplete}
+                disabled={updateStatus.isPending}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Save & Complete
+              </Button>
+            </div>
+
+            {/* Print Link */}
+            {prescriptionAppointment && (
+              <div className="text-center pt-2">
+                <Link
+                  to={`/prescription/${prescriptionAppointment.id}`}
+                  target="_blank"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Preview / Print Prescription
+                </Link>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
