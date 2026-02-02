@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
   Users, Play, CheckCircle2, SkipForward, XCircle, 
-  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban
+  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban, Pause, FlaskConical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -46,6 +46,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
   // State for prescription sheet and cancel dialog
   const [prescriptionAppointment, setPrescriptionAppointment] = useState<any>(null);
   const [cancelAppointment, setCancelAppointment] = useState<any>(null);
+  const [pauseForLabTests, setPauseForLabTests] = useState(false);
   
   // Prescription form state
   const [diagnosis, setDiagnosis] = useState("");
@@ -160,8 +161,9 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     },
   });
 
-  const currentlyServing = queueData?.find(apt => apt.status === "In Progress");
-  const waitingQueue = queueData?.filter(apt => apt.status === "Upcoming") || [];
+  const currentlyServing = queueData?.find(apt => apt.status === "In Progress" && !apt.is_paused);
+  const pausedPatients = queueData?.filter(apt => apt.is_paused === true) || [];
+  const waitingQueue = queueData?.filter(apt => apt.status === "Upcoming" && !apt.is_paused) || [];
   const completedToday = queueData?.filter(apt => apt.status === "Completed") || [];
 
   const handleCallNext = () => {
@@ -175,7 +177,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
   };
 
   // Open prescription sheet instead of directly completing
-  const handleOpenPrescription = (appointment: any) => {
+  const handleOpenPrescription = (appointment: any, forLabTests: boolean = false) => {
     // Pre-fill form with existing data if any
     setDiagnosis(appointment.diagnosis || "");
     setAllergies(appointment.allergies || "");
@@ -183,7 +185,65 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     setLabTests(appointment.lab_tests || "");
     setDoctorComments(appointment.doctor_comments || "");
     setFollowUpDate(appointment.follow_up_date || "");
+    setPauseForLabTests(forLabTests);
     setPrescriptionAppointment(appointment);
+  };
+
+  // Pause appointment for lab tests
+  const handlePauseForLabTests = async () => {
+    if (!prescriptionAppointment) return;
+    
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        diagnosis,
+        allergies,
+        lab_tests: labTests,
+        doctor_comments: doctorComments,
+        is_paused: true,
+        status: "Upcoming", // Move back to upcoming but paused
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", prescriptionAppointment.id);
+    
+    if (error) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+      return;
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["doctor-queue", doctorId, todayStr] });
+    queryClient.invalidateQueries({ queryKey: ["doctor-appointments", doctorId] });
+    
+    toast({ 
+      title: "Paused for Lab Tests", 
+      description: "Patient can return with results. Print the lab tests slip for them." 
+    });
+    
+    // Open lab tests print page in new tab
+    window.open(`/lab-tests/${prescriptionAppointment.id}`, '_blank');
+    
+    // Reset form
+    setPrescriptionAppointment(null);
+    setPauseForLabTests(false);
+    setDiagnosis("");
+    setAllergies("");
+    setMedicines("");
+    setLabTests("");
+    setDoctorComments("");
+    setFollowUpDate("");
+  };
+
+  // Resume paused appointment
+  const handleResume = (appointmentId: string) => {
+    updateStatus.mutate({ appointmentId, status: "In Progress" });
+    // Also unset is_paused
+    supabase
+      .from("appointments")
+      .update({ is_paused: false })
+      .eq("id", appointmentId)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["doctor-queue", doctorId, todayStr] });
+      });
   };
 
   // Save prescription and complete appointment
@@ -200,6 +260,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
         doctor_comments: doctorComments,
         follow_up_date: followUpDate || null,
         status: "Completed",
+        is_paused: false,
         updated_at: new Date().toISOString(),
       })
       .eq("id", prescriptionAppointment.id);
@@ -224,6 +285,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     
     // Reset form
     setPrescriptionAppointment(null);
+    setPauseForLabTests(false);
     setDiagnosis("");
     setAllergies("");
     setMedicines("");
@@ -410,6 +472,67 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
           </AnimatePresence>
         </CardContent>
       </Card>
+
+      {/* Paused for Lab Tests */}
+      {pausedPatients.length > 0 && (
+        <Card variant="glass" className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent dark:from-amber-500/10">
+          <CardHeader className="border-b border-border/30">
+            <CardTitle className="flex items-center gap-2">
+              <Pause className="w-5 h-5 text-amber-500" />
+              Paused for Lab Tests
+              <Badge variant="outline" className="ml-2 border-amber-500/50 text-amber-600 dark:text-amber-400">
+                {pausedPatients.length}
+              </Badge>
+            </CardTitle>
+            <CardDescription>Patients waiting for lab results</CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              {pausedPatients.map((apt) => (
+                <motion.div
+                  key={apt.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                      #{apt.token_number}
+                    </div>
+                    <div>
+                      <p className="font-medium">{apt.patient_full_name || "Patient"}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <FlaskConical className="w-3 h-3" />
+                        Awaiting results
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/lab-tests/${apt.id}`}
+                      target="_blank"
+                    >
+                      <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-600 hover:bg-amber-500/10">
+                        <FlaskConical className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Print Slip</span>
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      onClick={() => handleResume(apt.id)}
+                      disabled={updateStatus.isPending || !!currentlyServing}
+                      className="bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                      <Play className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Resume</span>
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Waiting Queue */}
       <Card variant="glass" className="border-border/30">
@@ -599,22 +722,40 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setPrescriptionAppointment(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1 bg-green-500 hover:bg-green-600"
-                onClick={handleSaveAndComplete}
-                disabled={updateStatus.isPending}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Save & Complete
-              </Button>
+            <div className="flex flex-col gap-3 pt-4">
+              {/* Pause for Lab Tests Button */}
+              {labTests.trim() && (
+                <Button
+                  variant="outline"
+                  className="w-full border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                  onClick={handlePauseForLabTests}
+                  disabled={updateStatus.isPending}
+                >
+                  <Pause className="w-4 h-4 mr-2" />
+                  Pause & Print Lab Tests
+                </Button>
+              )}
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setPrescriptionAppointment(null);
+                    setPauseForLabTests(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-green-500 hover:bg-green-600"
+                  onClick={handleSaveAndComplete}
+                  disabled={updateStatus.isPending}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Save & Complete
+                </Button>
+              </div>
             </div>
 
             {/* Print Link */}
