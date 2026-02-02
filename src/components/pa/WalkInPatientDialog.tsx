@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,8 +62,8 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
       
       if (tokenError) throw tokenError;
       
-      // Create the walk-in appointment
-      const { error: insertError } = await supabase
+      // Create the walk-in appointment with auto-confirmed payment
+      const { data: insertedAppointment, error: insertError } = await supabase
         .from("appointments")
         .insert({
           doctor_user_id: formData.doctorId,
@@ -74,21 +74,27 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
           appointment_date: today,
           token_number: tokenNumber,
           payment_method: "Cash",
-          payment_status: "Pending",
+          payment_status: "Confirmed",  // Auto-confirm for walk-in cash
           status: "Upcoming",
-        });
+        })
+        .select("id")
+        .single();
       
       if (insertError) throw insertError;
       
-      return tokenNumber;
+      return { tokenNumber, appointmentId: insertedAppointment.id };
     },
-    onSuccess: (tokenNumber) => {
+    onSuccess: ({ tokenNumber, appointmentId }) => {
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
       queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
       toast({ 
         title: "Walk-in patient registered", 
-        description: `Token #${tokenNumber} assigned successfully` 
+        description: `Token #${tokenNumber} assigned - Payment auto-confirmed` 
       });
+      
+      // Open token print page in new tab
+      window.open(`/token/${appointmentId}`, '_blank');
+      
       setOpen(false);
       setFormData({
         patientName: "",
@@ -206,7 +212,10 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
                 Registering...
               </>
             ) : (
-              "Register"
+              <>
+                <Printer className="w-4 h-4 mr-2" />
+                Register & Print Token
+              </>
             )}
           </Button>
         </DialogFooter>
