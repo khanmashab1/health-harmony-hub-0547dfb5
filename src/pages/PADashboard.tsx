@@ -730,24 +730,24 @@ export default function PADashboard() {
                                 <motion.div 
                                   key={payment.id} 
                                   whileHover={{ scale: 1.01 }}
-                                  className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 gap-3 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                                 >
-                                  <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                                       payment.payment_method === "Online" 
                                         ? "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30"
                                         : "bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30"
                                     }`}>
-                                      <CreditCard className={`w-6 h-6 ${
+                                      <CreditCard className={`w-5 h-5 sm:w-6 sm:h-6 ${
                                         payment.payment_method === "Online" 
                                           ? "text-yellow-600 dark:text-yellow-500" 
                                           : "text-blue-600 dark:text-blue-500"
                                       }`} />
                                     </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <p className="font-semibold">{payment.patient_full_name}</p>
-                                        <Badge variant="outline" className={`text-xs ${
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="font-semibold truncate">{payment.patient_full_name}</p>
+                                        <Badge variant="outline" className={`text-[10px] sm:text-xs ${
                                           payment.payment_method === "Online"
                                             ? "border-yellow-500/50 text-yellow-600 dark:text-yellow-400"
                                             : "border-blue-500/50 text-blue-600 dark:text-blue-400"
@@ -755,21 +755,21 @@ export default function PADashboard() {
                                           {payment.payment_method}
                                         </Badge>
                                       </div>
-                                      <p className="text-sm text-muted-foreground">
+                                      <p className="text-xs sm:text-sm text-muted-foreground">
                                         {format(new Date(payment.appointment_date), "MMM d, yyyy")} • Token #{payment.token_number}
                                       </p>
-                                      <p className="text-xs text-muted-foreground/70 font-mono">
+                                      <p className="text-[10px] sm:text-xs text-muted-foreground/70 font-mono hidden sm:block">
                                         ID: {payment.id.slice(0, 8)}...
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 flex-shrink-0 self-end sm:self-auto">
                                     {payment.receipt_path && (
                                       <Button
                                         variant="outline"
                                         size="icon"
                                         onClick={() => loadReceipt(payment.receipt_path!)}
-                                        className="hover:bg-brand-50"
+                                        className="hover:bg-brand-50 h-8 w-8 sm:h-9 sm:w-9"
                                       >
                                         <Eye className="w-4 h-4" />
                                       </Button>
@@ -778,14 +778,16 @@ export default function PADashboard() {
                                       size="sm"
                                       variant="hero"
                                       onClick={() => openConfirmDialog(payment)}
+                                      className="text-xs sm:text-sm"
                                     >
-                                      <CheckCircle2 className="w-4 h-4 mr-1" />
-                                      Confirm
+                                      <CheckCircle2 className="w-4 h-4 sm:mr-1" />
+                                      <span className="hidden sm:inline">Confirm</span>
                                     </Button>
                                     <Button
                                       variant="destructive"
                                       size="icon"
                                       onClick={() => openRejectDialog(payment)}
+                                      className="h-8 w-8 sm:h-9 sm:w-9"
                                     >
                                       <XCircle className="w-4 h-4" />
                                     </Button>
@@ -1060,51 +1062,51 @@ export default function PADashboard() {
                           <motion.div 
                             key={apt.id} 
                             whileHover={{ scale: 1.01 }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 gap-3 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/10 dark:to-primary/20 flex items-center justify-center">
-                                <span className="font-bold text-primary">#{apt.token_number}</span>
+                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/10 dark:to-primary/20 flex items-center justify-center flex-shrink-0">
+                                <span className="font-bold text-primary text-sm sm:text-base">#{apt.token_number}</span>
                               </div>
-                              <div>
-                                <p className="font-semibold">{apt.patient_full_name}</p>
-                                <p className="text-sm text-muted-foreground">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-semibold truncate">{apt.patient_full_name}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {format(new Date(apt.appointment_date), "MMM d, yyyy")}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap flex-shrink-0 self-end sm:self-auto">
                               {/* Payment Status Indicator */}
                               {apt.payment_method === "Online" && (
                                 <Badge 
                                   variant={apt.payment_status === "Confirmed" ? "default" : "outline"}
-                                  className={
+                                  className={`text-[10px] sm:text-xs ${
                                     apt.payment_status === "Confirmed" 
                                       ? "bg-green-100 text-green-700 border-green-200" 
                                       : apt.payment_status === "Pending"
                                       ? "bg-yellow-100 text-yellow-700 border-yellow-200"
                                       : "bg-muted text-muted-foreground"
-                                  }
+                                  }`}
                                 >
-                                  <CreditCard className="w-3 h-3 mr-1" />
+                                  <CreditCard className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                                   {apt.payment_status}
                                 </Badge>
                               )}
                               {apt.payment_method === "Cash" && (
-                                <Badge variant="outline" className="bg-muted/50 text-muted-foreground">
-                                  <CreditCard className="w-3 h-3 mr-1" />
+                                <Badge variant="outline" className="bg-muted/50 text-muted-foreground text-[10px] sm:text-xs">
+                                  <CreditCard className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                                   Cash
                                 </Badge>
                               )}
-                              <Badge className={
+                              <Badge className={`text-[10px] sm:text-xs ${
                                 apt.status === "Completed" ? "status-completed" :
                                 apt.status === "Upcoming" ? "status-upcoming" :
                                 apt.status === "Cancelled" ? "status-cancelled" : "status-pending"
-                              }>
+                              }`}>
                                 {apt.status}
                               </Badge>
                               {apt.status === "Pending" && (
-                                <Button size="sm" variant="destructive" onClick={() => cancelAppointment.mutate(apt.id)}>
+                                <Button size="sm" variant="destructive" onClick={() => cancelAppointment.mutate(apt.id)} className="text-xs h-7 px-2 sm:h-8 sm:px-3">
                                   Cancel
                                 </Button>
                               )}
@@ -1163,28 +1165,28 @@ export default function PADashboard() {
                               <motion.div 
                                 key={apt.id}
                                 whileHover={{ scale: 1.01 }}
-                                className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
+                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 hover:shadow-md transition-all"
                               >
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                                     hasVitals 
                                       ? "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30" 
                                       : "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30"
                                   }`}>
-                                    <span className="font-bold text-foreground">#{apt.token_number}</span>
+                                    <span className="font-bold text-foreground text-sm sm:text-base">#{apt.token_number}</span>
                                   </div>
-                                  <div>
-                                    <p className="font-semibold">{apt.patient_full_name}</p>
-                                    <div className="flex gap-2 mt-1 flex-wrap">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold truncate">{apt.patient_full_name}</p>
+                                    <div className="flex gap-1.5 sm:gap-2 mt-1 flex-wrap">
                                       {hasVitals ? (
                                         <>
-                                          {apt.vitals_bp && <Badge variant="outline" className="text-xs">BP: {apt.vitals_bp}</Badge>}
-                                          {apt.vitals_heart_rate && <Badge variant="outline" className="text-xs">HR: {apt.vitals_heart_rate}</Badge>}
-                                          {apt.vitals_temperature && <Badge variant="outline" className="text-xs">Temp: {apt.vitals_temperature}°F</Badge>}
-                                          {apt.vitals_weight && <Badge variant="outline" className="text-xs">Wt: {apt.vitals_weight}kg</Badge>}
+                                          {apt.vitals_bp && <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">BP: {apt.vitals_bp}</Badge>}
+                                          {apt.vitals_heart_rate && <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">HR: {apt.vitals_heart_rate}</Badge>}
+                                          {apt.vitals_temperature && <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">Temp: {apt.vitals_temperature}°F</Badge>}
+                                          {apt.vitals_weight && <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">Wt: {apt.vitals_weight}kg</Badge>}
                                         </>
                                       ) : (
-                                        <span className="text-sm text-muted-foreground">No vitals recorded</span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground">No vitals recorded</span>
                                       )}
                                     </div>
                                   </div>
@@ -1196,6 +1198,7 @@ export default function PADashboard() {
                                     setSelectedVitalsAppointment(apt);
                                     setVitalsDialogOpen(true);
                                   }}
+                                  className="w-full sm:w-auto flex-shrink-0"
                                 >
                                   <Activity className="w-4 h-4 mr-2" />
                                   {hasVitals ? "Update" : "Record"} Vitals
