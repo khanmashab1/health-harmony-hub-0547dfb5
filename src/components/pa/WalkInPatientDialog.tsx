@@ -116,8 +116,8 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
           <span className="sm:hidden">Walk-in</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
             Register Walk-in Patient
@@ -127,7 +127,7 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1">
           <div className="space-y-2">
             <Label htmlFor="doctor">Select Doctor *</Label>
             <Select
@@ -191,13 +191,14 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="flex-shrink-0 pt-4 border-t border-border">
+          <Button variant="outline" onClick={() => setOpen(false)} className="flex-1 sm:flex-none">
             Cancel
           </Button>
           <Button 
             onClick={() => createWalkInAppointment.mutate()}
             disabled={createWalkInAppointment.isPending || !formData.doctorId || !formData.patientName}
+            className="flex-1 sm:flex-none"
           >
             {createWalkInAppointment.isPending ? (
               <>
@@ -205,7 +206,7 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
                 Registering...
               </>
             ) : (
-              "Register Patient"
+              "Register"
             )}
           </Button>
         </DialogFooter>
