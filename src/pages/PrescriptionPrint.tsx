@@ -289,15 +289,17 @@ export default function PrescriptionPrint() {
               <div className="bg-muted/50 rounded-lg p-3 border border-border/50 print:p-2">
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 print:mb-1">Patient Details</h3>
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
-                    {appointment.patientProfile?.patient_id && (
-                      <span className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                        {appointment.patientProfile.patient_id}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-1">
+                  <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
+                  
+                  {/* Patient ID - Prominent display */}
+                  {appointment.patientProfile?.patient_id && (
+                    <div className="mt-2 p-2 rounded-md bg-primary/10 border border-primary/20">
+                      <p className="text-[10px] font-medium text-primary uppercase tracking-wider">Patient ID</p>
+                      <p className="text-sm font-mono font-bold text-primary">{appointment.patientProfile.patient_id}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {appointment.patientProfile?.age && (
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <CalendarDays className="w-2.5 h-2.5" />
