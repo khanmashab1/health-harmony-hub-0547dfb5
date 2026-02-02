@@ -94,8 +94,11 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Generate prescription URL for verification and download
-    const prescriptionUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app').replace('https://', 'https://id-preview--')}/verify/${appointmentId}`;
-    const downloadUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app').replace('https://', 'https://id-preview--')}/prescription/${appointmentId}`;
+    // Use the project ID to build the correct preview URL
+    const projectId = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+    const baseUrl = `https://id-preview--${projectId}.lovable.app`;
+    const prescriptionUrl = `${baseUrl}/verify/${appointmentId}`;
+    const downloadUrl = `${baseUrl}/prescription/${appointmentId}`;
 
     // Parse medicines
     let medicinesHtml = "";
