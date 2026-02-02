@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
   Users, Play, CheckCircle2, SkipForward, XCircle, 
-  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban, Pause, FlaskConical
+  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban, Pause, FlaskConical, Search
 } from "lucide-react";
+import { PausedPatientsSection } from "./PausedPatientsSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -475,63 +476,11 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
 
       {/* Paused for Lab Tests */}
       {pausedPatients.length > 0 && (
-        <Card variant="glass" className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent dark:from-amber-500/10">
-          <CardHeader className="border-b border-border/30">
-            <CardTitle className="flex items-center gap-2">
-              <Pause className="w-5 h-5 text-amber-500" />
-              Paused for Lab Tests
-              <Badge variant="outline" className="ml-2 border-amber-500/50 text-amber-600 dark:text-amber-400">
-                {pausedPatients.length}
-              </Badge>
-            </CardTitle>
-            <CardDescription>Patients waiting for lab results</CardDescription>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              {pausedPatients.map((apt) => (
-                <motion.div
-                  key={apt.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/20"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                      #{apt.token_number}
-                    </div>
-                    <div>
-                      <p className="font-medium">{apt.patient_full_name || "Patient"}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <FlaskConical className="w-3 h-3" />
-                        Awaiting results
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={`/lab-tests/${apt.id}`}
-                      target="_blank"
-                    >
-                      <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-600 hover:bg-amber-500/10">
-                        <FlaskConical className="w-4 h-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Print Slip</span>
-                      </Button>
-                    </Link>
-                    <Button
-                      size="sm"
-                      onClick={() => handleResume(apt.id)}
-                      disabled={updateStatus.isPending || !!currentlyServing}
-                      className="bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                      <Play className="w-4 h-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Resume</span>
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <PausedPatientsSection
+          pausedPatients={pausedPatients}
+          onResume={handleResume}
+          isResumeDisabled={updateStatus.isPending || !!currentlyServing}
+        />
       )}
 
       {/* Waiting Queue */}

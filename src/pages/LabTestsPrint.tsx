@@ -135,12 +135,16 @@ export default function LabTestsPrint() {
               <div className="bg-muted/50 rounded-lg p-3 border border-border/50">
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Patient Details</h3>
                 <p className="text-sm font-bold text-foreground">{appointment.patient_full_name}</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {appointment.patientProfile?.patient_id && (
-                    <span className="text-xs font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                      {appointment.patientProfile.patient_id}
-                    </span>
-                  )}
+                
+                {/* Patient ID - Prominent display */}
+                {appointment.patientProfile?.patient_id && (
+                  <div className="mt-2 p-2 rounded-md bg-primary/10 border border-primary/20">
+                    <p className="text-[10px] font-medium text-primary uppercase tracking-wider">Patient ID</p>
+                    <p className="text-sm font-mono font-bold text-primary">{appointment.patientProfile.patient_id}</p>
+                  </div>
+                )}
+                
+                <div className="flex flex-wrap gap-2 mt-2">
                   {appointment.patientProfile?.age && (
                     <span className="text-xs text-muted-foreground">{appointment.patientProfile.age} yrs</span>
                   )}
