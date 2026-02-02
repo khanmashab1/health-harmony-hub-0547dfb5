@@ -316,7 +316,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
             <Badge className="bg-green-500 text-white animate-pulse">Live</Badge>
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <AnimatePresence mode="wait">
             {currentlyServing ? (
               <motion.div
@@ -324,14 +324,14 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center justify-between"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                    <span className="text-3xl font-bold text-white">#{currentlyServing.token_number}</span>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                    <span className="text-2xl sm:text-3xl font-bold text-white">#{currentlyServing.token_number}</span>
                   </div>
-                  <div>
-                    <p className="text-xl font-bold">{currentlyServing.patient_full_name || "Patient"}</p>
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-xl font-bold truncate">{currentlyServing.patient_full_name || "Patient"}</p>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
                         <Phone className="w-3 h-3" />
@@ -339,48 +339,48 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
                       </span>
                     </div>
                     {currentlyServing.reason && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1 truncate">
                         Reason: {currentlyServing.reason}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleSkip(currentlyServing.id)}
                     disabled={updateStatus.isPending}
-                    className="hover:bg-yellow-500/10 hover:text-yellow-600 hover:border-yellow-500"
+                    className="hover:bg-yellow-500/10 hover:text-yellow-600 hover:border-yellow-500 flex-1 sm:flex-none min-w-[70px]"
                   >
-                    <SkipForward className="w-4 h-4 mr-1" />
-                    Skip
+                    <SkipForward className="w-4 h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Skip</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleNoShow(currentlyServing.id)}
                     disabled={updateStatus.isPending}
-                    className="hover:bg-red-500/10 hover:text-red-600 hover:border-red-500"
+                    className="hover:bg-red-500/10 hover:text-red-600 hover:border-red-500 flex-1 sm:flex-none min-w-[70px]"
                   >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    No Show
+                    <XCircle className="w-4 h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">No Show</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCancelAppointment(currentlyServing)}
                     disabled={updateStatus.isPending}
-                    className="hover:bg-red-500/10 hover:text-red-600 hover:border-red-500"
+                    className="hover:bg-red-500/10 hover:text-red-600 hover:border-red-500 flex-1 sm:flex-none min-w-[70px]"
                   >
-                    <Ban className="w-4 h-4 mr-1" />
-                    Cancel
+                    <Ban className="w-4 h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Cancel</span>
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => handleOpenPrescription(currentlyServing)}
                     disabled={updateStatus.isPending}
-                    className="bg-green-500 hover:bg-green-600"
+                    className="bg-green-500 hover:bg-green-600 w-full sm:w-auto"
                   >
                     <FileText className="w-4 h-4 mr-1" />
                     Prescription
