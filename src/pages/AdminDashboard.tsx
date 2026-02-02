@@ -24,7 +24,8 @@ import {
   Palette,
   ExternalLink,
   HardDrive,
-  Pill
+  Pill,
+  Video
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +75,7 @@ import { BackupPanel } from "@/components/admin/BackupPanel";
 import { HeroSlidesPanel } from "@/components/admin/HeroSlidesPanel";
 import { BrandingPanel } from "@/components/admin/BrandingPanel";
 import { MedicinesPanel } from "@/components/admin/MedicinesPanel";
+import { VideoPanel } from "@/components/admin/VideoPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -384,12 +386,16 @@ export default function AdminDashboard() {
                 <TabsTrigger value="branding" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Palette className="w-4 h-4 mr-1 sm:mr-2" />Branding
                 </TabsTrigger>
+                <TabsTrigger value="video" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Video className="w-4 h-4 mr-1 sm:mr-2" />Video
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
               <TabsContent value="performance"><DoctorPerformancePanel /></TabsContent>
               <TabsContent value="slides"><HeroSlidesPanel /></TabsContent>
               <TabsContent value="branding"><BrandingPanel /></TabsContent>
+              <TabsContent value="video"><VideoPanel /></TabsContent>
               <TabsContent value="medicines"><MedicinesPanel /></TabsContent>
 
               {/* Users Tab */}

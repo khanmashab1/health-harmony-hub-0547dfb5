@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
+import { IntroVideo } from "@/components/home/IntroVideo";
 import doctorConsultationImg from "@/assets/doctor-consultation.png";
 
 const specialties = [
@@ -610,6 +611,9 @@ export default function Index() {
           )}
         </div>
       </section>
+
+      {/* Intro Video Section */}
+      <IntroVideo />
 
       {/* Dashboard CTA for logged in users */}
       {user && profile && (

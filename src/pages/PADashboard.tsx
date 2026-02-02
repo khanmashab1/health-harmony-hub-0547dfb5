@@ -52,6 +52,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { VitalsEntryDialog } from "@/components/pa/VitalsEntryDialog";
+import { WalkInPatientDialog } from "@/components/pa/WalkInPatientDialog";
 import { exportPaymentHistoryCSV, exportPaymentHistoryPDF } from "@/lib/exportUtils";
 
 export default function PADashboard() {
@@ -520,6 +521,10 @@ export default function PADashboard() {
                 <p className="text-muted-foreground font-medium">Personal Assistant</p>
               </div>
             </div>
+            {/* Walk-in Patient Button */}
+            {assignments && assignments.length > 0 && (
+              <WalkInPatientDialog assignedDoctors={assignments} />
+            )}
           </motion.div>
 
           {/* Assigned Doctors */}
