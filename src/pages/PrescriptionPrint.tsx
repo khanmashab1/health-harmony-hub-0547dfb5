@@ -45,12 +45,12 @@ export default function PrescriptionPrint() {
         .eq("id", data.doctor_user_id)
         .single();
 
-      // Get patient profile for age and gender
+      // Get patient profile for age, gender, and patient_id
       let patientProfile = null;
       if (data.patient_user_id) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("age, gender")
+          .select("age, gender, patient_id")
           .eq("id", data.patient_user_id)
           .single();
         patientProfile = profile;
@@ -289,7 +289,14 @@ export default function PrescriptionPrint() {
               <div className="bg-muted/50 rounded-lg p-3 border border-border/50 print:p-2">
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 print:mb-1">Patient Details</h3>
                 <div className="space-y-0.5">
-                  <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-bold text-foreground print:text-sm">{appointment.patient_full_name}</p>
+                    {appointment.patientProfile?.patient_id && (
+                      <span className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                        {appointment.patientProfile.patient_id}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {appointment.patientProfile?.age && (
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -311,7 +318,7 @@ export default function PrescriptionPrint() {
                     </p>
                   )}
                   {appointment.allergies && (
-                    <p className="text-[10px] text-red-600 mt-1 font-medium">⚠️ Allergies: {appointment.allergies}</p>
+                    <p className="text-[10px] text-destructive mt-1 font-medium">⚠️ Allergies: {appointment.allergies}</p>
                   )}
                 </div>
               </div>

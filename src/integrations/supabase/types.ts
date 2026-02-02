@@ -26,6 +26,7 @@ export type Database = {
           follow_up_date: string | null
           follow_up_reminder_sent: boolean | null
           id: string
+          is_paused: boolean | null
           lab_tests: string | null
           medicines: string | null
           patient_email: string | null
@@ -55,6 +56,7 @@ export type Database = {
           follow_up_date?: string | null
           follow_up_reminder_sent?: boolean | null
           id?: string
+          is_paused?: boolean | null
           lab_tests?: string | null
           medicines?: string | null
           patient_email?: string | null
@@ -84,6 +86,7 @@ export type Database = {
           follow_up_date?: string | null
           follow_up_reminder_sent?: boolean | null
           id?: string
+          is_paused?: boolean | null
           lab_tests?: string | null
           medicines?: string | null
           patient_email?: string | null
@@ -609,6 +612,7 @@ export type Database = {
           gender: string | null
           id: string
           name: string | null
+          patient_id: string | null
           phone: string | null
           province: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -625,6 +629,7 @@ export type Database = {
           gender?: string | null
           id: string
           name?: string | null
+          patient_id?: string | null
           phone?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -641,6 +646,7 @@ export type Database = {
           gender?: string | null
           id?: string
           name?: string | null
+          patient_id?: string | null
           phone?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]

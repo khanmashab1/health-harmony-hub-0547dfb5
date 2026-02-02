@@ -41,10 +41,22 @@ export default function TokenPrint() {
         .eq("id", data.doctor_user_id)
         .single();
 
+      // Get patient profile for patient_id
+      let patientProfile = null;
+      if (data.patient_user_id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("patient_id")
+          .eq("id", data.patient_user_id)
+          .single();
+        patientProfile = profile;
+      }
+
       return {
         ...data,
         doctor,
         doctorProfile,
+        patientProfile,
       };
     },
   });
@@ -201,25 +213,33 @@ export default function TokenPrint() {
                 </div>
               </div>
 
-              {/* Unique Appointment ID for PA Search */}
-              <div className="p-3 border rounded-lg bg-muted/50 mt-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Appointment ID</p>
-                    <p className="font-mono text-sm font-bold text-foreground">{appointment.id.slice(0, 8).toUpperCase()}</p>
+              {/* Patient ID and Appointment ID for PA Search */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {appointment.patientProfile?.patient_id && (
+                  <div className="p-3 border rounded-lg bg-primary/5">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Patient ID</p>
+                    <p className="font-mono text-sm font-bold text-primary">{appointment.patientProfile.patient_id}</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(appointment.id.slice(0, 8).toUpperCase());
-                      toast({ title: "Copied!", description: "Appointment ID copied to clipboard" });
-                    }}
-                    className="p-2 hover:bg-muted rounded no-print"
-                  >
-                    <Copy className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                )}
+                <div className="p-3 border rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Token ID</p>
+                      <p className="font-mono text-sm font-bold text-foreground">{appointment.id.slice(0, 8).toUpperCase()}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(appointment.id.slice(0, 8).toUpperCase());
+                        toast({ title: "Copied!", description: "Token ID copied to clipboard" });
+                      }}
+                      className="p-2 hover:bg-muted rounded no-print"
+                    >
+                      <Copy className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">Share this ID with PA for quick payment verification</p>
               </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Use Patient ID or Token ID for quick search</p>
 
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Payment Status</span>
