@@ -95,27 +95,27 @@ export function LiveQueuePosition({
             ? "border-blue-500/50 bg-blue-500/5 dark:bg-blue-500/10"
             : "border-primary/30 bg-primary/5 dark:bg-primary/10"
       }`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             {/* Left side - Status */}
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                 isBeingServed 
                   ? "bg-green-500 animate-pulse" 
                   : isNext 
                     ? "bg-blue-500 animate-pulse"
                     : "bg-primary/20"
               }`}>
-                <Radio className={`w-5 h-5 ${
+                <Radio className={`w-4 h-4 sm:w-5 sm:h-5 ${
                   isBeingServed || isNext ? "text-white" : "text-primary"
                 }`} />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-sm">
                     {isBeingServed ? "Your Turn!" : isNext ? "You're Next!" : "Queue Position"}
                   </span>
-                  <Badge className={`text-xs ${
+                  <Badge className={`text-[10px] sm:text-xs ${
                     isBeingServed 
                       ? "bg-green-500 text-white" 
                       : isNext 
@@ -125,7 +125,7 @@ export function LiveQueuePosition({
                     Live
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                   {isBeingServed 
                     ? "Please proceed to the doctor's room" 
                     : isNext
@@ -137,29 +137,29 @@ export function LiveQueuePosition({
             </div>
 
             {/* Right side - Token info */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-4">
               {/* Currently Serving */}
-              <div className="text-center px-3 py-1 rounded-lg bg-background/50 dark:bg-background/30">
-                <p className="text-xs text-muted-foreground">Serving</p>
-                <p className="text-lg font-bold text-green-500">
+              <div className="text-center px-3 py-1.5 sm:py-1 rounded-lg bg-background/50 dark:bg-background/30 flex-1 sm:flex-initial">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Serving</p>
+                <p className="text-base sm:text-lg font-bold text-green-500">
                   {currentlyServing > 0 ? `#${currentlyServing}` : "—"}
                 </p>
               </div>
 
-              <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
 
               {/* Your Token */}
-              <div className={`text-center px-4 py-1 rounded-lg ${
+              <div className={`text-center px-3 sm:px-4 py-1.5 sm:py-1 rounded-lg flex-1 sm:flex-initial ${
                 isBeingServed 
                   ? "bg-green-500 text-white" 
                   : isNext 
                     ? "bg-blue-500 text-white"
                     : "bg-primary/20"
               }`}>
-                <p className={`text-xs ${isBeingServed || isNext ? "text-white/80" : "text-muted-foreground"}`}>
+                <p className={`text-[10px] sm:text-xs ${isBeingServed || isNext ? "text-white/80" : "text-muted-foreground"}`}>
                   Your Token
                 </p>
-                <p className="text-lg font-bold">#{patientTokenNumber}</p>
+                <p className="text-base sm:text-lg font-bold">#{patientTokenNumber}</p>
               </div>
             </div>
           </div>
