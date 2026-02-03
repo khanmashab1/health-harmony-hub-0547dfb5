@@ -115,8 +115,8 @@ export default function Index() {
 
   return (
     <Layout>
-      {/* Hero Section - Dark themed */}
-      <section className="relative min-h-[calc(100vh-72px)] md:min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-[#0a1628]">
+      {/* Hero Section - Theme aware */}
+      <section className="relative min-h-[calc(100vh-72px)] md:min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted dark:from-[#0a1628] dark:via-[#0d1d35] dark:to-[#0a1628]">
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
@@ -140,11 +140,11 @@ export default function Index() {
               transition={{ duration: 0.6 }}
               className="space-y-4 md:space-y-6 text-center lg:text-left"
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-white">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-foreground">
                 Your Health, Our <span className="text-primary">Priority</span>
               </h1>
 
-              <p className="text-base md:text-lg text-gray-300 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Book appointments with top doctors, track your health metrics, and get expert medical advice.
               </p>
 
@@ -167,19 +167,19 @@ export default function Index() {
               {/* Quick Stats */}
               <div className="flex flex-wrap gap-4 md:gap-8 pt-4 md:pt-6 justify-center lg:justify-start">
                 <div className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold text-white">{stats?.doctors || 0}+</p>
-                  <p className="text-xs md:text-sm text-gray-400">Expert Doctors</p>
+                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.doctors || 0}+</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Expert Doctors</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold text-white">{stats?.patients || 0}+</p>
-                  <p className="text-xs md:text-sm text-gray-400">Happy Patients</p>
+                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Happy Patients</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
-                    <p className="text-2xl md:text-3xl font-bold text-white">{stats?.rating || "4.8"}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.rating || "4.8"}</p>
                   </div>
-                  <p className="text-xs md:text-sm text-gray-400">Average Rating</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Average Rating</p>
                 </div>
               </div>
             </motion.div>
@@ -204,7 +204,7 @@ export default function Index() {
                   <img 
                     src={doctorConsultationImg} 
                     alt="Doctor consulting with patient" 
-                    className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl border-4 border-white/10"
+                    className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl border-4 border-border/20"
                   />
                 </motion.div>
               </div>

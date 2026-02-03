@@ -533,78 +533,56 @@ export default function Booking() {
                         <button
                           key={doc.user_id}
                           onClick={() => setSelectedDoctor(doc)}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          className={`w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all ${
                             selectedDoctor?.user_id === doc.user_id
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
                           }`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                            {/* Avatar & Name */}
-                            <div className="flex items-center gap-3 sm:gap-4">
-                              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <User className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
-                              </div>
-                              <div className="sm:hidden">
-                                <h3 className="font-semibold text-base">Dr. {doc.profile?.name || "Doctor"}</h3>
-                                <p className="text-sm text-muted-foreground">{doc.specialty}</p>
-                                {doc.degree && (
-                                  <p className="text-xs text-primary font-medium">{doc.degree}</p>
-                                )}
-                              </div>
+                          <div className="flex items-start gap-3">
+                            {/* Avatar */}
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <User className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                             </div>
 
-                            {/* Desktop: Name & Details */}
-                            <div className="hidden sm:block flex-1">
-                              <h3 className="font-semibold text-lg">Dr. {doc.profile?.name || "Doctor"}</h3>
-                              <p className="text-sm text-muted-foreground">{doc.specialty}</p>
-                              {doc.degree && (
-                                <p className="text-xs text-primary font-medium mt-1">{doc.degree}</p>
-                              )}
-                              <div className="flex items-center gap-4 mt-2 text-sm">
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <h3 className="font-semibold text-sm sm:text-base truncate">Dr. {doc.profile?.name || "Doctor"}</h3>
+                                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{doc.specialty}</p>
+                                  {doc.degree && (
+                                    <p className="text-xs text-primary font-medium">{doc.degree}</p>
+                                  )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-sm sm:text-lg font-bold text-primary">Rs. {doc.fee}</p>
+                                  <p className="text-[10px] sm:text-xs text-muted-foreground">per visit</p>
+                                </div>
+                              </div>
+                              
+                              {/* Stats Row */}
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-500" />
                                   {doc.rating || 4.5}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  {doc.experience_years || 0} yrs exp
+                                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  {doc.experience_years || 0} yrs
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  <MapPin className="w-4 h-4" />
-                                  {doc.city}
+                                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="truncate max-w-[80px] sm:max-w-none">{doc.city}</span>
                                 </span>
                               </div>
-                            </div>
 
-                            {/* Mobile: Stats Row */}
-                            <div className="sm:hidden flex items-center justify-between w-full">
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                  {doc.rating || 4.5}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3.5 h-3.5" />
-                                  {doc.experience_years || 0}y
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3.5 h-3.5" />
-                                  {doc.city}
-                                </span>
-                              </div>
-                              <p className="text-base font-bold text-primary">Rs. {doc.fee}</p>
-                            </div>
-
-                            {/* Desktop: Price & Links */}
-                            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
-                              <p className="text-lg font-bold text-primary">Rs. {doc.fee}</p>
-                              <p className="text-xs text-muted-foreground">per visit</p>
-                              <div className="flex flex-col gap-1">
+                              {/* Links */}
+                              <div className="flex items-center gap-3 mt-2">
                                 <Link
                                   to={`/doctor/${doc.user_id}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                                  className="flex items-center gap-1 text-[10px] sm:text-xs text-primary hover:underline"
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                   Full Profile
@@ -615,7 +593,7 @@ export default function Booking() {
                                     setDetailsDoctor(doc);
                                     setDetailsDialogOpen(true);
                                   }}
-                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+                                  className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground hover:text-primary"
                                 >
                                   <Info className="w-3 h-3" />
                                   Quick View
