@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { DoctorDetailsDialog } from "@/components/booking/DoctorDetailsDialog";
 import { DoctorSearchFilter } from "@/components/booking/DoctorSearchFilter";
+import { DoctorScheduleDisplay } from "@/components/booking/DoctorScheduleDisplay";
 
 interface Doctor {
   user_id: string;
@@ -49,6 +50,7 @@ interface Doctor {
   bio: string | null;
   degree: string | null;
   qualifications: string | null;
+  consultation_duration: number | null;
   profile?: { name: string | null };
 }
 
@@ -599,6 +601,14 @@ export default function Booking() {
                                   Quick View
                                 </button>
                               </div>
+
+                              {/* Schedule Display */}
+                              <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                <DoctorScheduleDisplay 
+                                  doctorId={doc.user_id} 
+                                  compact={true}
+                                />
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -623,38 +633,46 @@ export default function Booking() {
                   <div className="space-y-6">
                     {/* Selected Doctor Summary Card */}
                     {selectedDoctor && (
-                      <div className="flex items-center gap-4 p-4 rounded-xl border bg-muted/50">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <User className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold truncate">
-                            Dr. {selectedDoctor.profile?.name || "Doctor"}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Stethoscope className="w-3.5 h-3.5" />
-                              {selectedDoctor.specialty}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                              {selectedDoctor.rating || 4.0}
-                            </span>
-                            <span className="font-medium text-primary">
-                              Rs. {selectedDoctor.fee}
-                            </span>
+                      <div className="p-4 rounded-xl border bg-muted/50 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <User className="w-6 h-6 text-primary" />
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold truncate">
+                              Dr. {selectedDoctor.profile?.name || "Doctor"}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Stethoscope className="w-3.5 h-3.5" />
+                                {selectedDoctor.specialty}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                {selectedDoctor.rating || 4.0}
+                              </span>
+                              <span className="font-medium text-primary">
+                                Rs. {selectedDoctor.fee}
+                              </span>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setDoctorPreloaded(false);
+                              setStep(3);
+                            }}
+                          >
+                            Change
+                          </Button>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setDoctorPreloaded(false);
-                            setStep(3);
-                          }}
-                        >
-                          Change
-                        </Button>
+                        
+                        {/* Full Schedule Display */}
+                        <DoctorScheduleDisplay 
+                          doctorId={selectedDoctor.user_id} 
+                          consultationDuration={selectedDoctor.consultation_duration}
+                        />
                       </div>
                     )}
 
