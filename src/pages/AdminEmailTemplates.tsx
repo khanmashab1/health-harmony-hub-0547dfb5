@@ -168,11 +168,11 @@ export default function AdminEmailTemplates() {
   if (loading || isLoading) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20 py-8">
+        <div className="min-h-screen admin-gradient py-8">
           <div className="container mx-auto px-4">
-            <Skeleton className="h-12 w-64 mb-8" />
+            <Skeleton className="h-12 w-64 mb-8 bg-slate-700" />
             <div className="grid gap-4">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 bg-slate-700" />)}
             </div>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function AdminEmailTemplates() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20">
+      <div className="min-h-screen admin-gradient">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div 
@@ -194,23 +194,25 @@ export default function AdminEmailTemplates() {
               <Mail className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Email Templates</h1>
-              <p className="text-muted-foreground">Customize email branding and content</p>
+              <h1 className="text-3xl font-bold text-white">Email Templates</h1>
+              <p className="text-slate-400">
+                Customize email branding and <span className="text-pink-400">content</span>
+              </p>
             </div>
           </motion.div>
 
           {/* Template Variables Reference */}
-          <Card className="mb-8">
+          <Card className="mb-8 admin-card text-white border-slate-700/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Available Variables</CardTitle>
-              <CardDescription>Use these placeholders in your templates</CardDescription>
+              <CardTitle className="text-lg text-white">Available Variables</CardTitle>
+              <CardDescription className="text-slate-400">Use these placeholders in your templates</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATE_VARIABLES.map((v) => (
-                  <div key={v.var} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
-                    <code className="text-sm font-mono text-primary">{v.var}</code>
-                    <span className="text-xs text-muted-foreground">— {v.desc}</span>
+                  <div key={v.var} className="variable-badge">
+                    <code className="text-sm font-mono text-pink-400">{v.var}</code>
+                    <span className="text-xs text-slate-400">— {v.desc}</span>
                   </div>
                 ))}
               </div>
@@ -219,9 +221,13 @@ export default function AdminEmailTemplates() {
 
           {/* Templates */}
           <Tabs defaultValue={templates?.[0]?.template_type || "payment_confirmed"}>
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 bg-slate-800/50 border border-slate-700/50">
               {templates?.map((t) => (
-                <TabsTrigger key={t.template_type} value={t.template_type}>
+                <TabsTrigger 
+                  key={t.template_type} 
+                  value={t.template_type}
+                  className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400"
+                >
                   {TEMPLATE_LABELS[t.template_type]?.label || t.template_type}
                 </TabsTrigger>
               ))}
@@ -233,7 +239,7 @@ export default function AdminEmailTemplates() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <Card>
+                  <Card className="admin-card text-white border-slate-700/50">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>

@@ -231,10 +231,10 @@ Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of
   if (loading) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20 py-8">
+        <div className="min-h-screen admin-gradient py-8">
           <div className="container mx-auto px-4">
-            <Skeleton className="h-12 w-64 mb-8" />
-            <Skeleton className="h-64" />
+            <Skeleton className="h-12 w-64 mb-8 bg-slate-700" />
+            <Skeleton className="h-64 bg-slate-700" />
           </div>
         </div>
       </Layout>
@@ -243,7 +243,7 @@ Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20">
+      <div className="min-h-screen admin-gradient">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div 
@@ -255,8 +255,10 @@ Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of
               <Database className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Disease & Symptoms Dataset</h1>
-              <p className="text-muted-foreground">Manage the RAG knowledge base for AI symptom analysis</p>
+              <h1 className="text-3xl font-bold text-white">Disease & Symptoms Dataset</h1>
+              <p className="text-slate-400">
+                Manage the RAG knowledge base for <span className="text-emerald-400">AI symptom</span> analysis
+              </p>
             </div>
           </motion.div>
 
@@ -267,50 +269,50 @@ Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
           >
-            <Card>
-              <CardContent className="p-6">
+            <Card className="admin-stats-card">
+              <CardContent className="p-0">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <FileSpreadsheet className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold">{loadingStats ? "-" : knowledgeStats?.totalRows}</p>
-                    <p className="text-sm text-muted-foreground">Total Diseases</p>
+                    <p className="text-3xl font-bold text-white">{loadingStats ? "-" : knowledgeStats?.totalRows}</p>
+                    <p className="text-sm text-slate-400">Total Diseases</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="p-6">
+            <Card className="admin-stats-card">
+              <CardContent className="p-0">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
                     <CheckCircle2 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-green-600">
+                    <p className="text-lg font-semibold text-green-400">
                       {knowledgeStats?.totalRows && knowledgeStats.totalRows > 0 ? "Active" : "Empty"}
                     </p>
-                    <p className="text-sm text-muted-foreground">RAG Status</p>
+                    <p className="text-sm text-slate-400">RAG Status</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="p-6">
+            <Card className="admin-stats-card">
+              <CardContent className="p-0">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium text-white">
                       {knowledgeStats?.lastUpdated 
                         ? format(new Date(knowledgeStats.lastUpdated), "MMM d, yyyy HH:mm")
                         : "Never"
                       }
                     </p>
-                    <p className="text-sm text-muted-foreground">Last Updated</p>
+                    <p className="text-sm text-slate-400">Last Updated</p>
                   </div>
                 </div>
               </CardContent>
@@ -323,13 +325,13 @@ Bronchitis,"Persistent cough with mucus, chest congestion, fatigue, shortness of
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="mb-8">
+            <Card className="mb-8 admin-card text-white border-slate-700/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white">
                   <Upload className="w-5 h-5" />
                   Upload CSV Dataset
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-400">
                   Upload a CSV file with disease data. Format: title, symptom_keywords, symptom_keywords, recommendation
                 </CardDescription>
               </CardHeader>

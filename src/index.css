@@ -206,6 +206,17 @@
     background-image: var(--gradient-hero);
   }
 
+  /* Admin Page Gradient - Dark slate theme matching reference */
+  .admin-gradient {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900;
+  }
+
+  /* Admin Card - Dark glassmorphism */
+  .admin-card {
+    @apply backdrop-blur-xl border border-white/10 shadow-lg;
+    background: linear-gradient(180deg, hsl(217 33% 17% / 0.8) 0%, hsl(222 47% 11% / 0.9) 100%);
+  }
+
   /* Card Hover Effect */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
@@ -235,6 +246,7 @@
   .premium-badge {
     @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
     @apply bg-white/80 backdrop-blur-sm border border-border/50 shadow-sm;
+    @apply dark:bg-card/80 dark:border-border;
   }
 
   /* Nav Pill */
@@ -264,17 +276,26 @@
     @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700;
   }
 
-  /* Premium Badge - Dark mode support */
-  .premium-badge {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
-    @apply bg-white/80 backdrop-blur-sm border border-border/50 shadow-sm;
-    @apply dark:bg-card/80 dark:border-border;
-  }
-
   /* Glass Card - Dark mode support */
   .glass-card {
     @apply backdrop-blur-xl border border-white/30 shadow-lg dark:border-white/10;
     background: var(--gradient-glass);
+  }
+
+  /* Admin Stats Card */
+  .admin-stats-card {
+    @apply rounded-2xl border border-white/10 backdrop-blur-xl p-6;
+    background: linear-gradient(180deg, hsl(217 33% 17% / 0.6) 0%, hsl(222 47% 11% / 0.8) 100%);
+  }
+
+  /* Variable Badge - Pink/Magenta accent */
+  .variable-badge {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm;
+    @apply bg-slate-800/50 border border-slate-700/50;
+  }
+
+  .variable-badge code {
+    @apply text-pink-400 font-mono;
   }
 }
 
