@@ -59,24 +59,14 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-border/40 bg-header text-header-foreground">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-[72px]">
+        <div className="flex items-center justify-between h-[80px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <img 
-                src={logoUrl || medicareLogo} 
-                alt={`${siteName} Logo`} 
-                className={`object-contain group-hover:scale-105 transition-transform ${
-                  logoUrl ? 'h-[50px] sm:h-[60px] max-w-[280px]' : 'w-12 h-12'
-                }`}
-              />
-            </div>
-            {/* Only show text if no custom logo is uploaded */}
-            {!logoUrl && (
-              <span className="text-xl font-bold text-foreground">
-                {siteName}
-              </span>
-            )}
+          <Link to="/" className="flex items-center group">
+            <img 
+              src={logoUrl || medicareLogo} 
+              alt={`${siteName} Logo`} 
+              className="h-[55px] sm:h-[65px] w-auto object-contain group-hover:scale-105 transition-transform"
+            />
           </Link>
 
           {/* Desktop Nav - Center */}
