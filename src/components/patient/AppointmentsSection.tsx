@@ -254,6 +254,10 @@ export function AppointmentsSection({
     const isActive = apt.status === "Upcoming" || apt.status === "In Progress" || apt.status === "Pending";
     const aptDate = parseISO(apt.appointment_date);
     const isTodayAppointment = isToday(aptDate);
+    
+    // Check if we're viewing all patients and should show patient name
+    const showPatientName = !selectedManagedPatientId && patientFilter === "all" && hasPatients;
+    const isForManagedPatient = apt.patient_full_name && apt.patient_full_name !== currentUserName;
 
     return (
       <motion.div
@@ -276,15 +280,16 @@ export function AppointmentsSection({
           )}
           
           <div className="p-3 sm:p-4 pl-4 sm:pl-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+            <div className="flex flex-col gap-3">
+              {/* Main content row */}
+              <div className="flex items-start gap-3 sm:gap-4">
                 {/* Token Badge */}
                 <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center ${
                   isTodayAppointment && isActive
                     ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg"
                     : "bg-gradient-to-br from-primary/20 to-primary/30 dark:from-primary/30 dark:to-primary/40"
                 }`}>
-                  <span className={`text-[10px] sm:text-xs font-medium ${isTodayAppointment && isActive ? "text-white/80" : "text-muted-foreground"}`}>
+                  <span className={`text-[9px] sm:text-xs font-medium ${isTodayAppointment && isActive ? "text-white/80" : "text-muted-foreground"}`}>
                     Token
                   </span>
                   <span className={`text-base sm:text-lg font-bold ${isTodayAppointment && isActive ? "text-white" : "text-primary"}`}>
@@ -299,61 +304,76 @@ export function AppointmentsSection({
                     {isTodayAppointment && isActive && (
                       <span className="flex items-center gap-1 text-green-500 text-xs">
                         <Radio className="w-3 h-3 animate-pulse" />
-                        Live
+                        <span className="hidden xs:inline">Live</span>
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {isTodayAppointment ? "Today" : format(aptDate, "MMM d, yyyy")}
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
+                      <span>{isTodayAppointment ? "Today" : format(aptDate, "MMM d, yyyy")}</span>
                     </span>
                   </div>
+                  
+                  {/* Patient name indicator for managed patients */}
+                  {showPatientName && isForManagedPatient && (
+                    <div className="mt-1.5">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
+                        <Users className="w-2.5 h-2.5 mr-1" />
+                        {apt.patient_full_name}
+                      </Badge>
+                    </div>
+                  )}
+                  
                   <p className="text-[10px] sm:text-xs text-muted-foreground/70 mt-0.5">
                     ID: {apt.id.slice(0, 8).toUpperCase()}
                   </p>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 self-end sm:self-center">
-                <Badge className={getStatusBadgeClass(apt.status)}>
+              {/* Actions row - Now below for better mobile layout */}
+              <div className="flex items-center justify-between gap-2 border-t border-border/30 pt-2 -mx-3 sm:-mx-4 px-3 sm:px-4 -mb-1 sm:-mb-2 pb-2 sm:pb-2 bg-muted/20 dark:bg-muted/10">
+                <Badge className={`text-xs ${getStatusBadgeClass(apt.status)}`}>
                   {apt.status}
                 </Badge>
-                {/* Cancel button for upcoming/pending appointments */}
-                {(apt.status === "Upcoming" || apt.status === "Pending") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCancelDialog(apt);
-                    }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Cancel</span>
-                  </Button>
-                )}
-                {apt.status === "Completed" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onWriteReview(apt.doctor_user_id);
-                    }}
-                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                  >
-                    <Star className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Review</span>
-                  </Button>
-                )}
-                <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
-                </Link>
+                
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {/* Cancel button for upcoming/pending appointments */}
+                  {(apt.status === "Upcoming" || apt.status === "Pending") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCancelDialog(apt);
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 h-8 px-2 sm:px-3"
+                    >
+                      <X className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-1">Cancel</span>
+                    </Button>
+                  )}
+                  {apt.status === "Completed" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onWriteReview(apt.doctor_user_id);
+                      }}
+                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
+                    >
+                      <Star className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-1">Review</span>
+                    </Button>
+                  )}
+                  <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
+                    <Button variant="ghost" size="sm" className="hover:bg-primary/10 h-8 px-2 sm:px-3">
+                      <span className="text-xs sm:text-sm mr-1">{apt.status === "Completed" ? "View" : "Details"}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

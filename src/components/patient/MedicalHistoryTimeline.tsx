@@ -301,31 +301,34 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Actions */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         <Button
           onClick={handleDownloadPDF}
           disabled={isDownloading || !appointments?.length}
-          className="gap-2"
+          className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10"
+          size="sm"
         >
           {isDownloading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
           ) : (
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           )}
-          Download PDF
+          <span className="hidden sm:inline">Download PDF</span>
+          <span className="sm:hidden">PDF</span>
         </Button>
         <Button
           variant="outline"
           onClick={handleSharePDF}
           disabled={isSharing || !appointments?.length}
-          className="gap-2"
+          className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10"
+          size="sm"
         >
           {isSharing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
           ) : (
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           )}
           Share
         </Button>
@@ -333,54 +336,55 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
           <Button
             variant="outline"
             disabled={!appointments?.length}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10"
+            size="sm"
           >
-            <Printer className="w-4 h-4" />
-            Print View
+            <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Print
           </Button>
         </Link>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Total Visits</span>
+          <CardContent className="p-3 sm:pt-4 sm:pb-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground truncate">Total Visits</span>
             </div>
-            <p className="text-2xl font-bold mt-1">{appointments?.length || 0}</p>
+            <p className="text-xl sm:text-2xl font-bold mt-1">{appointments?.length || 0}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2">
-              <Stethoscope className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-muted-foreground">Diagnoses</span>
+          <CardContent className="p-3 sm:pt-4 sm:pb-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Stethoscope className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground truncate">Diagnoses</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl sm:text-2xl font-bold mt-1">
               {appointments?.filter((a) => a.diagnosis).length || 0}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2">
-              <Pill className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-muted-foreground">Prescriptions</span>
+          <CardContent className="p-3 sm:pt-4 sm:pb-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Pill className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground truncate">Prescriptions</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl sm:text-2xl font-bold mt-1">
               {appointments?.filter((a) => a.medicines).length || 0}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2">
-              <TestTube className="w-4 h-4 text-purple-600" />
-              <span className="text-sm text-muted-foreground">Lab Tests</span>
+          <CardContent className="p-3 sm:pt-4 sm:pb-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <TestTube className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground truncate">Lab Tests</span>
             </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-xl sm:text-2xl font-bold mt-1">
               {appointments?.filter((a) => a.lab_tests).length || 0}
             </p>
           </CardContent>
@@ -389,21 +393,21 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
 
       {/* Timeline */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             Medical History Timeline
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Your complete medical history in chronological order
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
+            <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-0.5 bg-border" />
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {timelineItems.map((item, index) => {
                 const isExpanded = expandedItems.has(item.id);
 
@@ -417,32 +421,32 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="relative pl-14"
+                      className="relative pl-10 sm:pl-14"
                     >
                       {/* Timeline dot */}
-                      <div className="absolute left-4 w-5 h-5 rounded-full bg-primary border-4 border-background" />
+                      <div className="absolute left-2 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-primary border-[3px] sm:border-4 border-background" />
 
                       <Card className="overflow-hidden">
                         <div
-                          className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
+                          className={`p-3 sm:p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
                             hasDetails ? "" : "cursor-default"
                           }`}
                           onClick={() => hasDetails && toggleExpand(item.id)}
                         >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold">
-                                  {format(new Date(apt.appointment_date), "MMMM d, yyyy")}
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="font-semibold text-sm sm:text-base">
+                                  {format(new Date(apt.appointment_date), "MMM d, yyyy")}
                                 </span>
-                                <Badge className={getStatusColor(apt.status)}>
+                                <Badge className={`text-[10px] sm:text-xs ${getStatusColor(apt.status)}`}>
                                   {apt.status}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
-                                  <User className="w-3 h-3" />
-                                  Dr. {apt.doctor?.name || "Unknown"}
+                                  <User className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">Dr. {apt.doctor?.name || "Unknown"}</span>
                                 </span>
                                 {apt.department && (
                                   <span className="flex items-center gap-1">
@@ -479,33 +483,33 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
                             animate={{ height: "auto", opacity: 1 }}
                             className="border-t bg-muted/30"
                           >
-                            <div className="p-4 space-y-4">
+                            <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                               {/* Vitals */}
                               {(apt.vitals_bp || apt.vitals_temperature || apt.vitals_weight || apt.vitals_heart_rate) && (
                                 <div>
-                                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                                    <Activity className="w-4 h-4 text-red-500" />
+                                  <h4 className="font-medium text-xs sm:text-sm mb-2 flex items-center gap-2">
+                                    <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
                                     Vitals
                                   </h4>
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  <div className="grid grid-cols-2 gap-2">
                                     {apt.vitals_bp && (
-                                      <div className="p-2 rounded-lg bg-background text-sm">
+                                      <div className="p-2 rounded-lg bg-background text-xs sm:text-sm">
                                         <span className="text-muted-foreground">BP:</span> {apt.vitals_bp}
                                       </div>
                                     )}
                                     {apt.vitals_temperature && (
-                                      <div className="p-2 rounded-lg bg-background text-sm">
+                                      <div className="p-2 rounded-lg bg-background text-xs sm:text-sm">
                                         <span className="text-muted-foreground">Temp:</span> {apt.vitals_temperature}
                                       </div>
                                     )}
                                     {apt.vitals_weight && (
-                                      <div className="p-2 rounded-lg bg-background text-sm">
+                                      <div className="p-2 rounded-lg bg-background text-xs sm:text-sm">
                                         <span className="text-muted-foreground">Weight:</span> {apt.vitals_weight}
                                       </div>
                                     )}
                                     {apt.vitals_heart_rate && (
-                                      <div className="p-2 rounded-lg bg-background text-sm">
-                                        <span className="text-muted-foreground">Heart Rate:</span> {apt.vitals_heart_rate}
+                                      <div className="p-2 rounded-lg bg-background text-xs sm:text-sm">
+                                        <span className="text-muted-foreground">HR:</span> {apt.vitals_heart_rate}
                                       </div>
                                     )}
                                   </div>
