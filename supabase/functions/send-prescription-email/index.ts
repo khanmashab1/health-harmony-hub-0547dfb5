@@ -93,10 +93,22 @@ const handler = async (req: Request): Promise<Response> => {
       day: "numeric",
     });
 
-    // Generate prescription URL for verification and download
-    // Use the project ID to build the correct preview URL
-    const projectId = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
-    const baseUrl = `https://id-preview--${projectId}.lovable.app`;
+    // Fetch custom domain URL from site_settings
+    const { data: siteUrlSetting } = await supabase
+      .from("site_settings")
+      .select("setting_value")
+      .eq("setting_key", "site_url")
+      .single();
+
+    // Use custom domain if configured, otherwise fall back to preview URL
+    let baseUrl = siteUrlSetting?.setting_value;
+    if (!baseUrl) {
+      const projectId = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+      baseUrl = `https://id-preview--${projectId}.lovable.app`;
+    }
+    // Ensure no trailing slash
+    baseUrl = baseUrl.replace(/\/$/, '');
+    
     const prescriptionUrl = `${baseUrl}/verify/${appointmentId}`;
     const downloadUrl = `${baseUrl}/prescription/${appointmentId}`;
 

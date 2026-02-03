@@ -17,6 +17,7 @@ export function BrandingPanel() {
   const [logoDarkFile, setLogoDarkFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [siteName, setSiteName] = useState("");
+  const [siteUrl, setSiteUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
   // Fetch current settings
@@ -37,6 +38,9 @@ export function BrandingPanel() {
   useEffect(() => {
     if (settings?.site_name) {
       setSiteName(settings.site_name);
+    }
+    if (settings?.site_url) {
+      setSiteUrl(settings.site_url);
     }
   }, [settings]);
 
@@ -120,6 +124,13 @@ export function BrandingPanel() {
     toast({ title: "Site name updated" });
   };
 
+  const handleSiteUrlUpdate = async () => {
+    // Ensure URL doesn't have trailing slash
+    const cleanUrl = siteUrl.replace(/\/$/, '');
+    await updateSetting.mutateAsync({ key: "site_url", value: cleanUrl || null });
+    toast({ title: "Site URL updated" });
+  };
+
   const resetToDefault = async (key: string) => {
     await updateSetting.mutateAsync({ key, value: null });
     toast({ title: "Reset to default" });
@@ -166,6 +177,30 @@ export function BrandingPanel() {
               Save
             </Button>
           </div>
+        </div>
+
+        {/* Site URL */}
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Site URL (Custom Domain)</Label>
+          <p className="text-sm text-muted-foreground">
+            Enter your custom domain URL. This will be used for email links (prescriptions, verification, etc.)
+          </p>
+          <div className="flex gap-3">
+            <Input
+              value={siteUrl}
+              onChange={(e) => setSiteUrl(e.target.value)}
+              placeholder="https://yourdomain.com"
+              className="max-w-sm"
+            />
+            <Button onClick={handleSiteUrlUpdate} disabled={updateSetting.isPending}>
+              Save
+            </Button>
+          </div>
+          {settings?.site_url && (
+            <p className="text-xs text-green-600 dark:text-green-400">
+              ✓ Custom domain configured: {settings.site_url}
+            </p>
+          )}
         </div>
 
         {/* Light Theme Logo */}
