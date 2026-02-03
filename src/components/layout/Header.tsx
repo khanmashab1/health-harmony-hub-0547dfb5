@@ -66,12 +66,17 @@ export function Header() {
               <img 
                 src={logoUrl || medicareLogo} 
                 alt={`${siteName} Logo`} 
-                className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
+                className={`object-contain group-hover:scale-105 transition-transform ${
+                  logoUrl ? 'h-12 max-w-[180px]' : 'w-10 h-10'
+                }`}
               />
             </div>
-            <span className="text-xl font-bold text-foreground">
-              {siteName}
-            </span>
+            {/* Only show text if no custom logo is uploaded */}
+            {!logoUrl && (
+              <span className="text-xl font-bold text-foreground">
+                {siteName}
+              </span>
+            )}
           </Link>
 
           {/* Desktop Nav - Center */}
