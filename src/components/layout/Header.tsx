@@ -67,7 +67,7 @@ export function Header() {
                 src={logoUrl || medicareLogo} 
                 alt={`${siteName} Logo`} 
                 className={`object-contain group-hover:scale-105 transition-transform ${
-                  logoUrl ? 'h-12 max-w-[180px]' : 'w-10 h-10'
+                  logoUrl ? 'h-14 sm:h-16 max-w-[220px]' : 'w-12 h-12'
                 }`}
               />
             </div>
