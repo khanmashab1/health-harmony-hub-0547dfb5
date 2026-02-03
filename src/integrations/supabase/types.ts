@@ -219,6 +219,50 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_breaks: {
+        Row: {
+          applies_to_days: number[] | null
+          break_name: string
+          created_at: string
+          doctor_user_id: string
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to_days?: number[] | null
+          break_name: string
+          created_at?: string
+          doctor_user_id: string
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to_days?: number[] | null
+          break_name?: string
+          created_at?: string
+          doctor_user_id?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_breaks_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_schedules: {
         Row: {
           created_at: string
