@@ -160,12 +160,12 @@ export default function AdminReviews() {
   if (loading) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20">
+        <div className="min-h-screen admin-gradient">
           <div className="container mx-auto px-4 py-8">
-            <Skeleton className="h-12 w-64 mb-8" />
+            <Skeleton className="h-12 w-64 mb-8 bg-slate-700" />
             <div className="grid md:grid-cols-4 gap-4 mb-8">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-24" />
+                <Skeleton key={i} className="h-24 bg-slate-700" />
               ))}
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function AdminReviews() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-brand-50/20">
+      <div className="min-h-screen admin-gradient">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div
@@ -185,16 +185,16 @@ export default function AdminReviews() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
           >
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-white hover:bg-slate-700">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
                 <Star className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Review Moderation</h1>
-                <p className="text-muted-foreground font-medium">
-                  Approve or reject patient reviews
+                <h1 className="text-3xl font-bold text-white">Review Moderation</h1>
+                <p className="text-slate-400 font-medium">
+                  Approve or reject <span className="text-amber-400">patient</span> reviews
                 </p>
               </div>
             </div>
@@ -219,8 +219,8 @@ export default function AdminReviews() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
               >
-                <Card variant="glass" className="border-white/50">
-                  <CardContent className="p-5">
+                <Card className="admin-stats-card border-slate-700/50">
+                  <CardContent className="p-0">
                     <div className="flex items-center gap-4">
                       <div
                         className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}
@@ -228,8 +228,8 @@ export default function AdminReviews() {
                         <Star className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-3xl font-bold">{stat.value}</p>
-                        <p className="text-sm text-muted-foreground font-medium">
+                        <p className="text-3xl font-bold text-white">{stat.value}</p>
+                        <p className="text-sm text-slate-400 font-medium">
                           {stat.label}
                         </p>
                       </div>
@@ -248,20 +248,20 @@ export default function AdminReviews() {
             className="flex flex-col md:flex-row gap-4 mb-6"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 placeholder="Search by name or comment..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-500"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 bg-slate-800/50 border-slate-700/50 text-white">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all">All Reviews</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Approved">Approved</SelectItem>
@@ -276,13 +276,13 @@ export default function AdminReviews() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card variant="glass" className="border-white/50">
-              <CardHeader className="border-b border-border/30 bg-gradient-to-r from-amber-50/50 to-transparent">
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-amber-600" />
+            <Card className="admin-card border-slate-700/50">
+              <CardHeader className="border-b border-slate-700/50">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Star className="w-5 h-5 text-amber-500" />
                   Reviews
                   {filteredReviews && (
-                    <Badge variant="secondary" className="ml-2">
+                    <Badge className="ml-2 bg-primary text-primary-foreground">
                       {filteredReviews.length}
                     </Badge>
                   )}
@@ -297,7 +297,7 @@ export default function AdminReviews() {
                 ) : isLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-32" />
+                      <Skeleton key={i} className="h-32 bg-slate-700" />
                     ))}
                   </div>
                 ) : filteredReviews && filteredReviews.length > 0 ? (
@@ -308,19 +308,19 @@ export default function AdminReviews() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.03 }}
-                        className="p-4 rounded-xl border border-border/50 bg-white/50 hover:bg-white transition-all"
+                        className="p-4 rounded-xl border border-slate-700/50 bg-slate-800/50 hover:bg-slate-800 transition-all"
                       >
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <p className="font-semibold">{review.display_name}</p>
+                              <p className="font-semibold text-white">{review.display_name}</p>
                               <Badge
                                 className={
                                   review.status === "Approved"
-                                    ? "status-completed"
+                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
                                     : review.status === "Pending"
-                                    ? "status-pending"
-                                    : "status-cancelled"
+                                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                                    : "bg-red-500/20 text-red-400 border-red-500/30"
                                 }
                               >
                                 {review.status}
@@ -333,15 +333,15 @@ export default function AdminReviews() {
                                   className={`w-4 h-4 ${
                                     i < review.rating
                                       ? "text-amber-500 fill-amber-500"
-                                      : "text-gray-200"
+                                      : "text-slate-600"
                                   }`}
                                 />
                               ))}
                             </div>
-                            <p className="text-muted-foreground text-sm mb-2">
+                            <p className="text-slate-400 text-sm mb-2">
                               {review.comment || "No comment provided."}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-slate-500">
                               {format(new Date(review.created_at), "MMM d, yyyy 'at' h:mm a")}
                               {review.source && ` • Source: ${review.source}`}
                             </p>
@@ -351,7 +351,7 @@ export default function AdminReviews() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-green-600 hover:bg-green-50 hover:border-green-300"
+                                className="text-green-400 border-green-500/50 hover:bg-green-500/20"
                                 onClick={() =>
                                   updateStatus.mutate({ id: review.id, status: "Approved", patientUserId: review.patient_user_id })
                                 }
@@ -363,7 +363,7 @@ export default function AdminReviews() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-red-600 hover:bg-red-50 hover:border-red-300"
+                                className="text-red-400 border-red-500/50 hover:bg-red-500/20"
                                 onClick={() =>
                                   updateStatus.mutate({ id: review.id, status: "Rejected", patientUserId: review.patient_user_id })
                                 }
@@ -380,10 +380,10 @@ export default function AdminReviews() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-                      <Star className="w-10 h-10 text-muted-foreground" />
+                    <div className="w-20 h-20 mx-auto rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                      <Star className="w-10 h-10 text-slate-500" />
                     </div>
-                    <p className="text-muted-foreground">No reviews found.</p>
+                    <p className="text-slate-400">No reviews found.</p>
                   </div>
                 )}
               </CardContent>
