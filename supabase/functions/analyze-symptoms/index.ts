@@ -3,13 +3,35 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface DiseaseEntry {
   title: string;
   symptoms: string;
   recommendation: string;
+}
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10; // Max 10 requests per minute per user
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
 }
 
 // Parse CSV content into structured data
@@ -86,14 +108,50 @@ serve(async (req) => {
   }
 
   try {
-    const { symptoms, age, gender, duration, severity, medicalHistory, selectedTags } = await req.json();
-    
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Authentication check - verify user is authenticated
+    const authHeader = req.headers.get("Authorization");
+    let userId = "anonymous";
+    
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabaseAuth = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims, error: authError } = await supabaseAuth.auth.getClaims(token);
+      
+      if (!authError && claims?.claims) {
+        userId = claims.claims.sub as string;
+        console.log(`Authenticated user: ${userId}`);
+      }
+    }
+
+    // Rate limiting
+    if (!checkRateLimit(userId)) {
+      console.log(`Rate limit exceeded for: ${userId}`);
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    const { symptoms, age, gender, duration, severity, medicalHistory, selectedTags } = await req.json();
+
+    // Validate input
+    if (!symptoms || typeof symptoms !== 'string' || symptoms.trim().length < 3) {
+      return new Response(
+        JSON.stringify({ error: "Please provide valid symptoms (at least 3 characters)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Build search query from symptoms and tags
