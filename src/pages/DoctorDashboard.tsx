@@ -44,6 +44,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { MedicineEntry } from "@/components/doctor/MedicineEntry";
 import { DoctorSettingsPanel } from "@/components/doctor/DoctorSettingsPanel";
 import { QueueManagementPanel } from "@/components/doctor/QueueManagementPanel";
+import { PAManagementPanel } from "@/components/doctor/PAManagementPanel";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -330,6 +331,11 @@ export default function DoctorDashboard() {
                   <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Availability</span>
                   <span className="sm:hidden">Avail</span>
+                </TabsTrigger>
+                <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">My Team</span>
+                  <span className="sm:hidden">Team</span>
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />
@@ -669,6 +675,11 @@ export default function DoctorDashboard() {
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* My Team (PA Management) */}
+              <TabsContent value="team">
+                {user && <PAManagementPanel doctorId={user.id} />}
               </TabsContent>
 
               {/* Settings */}

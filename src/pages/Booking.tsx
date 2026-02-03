@@ -390,22 +390,30 @@ export default function Booking() {
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Progress Stepper */}
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between overflow-x-auto pb-2">
               {steps.map((s, index) => (
-                <div key={s.id} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    // Allow going back to completed steps
+                    if (s.id < step) setStep(s.id);
+                  }}
+                  disabled={s.id > step}
+                  className="flex items-center cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shrink-0 ${
                     step >= s.id 
                       ? "bg-primary text-primary-foreground" 
                       : "bg-muted text-muted-foreground"
-                  }`}>
+                  } ${s.id < step ? "hover:ring-2 hover:ring-primary/50" : ""}`}>
                     <s.icon className="w-5 h-5" />
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`hidden sm:block w-12 lg:w-24 h-1 mx-2 rounded transition-all ${
+                    <div className={`hidden sm:block w-8 md:w-12 lg:w-24 h-1 mx-1 md:mx-2 rounded transition-all ${
                       step > s.id ? "bg-primary" : "bg-muted"
                     }`} />
                   )}
-                </div>
+                </button>
               ))}
             </div>
             <div className="mt-4 text-center">
@@ -427,31 +435,53 @@ export default function Booking() {
                 {step === 1 && (
                   <div className="space-y-6">
                     <div>
-                      <Label>Province</Label>
-                      <Select value={province} onValueChange={(v) => { setProvince(v); setCity(""); }}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select province" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PROVINCES.map((p) => (
-                            <SelectItem key={p} value={p}>{p}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-base font-medium flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        Select Province
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                        {PROVINCES.map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => { setProvince(p); setCity(""); }}
+                            className={`p-3 rounded-xl border-2 text-left transition-all ${
+                              province === p
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <p className="font-medium text-sm">{p}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <Label>City</Label>
-                      <Select value={city} onValueChange={setCity} disabled={!province}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select city" />
-                        </SelectTrigger>
-                        <SelectContent>
+                    {province && (
+                      <div>
+                        <Label className="text-base font-medium flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          Select City
+                        </Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 max-h-[300px] overflow-y-auto">
                           {(CITIES[province] || []).map((c) => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                            <button
+                              key={c}
+                              onClick={() => {
+                                setCity(c);
+                                // Auto-advance to next step
+                                setTimeout(() => setStep(2), 200);
+                              }}
+                              className={`p-3 rounded-xl border-2 text-left transition-all ${
+                                city === c
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                            >
+                              <p className="font-medium text-sm">{c}</p>
+                            </button>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -500,27 +530,32 @@ export default function Booking() {
                       </div>
                     ) : filteredDoctors && filteredDoctors.length > 0 ? (
                       filteredDoctors.map((doc) => (
-                        <div
+                        <button
                           key={doc.user_id}
-                          className={`p-4 rounded-xl border-2 transition-all ${
+                          onClick={() => setSelectedDoctor(doc)}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                             selectedDoctor?.user_id === doc.user_id
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
                           }`}
                         >
-                          <div className="flex items-start gap-4">
-                            <button
-                              onClick={() => setSelectedDoctor(doc)}
-                              className="flex-shrink-0"
-                            >
-                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="w-8 h-8 text-primary" />
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                            {/* Avatar & Name */}
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                               </div>
-                            </button>
-                            <button
-                              onClick={() => setSelectedDoctor(doc)}
-                              className="flex-1 text-left"
-                            >
+                              <div className="sm:hidden">
+                                <h3 className="font-semibold text-base">Dr. {doc.profile?.name || "Doctor"}</h3>
+                                <p className="text-sm text-muted-foreground">{doc.specialty}</p>
+                                {doc.degree && (
+                                  <p className="text-xs text-primary font-medium">{doc.degree}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Desktop: Name & Details */}
+                            <div className="hidden sm:block flex-1">
                               <h3 className="font-semibold text-lg">Dr. {doc.profile?.name || "Doctor"}</h3>
                               <p className="text-sm text-muted-foreground">{doc.specialty}</p>
                               {doc.degree && (
@@ -540,20 +575,43 @@ export default function Booking() {
                                   {doc.city}
                                 </span>
                               </div>
-                            </button>
-                            <div className="text-right flex flex-col items-end gap-2">
+                            </div>
+
+                            {/* Mobile: Stats Row */}
+                            <div className="sm:hidden flex items-center justify-between w-full">
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                  {doc.rating || 4.5}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {doc.experience_years || 0}y
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  {doc.city}
+                                </span>
+                              </div>
+                              <p className="text-base font-bold text-primary">Rs. {doc.fee}</p>
+                            </div>
+
+                            {/* Desktop: Price & Links */}
+                            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
                               <p className="text-lg font-bold text-primary">Rs. {doc.fee}</p>
                               <p className="text-xs text-muted-foreground">per visit</p>
                               <div className="flex flex-col gap-1">
                                 <Link
                                   to={`/doctor/${doc.user_id}`}
+                                  onClick={(e) => e.stopPropagation()}
                                   className="flex items-center gap-1 text-xs text-primary hover:underline"
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                   Full Profile
                                 </Link>
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setDetailsDoctor(doc);
                                     setDetailsDialogOpen(true);
                                   }}
@@ -565,7 +623,7 @@ export default function Booking() {
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       ))
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">

@@ -76,6 +76,7 @@ import { HeroSlidesPanel } from "@/components/admin/HeroSlidesPanel";
 import { BrandingPanel } from "@/components/admin/BrandingPanel";
 import { MedicinesPanel } from "@/components/admin/MedicinesPanel";
 import { VideoPanel } from "@/components/admin/VideoPanel";
+import { FooterSettingsPanel } from "@/components/admin/FooterSettingsPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -386,6 +387,9 @@ export default function AdminDashboard() {
                 <TabsTrigger value="branding" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Palette className="w-4 h-4 mr-1 sm:mr-2" />Branding
                 </TabsTrigger>
+                <TabsTrigger value="footer" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  Footer
+                </TabsTrigger>
                 <TabsTrigger value="video" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Video className="w-4 h-4 mr-1 sm:mr-2" />Video
                 </TabsTrigger>
@@ -395,6 +399,7 @@ export default function AdminDashboard() {
               <TabsContent value="performance"><DoctorPerformancePanel /></TabsContent>
               <TabsContent value="slides"><HeroSlidesPanel /></TabsContent>
               <TabsContent value="branding"><BrandingPanel /></TabsContent>
+              <TabsContent value="footer"><FooterSettingsPanel /></TabsContent>
               <TabsContent value="video"><VideoPanel /></TabsContent>
               <TabsContent value="medicines"><MedicinesPanel /></TabsContent>
 
