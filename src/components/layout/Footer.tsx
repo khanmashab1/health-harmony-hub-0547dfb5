@@ -31,7 +31,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-foreground text-background">
+    <footer className="bg-header text-header-foreground">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
@@ -44,11 +44,11 @@ export function Footer() {
                   <Stethoscope className="w-5 h-5 text-white" />
                 </div>
               )}
-              <span className="text-xl font-bold text-background">
+              <span className="text-xl font-bold text-header-foreground">
                 {siteName}
               </span>
             </Link>
-            <p className="text-background/70 text-sm leading-relaxed">
+            <p className="text-header-foreground/70 text-sm leading-relaxed">
               Your trusted healthcare partner. Book appointments with top doctors,
               track your health metrics, and get expert medical advice.
             </p>
@@ -62,7 +62,7 @@ export function Footer() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-xl bg-background/10 flex items-center justify-center hover:bg-primary transition-colors"
+                      className="w-9 h-9 rounded-xl bg-header-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
                       aria-label={link.name}
                     >
                       <IconComponent className="w-4 h-4" />
@@ -74,7 +74,7 @@ export function Footer() {
                   <a
                     key={i}
                     href="#"
-                    className="w-9 h-9 rounded-xl bg-background/10 flex items-center justify-center hover:bg-primary transition-colors"
+                    className="w-9 h-9 rounded-xl bg-header-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
                   >
                     <Icon className="w-4 h-4" />
                   </a>
@@ -96,7 +96,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-background/70 hover:text-background transition-colors text-sm"
+                    className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm"
                   >
                     {link.label}
                   </Link>
@@ -117,7 +117,7 @@ export function Footer() {
                 "Online Prescriptions",
               ].map((service) => (
                 <li key={service}>
-                  <span className="text-background/70 text-sm">{service}</span>
+                  <span className="text-header-foreground/70 text-sm">{service}</span>
                 </li>
               ))}
             </ul>
@@ -129,19 +129,19 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 mt-1 text-primary shrink-0" />
-                <span className="text-background/70 text-sm whitespace-pre-line">
+                <span className="text-header-foreground/70 text-sm whitespace-pre-line">
                   {address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                <a href={`tel:${phone.replace(/\s/g, '')}`} className="text-background/70 text-sm hover:text-background transition-colors">
+                <a href={`tel:${phone.replace(/\s/g, '')}`} className="text-header-foreground/70 text-sm hover:text-header-foreground transition-colors">
                   {phone}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
-                <a href={`mailto:${email}`} className="text-background/70 text-sm hover:text-background transition-colors">
+                <a href={`mailto:${email}`} className="text-header-foreground/70 text-sm hover:text-header-foreground transition-colors">
                   {email}
                 </a>
               </li>
@@ -149,15 +149,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-background/50 text-sm">
+        <div className="border-t border-header-foreground/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-header-foreground/50 text-sm">
             {copyright}
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-background/50 hover:text-background text-sm transition-colors">
+            <a href="#" className="text-header-foreground/50 hover:text-header-foreground text-sm transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="text-background/50 hover:text-background text-sm transition-colors">
+            <a href="#" className="text-header-foreground/50 hover:text-header-foreground text-sm transition-colors">
               Terms of Service
             </a>
           </div>
