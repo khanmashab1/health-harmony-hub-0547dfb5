@@ -37,6 +37,7 @@ import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
 import { DoctorDetailsDialog } from "@/components/booking/DoctorDetailsDialog";
 import { DoctorSearchFilter } from "@/components/booking/DoctorSearchFilter";
 import { DoctorScheduleDisplay } from "@/components/booking/DoctorScheduleDisplay";
+import { calculateEstimatedAppointmentTime } from "@/lib/appointmentTimeCalculator";
 
 interface Doctor {
   user_id: string;
@@ -184,6 +185,82 @@ export default function Booking() {
     },
     enabled: !!selectedDoctor && !!selectedDate,
   });
+
+  // Fetch doctor's schedule for the selected date - for estimated time calculation
+  const { data: doctorSchedules } = useQuery({
+    queryKey: ["doctor-schedules-booking", selectedDoctor?.user_id],
+    queryFn: async () => {
+      if (!selectedDoctor) return [];
+      const { data, error } = await supabase
+        .from("doctor_schedules")
+        .select("*")
+        .eq("doctor_user_id", selectedDoctor.user_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedDoctor,
+  });
+
+  // Fetch doctor's breaks - for estimated time calculation
+  const { data: doctorBreaks } = useQuery({
+    queryKey: ["doctor-breaks-booking", selectedDoctor?.user_id],
+    queryFn: async () => {
+      if (!selectedDoctor) return [];
+      const { data, error } = await supabase
+        .from("doctor_breaks")
+        .select("*")
+        .eq("doctor_user_id", selectedDoctor.user_id)
+        .eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedDoctor,
+  });
+
+  // Fetch current token count for the selected date (to estimate next token)
+  const { data: currentTokenCount } = useQuery({
+    queryKey: ["token-count", selectedDoctor?.user_id, selectedDate?.toISOString()],
+    queryFn: async () => {
+      if (!selectedDoctor || !selectedDate) return 0;
+      const { count, error } = await supabase
+        .from("appointments")
+        .select("*", { count: "exact", head: true })
+        .eq("doctor_user_id", selectedDoctor.user_id)
+        .eq("appointment_date", format(selectedDate, "yyyy-MM-dd"))
+        .neq("status", "Cancelled");
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!selectedDoctor && !!selectedDate,
+  });
+
+  // Calculate estimated appointment time
+  const estimatedTime = useMemo(() => {
+    if (!selectedDate || !doctorSchedules || doctorSchedules.length === 0) return null;
+    
+    const dayOfWeek = selectedDate.getDay();
+    const schedule = doctorSchedules.find((s) => s.day_of_week === dayOfWeek);
+    const nextToken = (currentTokenCount || 0) + 1;
+    const duration = selectedDoctor?.consultation_duration || 15;
+    const breaks = doctorBreaks?.map((b) => ({
+      break_name: b.break_name,
+      start_time: b.start_time,
+      end_time: b.end_time,
+      applies_to_days: b.applies_to_days || [],
+      is_active: b.is_active ?? true,
+    })) || [];
+    
+    if (!schedule || !schedule.is_available) return null;
+    
+    return calculateEstimatedAppointmentTime(
+      nextToken,
+      schedule,
+      breaks,
+      duration,
+      selectedDate
+    );
+  }, [selectedDate, doctorSchedules, doctorBreaks, currentTokenCount, selectedDoctor]);
+
 
   // Create appointment mutation - MUST be called unconditionally
   const createAppointment = useMutation({
@@ -846,6 +923,19 @@ export default function Booking() {
                         <span className="text-muted-foreground">Date</span>
                         <span className="font-medium">{selectedDate && format(selectedDate, "MMMM d, yyyy")}</span>
                       </div>
+                      {estimatedTime && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Estimated Time</span>
+                          <span className="font-medium flex items-center gap-1">
+                            <Clock className="w-4 h-4 text-primary" />
+                            ~{estimatedTime}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Token Number</span>
+                        <span className="font-medium text-primary">#{(currentTokenCount || 0) + 1}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Location</span>
                         <span className="font-medium">{city}, {province}</span>
@@ -859,6 +949,14 @@ export default function Booking() {
                         <span className="font-bold text-lg text-primary">Rs. {selectedDoctor?.fee}</span>
                       </div>
                     </div>
+                    {estimatedTime && (
+                      <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <p className="text-xs text-muted-foreground text-center">
+                          <Clock className="w-3 h-3 inline mr-1" />
+                          Estimated appointment time is approximately <strong>{estimatedTime}</strong> based on your token number and doctor's schedule. Actual time may vary.
+                        </p>
+                      </div>
+                    )}
                     {paymentMethod === "Online" && (
                       <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
                         <p className="text-sm text-yellow-800 dark:text-yellow-200">

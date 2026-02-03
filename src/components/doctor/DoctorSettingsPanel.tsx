@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScheduleSettingsCard } from "./ScheduleSettingsCard";
 import { PaymentSettingsCard } from "./PaymentSettingsCard";
+import { BreakTimesCard } from "./BreakTimesCard";
 
 interface DoctorSettingsPanelProps {
   doctorInfo: {
@@ -305,6 +306,9 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
         userId={userId} 
         consultationDuration={doctorInfo?.consultation_duration}
       />
+
+      {/* Break Times */}
+      <BreakTimesCard userId={userId} />
 
       {/* Payment Settings */}
       <PaymentSettingsCard 
