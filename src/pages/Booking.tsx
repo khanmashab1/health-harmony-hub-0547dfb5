@@ -234,6 +234,28 @@ export default function Booking() {
     enabled: !!selectedDoctor && !!selectedDate,
   });
 
+  // Check if patient already has an appointment with this doctor on this date
+  const { data: existingAppointment } = useQuery({
+    queryKey: ["existing-appointment", user?.id, selectedDoctor?.user_id, selectedDate?.toISOString(), patientName],
+    queryFn: async () => {
+      if (!selectedDoctor || !selectedDate || !user) return null;
+      
+      // Check by patient_user_id AND patient_full_name to handle managed patients
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id, token_number")
+        .eq("doctor_user_id", selectedDoctor.user_id)
+        .eq("appointment_date", format(selectedDate, "yyyy-MM-dd"))
+        .eq("patient_full_name", patientName)
+        .in("status", ["Upcoming", "Pending"])
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedDoctor && !!selectedDate && !!user && !!patientName,
+  });
+
   // Calculate estimated appointment time
   const estimatedTime = useMemo(() => {
     if (!selectedDate || !doctorSchedules || doctorSchedules.length === 0) return null;
@@ -458,7 +480,7 @@ export default function Booking() {
       case 2: return specialty;
       case 3: return selectedDoctor;
       case 4: return selectedDate && availableSlots && availableSlots > 0;
-      case 5: return paymentMethod && patientName && patientPhone;
+      case 5: return paymentMethod && patientName && patientPhone && !existingAppointment;
       default: return true;
     }
   };
@@ -829,6 +851,19 @@ export default function Booking() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                    )}
+
+                    {/* Existing appointment warning */}
+                    {existingAppointment && (
+                      <div className="p-4 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800">
+                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+                          <Info className="w-4 h-4 shrink-0" />
+                          <span>
+                            {patientName || "This patient"} already has an appointment with this doctor on {format(selectedDate!, "MMM d, yyyy")} (Token #{existingAppointment.token_number}). 
+                            Please choose a different date or patient.
+                          </span>
+                        </p>
                       </div>
                     )}
 

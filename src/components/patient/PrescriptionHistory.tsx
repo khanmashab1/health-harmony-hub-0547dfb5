@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { MedicinesList, parseMedicines } from "@/components/shared/MedicinesList";
 
 interface PrescriptionHistoryProps {
   userId: string;
@@ -93,15 +94,7 @@ export function PrescriptionHistory({ userId, selectedPatientName, selectedPatie
     p.follow_up_date && isToday(new Date(p.follow_up_date))
   ) || [];
 
-  // Parse medicines for display
-  const parseMedicines = (medicinesJson: string | null) => {
-    if (!medicinesJson) return [];
-    try {
-      return JSON.parse(medicinesJson);
-    } catch {
-      return [];
-    }
-  };
+  // Use shared parseMedicines from MedicinesList component
 
   const getFollowUpBadge = (followUpDate: string | null) => {
     if (!followUpDate) return null;
