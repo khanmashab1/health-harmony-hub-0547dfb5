@@ -219,16 +219,62 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          doctor_user_id: string
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          doctor_user_id: string
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          doctor_user_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_schedules_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctors: {
         Row: {
+          bank_account_number: string | null
+          bank_account_title: string | null
+          bank_name: string | null
           bio: string | null
           city: string | null
+          consultation_duration: number | null
           created_at: string
           degree: string | null
           easypaisa_number: string | null
           experience_years: number | null
           fee: number
           image_path: string | null
+          jazzcash_number: string | null
           max_patients_per_day: number
           province: string | null
           qualifications: string | null
@@ -238,14 +284,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bank_account_number?: string | null
+          bank_account_title?: string | null
+          bank_name?: string | null
           bio?: string | null
           city?: string | null
+          consultation_duration?: number | null
           created_at?: string
           degree?: string | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
           image_path?: string | null
+          jazzcash_number?: string | null
           max_patients_per_day?: number
           province?: string | null
           qualifications?: string | null
@@ -255,14 +306,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bank_account_number?: string | null
+          bank_account_title?: string | null
+          bank_name?: string | null
           bio?: string | null
           city?: string | null
+          consultation_duration?: number | null
           created_at?: string
           degree?: string | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
           image_path?: string | null
+          jazzcash_number?: string | null
           max_patients_per_day?: number
           province?: string | null
           qualifications?: string | null

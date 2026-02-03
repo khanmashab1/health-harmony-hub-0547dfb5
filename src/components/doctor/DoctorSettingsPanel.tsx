@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ScheduleSettingsCard } from "./ScheduleSettingsCard";
+import { PaymentSettingsCard } from "./PaymentSettingsCard";
 
 interface DoctorSettingsPanelProps {
   doctorInfo: {
@@ -22,6 +24,12 @@ interface DoctorSettingsPanelProps {
     experience_years?: number;
     rating?: number;
     image_path?: string | null;
+    consultation_duration?: number | null;
+    easypaisa_number?: string | null;
+    jazzcash_number?: string | null;
+    bank_name?: string | null;
+    bank_account_number?: string | null;
+    bank_account_title?: string | null;
   } | null | undefined;
   userId: string | undefined;
   profileName?: string | null;
@@ -291,6 +299,18 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
           )}
         </CardContent>
       </Card>
+
+      {/* Schedule Settings */}
+      <ScheduleSettingsCard 
+        userId={userId} 
+        consultationDuration={doctorInfo?.consultation_duration}
+      />
+
+      {/* Payment Settings */}
+      <PaymentSettingsCard 
+        userId={userId} 
+        doctorInfo={doctorInfo}
+      />
     </div>
   );
 }

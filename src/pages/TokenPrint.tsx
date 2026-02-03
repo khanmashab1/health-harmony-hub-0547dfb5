@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Hash, Upload, Wallet, Copy } from "lucide-react";
+import { Printer, ArrowLeft, Calendar, User, MapPin, Clock, Upload, Wallet, Copy, Building2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,11 +28,21 @@ export default function TokenPrint() {
       
       if (error) throw error;
 
-      // Get doctor info including easypaisa number
+      // Get doctor info including payment details and consultation duration
       const { data: doctor } = await supabase
         .from("doctors")
-        .select("specialty, fee, easypaisa_number")
+        .select("specialty, fee, easypaisa_number, jazzcash_number, bank_name, bank_account_number, bank_account_title, consultation_duration")
         .eq("user_id", data.doctor_user_id)
+        .single();
+
+      // Get doctor schedule for appointment date
+      const appointmentDay = new Date(data.appointment_date).getDay();
+      const { data: schedule } = await supabase
+        .from("doctor_schedules")
+        .select("start_time")
+        .eq("doctor_user_id", data.doctor_user_id)
+        .eq("day_of_week", appointmentDay)
+        .eq("is_available", true)
         .single();
 
       const { data: doctorProfile } = await supabase
@@ -52,11 +62,29 @@ export default function TokenPrint() {
         patientProfile = profile;
       }
 
+      // Calculate estimated time
+      let estimatedTime: string | null = null;
+      if (schedule?.start_time && doctor?.consultation_duration) {
+        const [startHour, startMin] = schedule.start_time.split(":").map(Number);
+        const tokensBefore = data.token_number - 1;
+        const totalMinutesToAdd = tokensBefore * doctor.consultation_duration;
+        
+        const estimatedDate = new Date();
+        estimatedDate.setHours(startHour, startMin + totalMinutesToAdd, 0, 0);
+        
+        estimatedTime = estimatedDate.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+
       return {
         ...data,
         doctor,
         doctorProfile,
         patientProfile,
+        estimatedTime,
       };
     },
   });
@@ -169,7 +197,7 @@ export default function TokenPrint() {
 
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary" />
+                  <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Department</p>
@@ -177,30 +205,116 @@ export default function TokenPrint() {
                 </div>
               </div>
 
-              {/* Easypaisa Payment Info for Online Payments */}
-              {appointment.payment_method === "Online" && appointment.doctor?.easypaisa_number && (
-                <div className="p-4 border-t bg-green-50/50 dark:bg-green-900/20">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <Wallet className="w-5 h-5 text-green-600" />
+              {/* Estimated Time */}
+              {appointment.estimatedTime && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Estimated Time</p>
+                    <p className="font-bold text-blue-700 dark:text-blue-400">{appointment.estimatedTime}</p>
+                    <p className="text-[10px] text-muted-foreground">Approx. based on token position</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Methods for Online Payments */}
+              {appointment.payment_method === "Online" && (
+                <div className="space-y-3 p-4 rounded-lg border border-green-200/50 bg-green-50/50 dark:bg-green-900/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wallet className="w-4 h-4 text-green-600" />
+                    <p className="font-semibold text-green-700 dark:text-green-400">Payment Details</p>
+                  </div>
+                  
+                  {/* Mobile Wallets */}
+                  {(appointment.doctor?.easypaisa_number || appointment.doctor?.jazzcash_number) && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Smartphone className="w-3 h-3" />
+                        <span>Mobile Wallets</span>
+                      </div>
+                      
+                      {appointment.doctor?.easypaisa_number && (
+                        <div className="flex items-center justify-between p-2 rounded bg-white/50 dark:bg-black/20">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <span className="text-sm font-medium">Easypaisa:</span>
+                            <span className="font-bold">{appointment.doctor.easypaisa_number}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(appointment.doctor?.easypaisa_number || "");
+                              toast({ title: "Copied!", description: "Easypaisa number copied" });
+                            }}
+                            className="p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded no-print"
+                          >
+                            <Copy className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                      )}
+                      
+                      {appointment.doctor?.jazzcash_number && (
+                        <div className="flex items-center justify-between p-2 rounded bg-white/50 dark:bg-black/20">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-red-500" />
+                            <span className="text-sm font-medium">JazzCash:</span>
+                            <span className="font-bold">{appointment.doctor.jazzcash_number}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(appointment.doctor?.jazzcash_number || "");
+                              toast({ title: "Copied!", description: "JazzCash number copied" });
+                            }}
+                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/40 rounded no-print"
+                          >
+                            <Copy className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Easypaisa Number</p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-green-700 dark:text-green-400">{appointment.doctor.easypaisa_number}</p>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(appointment.doctor?.easypaisa_number || "");
-                            toast({ title: "Copied!", description: "Easypaisa number copied to clipboard" });
-                          }}
-                          className="p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded no-print"
-                        >
-                          <Copy className="w-3 h-3 text-muted-foreground" />
-                        </button>
+                  )}
+                  
+                  {/* Bank Details */}
+                  {appointment.doctor?.bank_name && appointment.doctor?.bank_account_number && (
+                    <div className="space-y-2 pt-2 border-t border-green-200/50">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Building2 className="w-3 h-3" />
+                        <span>Bank Transfer</span>
+                      </div>
+                      <div className="p-2 rounded bg-white/50 dark:bg-black/20 space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Bank:</span>
+                          <span className="font-medium">{appointment.doctor.bank_name}</span>
+                        </div>
+                        {appointment.doctor.bank_account_title && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Account Title:</span>
+                            <span className="font-medium">{appointment.doctor.bank_account_title}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Account #:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold">{appointment.doctor.bank_account_number}</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(appointment.doctor?.bank_account_number || "");
+                                toast({ title: "Copied!", description: "Account number copied" });
+                              }}
+                              className="p-1 hover:bg-muted rounded no-print"
+                            >
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Send payment to this Easypaisa number and upload receipt</p>
+                  )}
+                  
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Send payment and upload receipt below
+                  </p>
                 </div>
               )}
 
