@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { downloadMedicalHistoryPDF, getMedicalHistoryPDFBlob } from "@/lib/pdfGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { MedicinesList } from "@/components/shared/MedicinesList";
 
 interface TimelineAppointment {
   id: string;
@@ -532,7 +533,7 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
                                     Prescription
                                   </h4>
                                   <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
-                                    <p className="text-sm whitespace-pre-line">{apt.medicines}</p>
+                                    <MedicinesList medicinesJson={apt.medicines} />
                                   </div>
                                 </div>
                               )}
