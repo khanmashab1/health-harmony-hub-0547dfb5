@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface NotificationRequest {
@@ -58,10 +58,67 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   try {
+    // Authentication check - verify user is authenticated
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Missing authorization header" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate JWT
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claims, error: authError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (authError || !claims?.claims) {
+      console.error("Invalid JWT token:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const userId = claims.claims.sub as string;
+    console.log(`Authenticated user: ${userId}`);
+
+    // Use service role for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if user has permission (is doctor, PA, or admin)
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      console.error("Could not fetch user profile:", profileError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - User not found" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Only doctors, PAs, and admins can send notifications
+    const allowedRoles = ["doctor", "pa", "admin"];
+    if (!allowedRoles.includes(userProfile.role)) {
+      console.error(`User role ${userProfile.role} not authorized to send notifications`);
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Insufficient permissions" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
 
@@ -92,6 +149,38 @@ const handler = async (req: Request): Promise<Response> => {
     if (appointmentError || !appointment) {
       console.error("Error fetching appointment:", appointmentError);
       throw new Error("Appointment not found");
+    }
+
+    // Additional authorization check: user must be related to the appointment
+    if (userProfile.role === "doctor" && appointment.doctor_user_id !== userId) {
+      // Check if user is a PA for this doctor
+      const { data: paAssignment } = await supabase
+        .from("pa_assignments")
+        .select("id")
+        .eq("pa_user_id", userId)
+        .eq("doctor_user_id", appointment.doctor_user_id)
+        .single();
+      
+      if (!paAssignment) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - Not authorized for this appointment" }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    } else if (userProfile.role === "pa") {
+      const { data: paAssignment } = await supabase
+        .from("pa_assignments")
+        .select("id")
+        .eq("pa_user_id", userId)
+        .eq("doctor_user_id", appointment.doctor_user_id)
+        .single();
+      
+      if (!paAssignment) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - Not assigned to this doctor" }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     const patientEmail = appointment.patient_email;
@@ -204,6 +293,7 @@ This is an automated message. Please do not reply directly to this email.`;
         action: "email_sent",
         entity_type: "appointments",
         entity_id: appointmentId,
+        user_id: userId,
         details: { to: patientEmail, subject, type },
       });
 
@@ -232,6 +322,7 @@ This is an automated message. Please do not reply directly to this email.`;
         action: "email_failed",
         entity_type: "appointments",
         entity_id: appointmentId,
+        user_id: userId,
         details: { to: patientEmail, subject, error: emailError.message },
       });
 
