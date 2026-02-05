@@ -2,7 +2,7 @@
  
  const corsHeaders = {
    "Access-Control-Allow-Origin": "*",
-   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
  };
  
  Deno.serve(async (req) => {
@@ -27,21 +27,34 @@
      );
  
      const { data: { user: callingUser }, error: authError } = await supabaseClient.auth.getUser();
-     if (authError || !callingUser) {
-       return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    if (authError) {
+      console.error("Auth error:", authError);
+      return new Response(JSON.stringify({ error: "Authentication failed: " + authError.message }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    if (!callingUser) {
+      console.error("No user found");
+      return new Response(JSON.stringify({ error: "No authenticated user found" }), {
          status: 401,
          headers: { ...corsHeaders, "Content-Type": "application/json" },
        });
      }
  
+    console.log("Calling user:", callingUser.id);
+
      // Check if calling user is admin using our helper function
-     const { data: isAdmin } = await supabaseClient.rpc("has_role", {
+    const { data: isAdmin, error: roleError } = await supabaseClient.rpc("has_role", {
        user_uuid: callingUser.id,
        check_role: "admin",
      });
  
+    console.log("Role check result:", { isAdmin, roleError });
+
      if (!isAdmin) {
-       return new Response(JSON.stringify({ error: "Admin access required" }), {
+      return new Response(JSON.stringify({ error: "Admin access required", roleError }), {
          status: 403,
          headers: { ...corsHeaders, "Content-Type": "application/json" },
        });
