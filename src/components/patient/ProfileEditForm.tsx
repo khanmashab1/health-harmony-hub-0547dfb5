@@ -2,20 +2,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Camera, User } from "lucide-react";
+import { Loader2, Camera, User, CalendarIcon } from "lucide-react";
+import { format, differenceInYears } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional().or(z.literal("")),
-  age: z.string().optional().or(z.literal("")),
+  dateOfBirth: z.date().optional().nullable(),
   gender: z.string().optional().or(z.literal("")),
   blood_type: z.string().optional().or(z.literal("")),
   province: z.string().trim().max(100, "Province must be less than 100 characters").optional().or(z.literal("")),
@@ -30,6 +33,7 @@ interface ProfileEditFormProps {
     name?: string | null;
     phone?: string | null;
     age?: number | null;
+    date_of_birth?: string | null;
     gender?: string | null;
     blood_type?: string | null;
     province?: string | null;
@@ -49,18 +53,27 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_path);
 
+  // Calculate age from date of birth
+  const calculateAge = (dob: Date | null | undefined): number | null => {
+    if (!dob) return null;
+    return differenceInYears(new Date(), dob);
+  };
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: profile.name || "",
       phone: profile.phone || "",
-      age: profile.age?.toString() || "",
+      dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : null,
       gender: profile.gender || "",
       blood_type: profile.blood_type || "",
       province: profile.province || "",
       city: profile.city || "",
     },
   });
+
+  const watchedDob = form.watch("dateOfBirth");
+  const calculatedAge = calculateAge(watchedDob);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -120,7 +133,7 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
         .update({
           name: values.name.trim(),
           phone: values.phone?.trim() || null,
-          age: values.age ? parseInt(values.age) : null,
+          date_of_birth: values.dateOfBirth ? format(values.dateOfBirth, "yyyy-MM-dd") : null,
           gender: values.gender || null,
           blood_type: values.blood_type || null,
           province: values.province?.trim() || null,
@@ -208,13 +221,49 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
           {/* Age */}
           <FormField
             control={form.control}
-            name="age"
+            name="dateOfBirth"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Age</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="Enter your age" min="1" max="150" {...field} />
-                </FormControl>
+                <FormLabel>Date of Birth</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "dd MMMM yyyy")
+                        ) : (
+                          <span>Pick your date of birth</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value || undefined}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      captionLayout="dropdown-buttons"
+                      fromYear={1900}
+                      toYear={new Date().getFullYear()}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {calculatedAge !== null && (
+                  <p className="text-sm text-muted-foreground">
+                    Age: {calculatedAge} years old
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}

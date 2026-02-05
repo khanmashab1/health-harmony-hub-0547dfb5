@@ -77,6 +77,7 @@ import { BrandingPanel } from "@/components/admin/BrandingPanel";
 import { MedicinesPanel } from "@/components/admin/MedicinesPanel";
 import { VideoPanel } from "@/components/admin/VideoPanel";
 import { FooterSettingsPanel } from "@/components/admin/FooterSettingsPanel";
+import { DoctorApplicationsPanel } from "@/components/admin/DoctorApplicationsPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -368,6 +369,9 @@ export default function AdminDashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="users" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Users</TabsTrigger>
                 <TabsTrigger value="doctors" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Doctors</TabsTrigger>
+                <TabsTrigger value="applications" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  Applications
+                </TabsTrigger>
                 <TabsTrigger value="pas" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">PAs</TabsTrigger>
                 <TabsTrigger value="medicines" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Pill className="w-4 h-4 mr-1 sm:mr-2" />
@@ -402,6 +406,22 @@ export default function AdminDashboard() {
               <TabsContent value="footer"><FooterSettingsPanel /></TabsContent>
               <TabsContent value="video"><VideoPanel /></TabsContent>
               <TabsContent value="medicines"><MedicinesPanel /></TabsContent>
+
+              {/* Doctor Applications Tab */}
+              <TabsContent value="applications">
+                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10 dark:to-transparent">
+                    <CardTitle className="flex items-center gap-2">
+                      <Stethoscope className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      Doctor Applications
+                    </CardTitle>
+                    <CardDescription>Review and manage doctor registration applications</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <DoctorApplicationsPanel />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* Users Tab */}
               <TabsContent value="users">

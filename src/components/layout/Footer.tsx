@@ -91,6 +91,7 @@ export function Footer() {
                 { label: "Book Appointment", href: "/booking" },
                 { label: "Find Doctors", href: "/booking" },
                 { label: "Symptoms Checker", href: "/symptoms" },
+                { label: "Become a Doctor", href: "/become-doctor" },
                 { label: "My Profile", href: "/profile" },
               ].map((link) => (
                 <li key={link.label}>
