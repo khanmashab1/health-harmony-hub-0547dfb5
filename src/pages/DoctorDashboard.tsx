@@ -1,19 +1,17 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks, startOfMonth, endOfMonth, eachWeekOfInterval } from "date-fns";
+import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks } from "date-fns";
 import {
   Stethoscope,
   Calendar,
   Users,
   Clock,
   CheckCircle2,
-  XCircle,
   FileText,
   Activity,
   CalendarX,
   Plus,
   Trash2,
-  LogOut,
   ChevronRight,
   Settings,
   TrendingUp,
@@ -21,7 +19,6 @@ import {
   BarChart3,
   Radio,
   Crown,
-  DollarSign,
   Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +46,8 @@ import { MedicineEntry } from "@/components/doctor/MedicineEntry";
 import { DoctorSettingsPanel } from "@/components/doctor/DoctorSettingsPanel";
 import { QueueManagementPanel } from "@/components/doctor/QueueManagementPanel";
 import { PAManagementPanel } from "@/components/doctor/PAManagementPanel";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
+import { FeatureGate, PatientLimitWarning } from "@/components/doctor/FeatureGate";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -69,7 +68,7 @@ export default function DoctorDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("doctors")
-        .select("*, selected_plan:doctor_payment_plans(id, name, price, billing_period)")
+        .select("*, selected_plan:doctor_payment_plans(id, name, price, billing_period, features)")
         .eq("user_id", user!.id)
         .single();
       if (error) throw error;
@@ -77,6 +76,9 @@ export default function DoctorDashboard() {
     },
     enabled: !!user,
   });
+
+  // Plan-based feature access
+  const { features, isFreePlan, canAccessFeature, getUpgradeMessage } = usePlanFeatures(user?.id);
 
   // Fetch appointments
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
@@ -335,7 +337,11 @@ export default function DoctorDashboard() {
                   All
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                  {!canAccessFeature("analyticsAccess") ? (
+                    <Lock className="w-4 h-4 mr-1 sm:mr-2 text-muted-foreground" />
+                  ) : (
+                    <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                  )}
                   <span className="hidden sm:inline">Analytics</span>
                   <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
@@ -345,7 +351,11 @@ export default function DoctorDashboard() {
                   <span className="sm:hidden">Avail</span>
                 </TabsTrigger>
                 <TabsTrigger value="team" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                  {!canAccessFeature("teamManagement") ? (
+                    <Lock className="w-4 h-4 mr-1 sm:mr-2 text-muted-foreground" />
+                  ) : (
+                    <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                  )}
                   <span className="hidden sm:inline">My Team</span>
                   <span className="sm:hidden">Team</span>
                 </TabsTrigger>
@@ -357,6 +367,14 @@ export default function DoctorDashboard() {
 
               {/* Queue Management Tab */}
               <TabsContent value="queue">
+                {/* Patient Limit Warning */}
+                {features.maxPatientsPerDay !== Infinity && (
+                  <PatientLimitWarning
+                    currentCount={todayAppointments.length}
+                    maxAllowed={features.maxPatientsPerDay}
+                    isAtLimit={todayAppointments.length >= features.maxPatientsPerDay}
+                  />
+                )}
                 {user && <QueueManagementPanel doctorId={user.id} />}
               </TabsContent>
 
@@ -485,22 +503,13 @@ export default function DoctorDashboard() {
 
               {/* Analytics Tab */}
               <TabsContent value="analytics">
-                {/* Free plan upgrade prompt */}
-                {doctorInfo?.selected_plan?.price === 0 && (
-                  <Alert className="mb-6 border-primary/30 bg-primary/5">
-                    <Crown className="h-4 w-4 text-primary" />
-                    <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
-                      <span>
-                        <strong>Upgrade to Professional</strong> for advanced analytics, custom branding, and priority support.
-                      </span>
-                      <Button size="sm" variant="default" asChild>
-                        <Link to="/doctor?tab=settings">
-                          Upgrade Now
-                        </Link>
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <FeatureGate
+                  feature="analyticsAccess"
+                  canAccess={canAccessFeature("analyticsAccess")}
+                  upgradeMessage={getUpgradeMessage("analyticsAccess")}
+                  variant={isFreePlan ? "banner" : "replace"}
+                  showPreview={true}
+                >
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card variant="glass" className="border-white/50">
                     <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
@@ -620,6 +629,7 @@ export default function DoctorDashboard() {
                     </CardContent>
                   </Card>
                 </div>
+                </FeatureGate>
               </TabsContent>
 
               {/* Availability */}
@@ -707,7 +717,14 @@ export default function DoctorDashboard() {
 
               {/* My Team (PA Management) */}
               <TabsContent value="team">
-                {user && <PAManagementPanel doctorId={user.id} />}
+                <FeatureGate
+                  feature="teamManagement"
+                  canAccess={canAccessFeature("teamManagement")}
+                  upgradeMessage={getUpgradeMessage("teamManagement")}
+                  variant="replace"
+                >
+                  {user && <PAManagementPanel doctorId={user.id} />}
+                </FeatureGate>
               </TabsContent>
 
               {/* Settings */}
