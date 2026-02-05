@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Crown, Check, ArrowRight, Sparkles, Star } from "lucide-react";
+import { Crown, Check, ArrowRight, Sparkles, Star, ExternalLink, Settings2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 interface PaymentPlan {
@@ -17,6 +19,7 @@ interface PaymentPlan {
   features: string[];
   is_popular: boolean;
   sort_order: number;
+  stripe_price_id: string | null;
 }
 
 interface SubscriptionCardProps {
@@ -31,9 +34,33 @@ interface SubscriptionCardProps {
 
 export function SubscriptionCard({ userId, currentPlan }: SubscriptionCardProps) {
   const [showPlansDialog, setShowPlansDialog] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
+  const [isManaging, setIsManaging] = useState(false);
+  const { toast } = useToast();
+
+  // Check for subscription success/cancel in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const subscription = params.get("subscription");
+    if (subscription === "success") {
+      toast({
+        title: "Subscription Successful!",
+        description: "Your plan has been upgraded. It may take a moment to reflect.",
+      });
+      // Clean up URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (subscription === "cancelled") {
+      toast({
+        title: "Subscription Cancelled",
+        description: "You can upgrade anytime from the Settings tab.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [toast]);
 
   const { data: plans } = useQuery({
-    queryKey: ["doctor-payment-plans"],
+    queryKey: ["doctor-payment-plans-with-stripe"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("doctor_payment_plans")
@@ -45,7 +72,69 @@ export function SubscriptionCard({ userId, currentPlan }: SubscriptionCardProps)
     },
   });
 
+  // Check Stripe subscription status
+  const { data: stripeStatus, refetch: refetchStatus } = useQuery({
+    queryKey: ["doctor-stripe-status", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("check-doctor-subscription");
+      if (error) throw error;
+      return data as { subscribed: boolean; product_id: string | null; subscription_end: string | null };
+    },
+    enabled: !!userId,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
   const currentPlanDetails = plans?.find(p => p.id === currentPlan?.id);
+  const isFreePlan = currentPlan?.price === 0 || !currentPlan;
+
+  const handleUpgrade = async (plan: PaymentPlan) => {
+    if (!plan.stripe_price_id) {
+      toast({
+        title: "Free Plan",
+        description: "This plan doesn't require payment.",
+      });
+      return;
+    }
+
+    setIsUpgrading(plan.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-plan-checkout", {
+        body: { planId: plan.id },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Upgrade Failed",
+        description: error.message || "Failed to start checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpgrading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setIsManaging(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("doctor-customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to open subscription portal",
+        variant: "destructive",
+      });
+    } finally {
+      setIsManaging(false);
+    }
+  };
 
   return (
     <>
@@ -80,10 +169,15 @@ export function SubscriptionCard({ userId, currentPlan }: SubscriptionCardProps)
                     )}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-2">
                   <Badge variant="outline" className="text-green-600 border-green-600/30 bg-green-50 dark:bg-green-900/20">
-                    Active
+                    {stripeStatus?.subscribed ? "Active" : "Active"}
                   </Badge>
+                  {stripeStatus?.subscription_end && (
+                    <p className="text-xs text-muted-foreground">
+                      Renews: {new Date(stripeStatus.subscription_end).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -104,15 +198,40 @@ export function SubscriptionCard({ userId, currentPlan }: SubscriptionCardProps)
                 </div>
               )}
 
-              {/* Upgrade Button */}
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setShowPlansDialog(true)}
-              >
-                View All Plans
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPlansDialog(true)}
+                >
+                  {isFreePlan ? "Upgrade Plan" : "View All Plans"}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                
+                {stripeStatus?.subscribed && (
+                  <Button 
+                    variant="outline"
+                    onClick={handleManageSubscription}
+                    disabled={isManaging}
+                  >
+                    {isManaging ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Settings2 className="w-4 h-4 mr-2" />
+                    )}
+                    Manage Subscription
+                  </Button>
+                )}
+              </div>
+
+              {isFreePlan && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Upgrade to Professional or Enterprise to unlock advanced features like analytics, custom branding, and priority support.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           ) : (
             <div className="text-center py-6 space-y-4">
@@ -148,104 +267,120 @@ export function SubscriptionCard({ userId, currentPlan }: SubscriptionCardProps)
           </DialogHeader>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 py-4">
-            {plans?.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card
-                  className={`relative h-full flex flex-col transition-all duration-200 ${
-                    plan.is_popular
-                      ? "ring-2 ring-primary shadow-lg"
-                      : currentPlan?.id === plan.id
-                      ? "ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/10"
-                      : "hover:shadow-md"
-                  }`}
+            {plans?.map((plan, index) => {
+              const isCurrentPlan = currentPlan?.id === plan.id;
+              const canUpgrade = !isCurrentPlan && plan.price > (currentPlan?.price || 0);
+              
+              return (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  {plan.is_popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground shadow-md">
-                        <Star className="w-3 h-3 mr-1 fill-current" />
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-
-                  {currentPlan?.id === plan.id && (
-                    <div className="absolute -top-3 right-4">
-                      <Badge className="bg-green-500 text-white shadow-md">
-                        <Check className="w-3 h-3 mr-1" />
-                        Current
-                      </Badge>
-                    </div>
-                  )}
-
-                  <CardHeader className="text-center pb-2 pt-6">
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    {plan.description && (
-                      <CardDescription className="text-xs">{plan.description}</CardDescription>
+                  <Card
+                    className={`relative h-full flex flex-col transition-all duration-200 ${
+                      plan.is_popular
+                        ? "ring-2 ring-primary shadow-lg"
+                        : isCurrentPlan
+                        ? "ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/10"
+                        : "hover:shadow-md"
+                    }`}
+                  >
+                    {plan.is_popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-primary text-primary-foreground shadow-md">
+                          <Star className="w-3 h-3 mr-1 fill-current" />
+                          Most Popular
+                        </Badge>
+                      </div>
                     )}
-                  </CardHeader>
 
-                  <CardContent className="flex-1 flex flex-col">
-                    <div className="text-center mb-4">
-                      <div className="flex items-baseline justify-center gap-1">
-                        {plan.price === 0 ? (
-                          <span className="text-3xl font-bold text-primary">Free</span>
-                        ) : (
-                          <>
-                            <span className="text-sm text-muted-foreground">PKR</span>
-                            <span className="text-3xl font-bold text-primary">
-                              {plan.price.toLocaleString()}
-                            </span>
-                          </>
+                    {isCurrentPlan && (
+                      <div className="absolute -top-3 right-4">
+                        <Badge className="bg-green-500 text-white shadow-md">
+                          <Check className="w-3 h-3 mr-1" />
+                          Current
+                        </Badge>
+                      </div>
+                    )}
+
+                    <CardHeader className="text-center pb-2 pt-6">
+                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      {plan.description && (
+                        <CardDescription className="text-xs">{plan.description}</CardDescription>
+                      )}
+                    </CardHeader>
+
+                    <CardContent className="flex-1 flex flex-col">
+                      <div className="text-center mb-4">
+                        <div className="flex items-baseline justify-center gap-1">
+                          {plan.price === 0 ? (
+                            <span className="text-3xl font-bold text-primary">Free</span>
+                          ) : (
+                            <>
+                              <span className="text-sm text-muted-foreground">PKR</span>
+                              <span className="text-3xl font-bold text-primary">
+                                {plan.price.toLocaleString()}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {plan.price > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            per {plan.billing_period}
+                          </span>
                         )}
                       </div>
-                      {plan.price > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          per {plan.billing_period}
-                        </span>
-                      )}
-                    </div>
 
-                    <ul className="space-y-2 flex-1 mb-4">
-                      {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <div className="w-4 h-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
-                          </div>
-                          <span className="text-xs">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                      <ul className="space-y-2 flex-1 mb-4">
+                        {plan.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <div className="w-4 h-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Check className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span className="text-xs">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
 
-                    <Button
-                      variant={currentPlan?.id === plan.id ? "outline" : plan.is_popular ? "default" : "outline"}
-                      className="w-full"
-                      disabled={currentPlan?.id === plan.id}
-                    >
-                      {currentPlan?.id === plan.id ? (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          Current Plan
-                        </>
-                      ) : (
-                        <>
-                          {plan.is_popular && <Sparkles className="w-4 h-4 mr-2" />}
-                          {currentPlan ? "Upgrade" : "Select"} Plan
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                      <Button
+                        variant={isCurrentPlan ? "outline" : plan.is_popular ? "default" : "outline"}
+                        className="w-full"
+                        disabled={isCurrentPlan || isUpgrading === plan.id || (!canUpgrade && plan.price > 0)}
+                        onClick={() => canUpgrade && handleUpgrade(plan)}
+                      >
+                        {isUpgrading === plan.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : isCurrentPlan ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            Current Plan
+                          </>
+                        ) : canUpgrade ? (
+                          <>
+                            {plan.is_popular && <Sparkles className="w-4 h-4 mr-2" />}
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Upgrade Now
+                          </>
+                        ) : plan.price === 0 ? (
+                          "Free Plan"
+                        ) : (
+                          "Downgrade via Portal"
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            To change your subscription, please contact support.
+            To manage billing or cancel subscription, use "Manage Subscription" button.
           </p>
         </DialogContent>
       </Dialog>
