@@ -116,22 +116,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
     mutationFn: async ({ id, status, notes, application }: { id: string; status: string; notes?: string; application?: DoctorApplication }) => {
       // If approving, first create the doctor account
       if (status === "approved" && application) {
-        // Check if a user with this email already exists
-        const { data: existingProfile } = await supabase
-          .from("profiles")
-          .select("id, role")
-          .eq("id", application.email)
-          .maybeSingle();
-
-        // We need to invite the user or create an account for them
-        // First, let's check if a profile exists by looking up via email in auth
-        // Since we can't directly query auth.users, we'll create the doctor record
-        // The user will need to use the same email to register/login
-        
-        // For now, we'll create a placeholder in doctors table
-        // When the user registers with this email, we'll link them
-        
-        // Actually, let's use an edge function to handle this properly
         const { data: funcData, error: funcError } = await supabase.functions.invoke("approve-doctor-application", {
           body: {
             applicationId: id,
@@ -145,7 +129,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
         return;
       }
       
-      // For rejection, just update the status
+      // For rejection, update the status and send rejection email
       const { error } = await supabase
          .from("doctor_applications")
          .update({
@@ -155,9 +139,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
          })
          .eq("id", id);
        if (error) throw error;
+
+      // Send rejection email if rejecting
+      if (status === "rejected" && application) {
+        try {
+          await supabase.functions.invoke("send-email", {
+            body: {
+              to: application.email,
+              subject: "Update on Your MediCare+ Doctor Application",
+              html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;"><div style="background:#374151;padding:30px;text-align:center;border-radius:10px 10px 0 0;"><h1 style="color:#fff;margin:0;">Application Update</h1></div><div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px;"><p>Dear ${application.full_name},</p><p>Thank you for your interest in joining <strong>MediCare+</strong> as a healthcare provider.</p><p>After careful review of your application, we regret to inform you that we are unable to proceed with your application at this time.</p>${notes ? `<div style="background:#fff;padding:15px;border-radius:8px;border-left:4px solid #6b7280;margin:20px 0;"><p style="margin:0;font-style:italic;">${notes}</p></div>` : ''}<p>If you believe this decision was made in error or if you have additional documentation to support your application, please feel free to submit a new application with the updated information.</p><p style="color:#6b7280;font-size:14px;margin-top:30px;">Thank you for your understanding.<br>The MediCare+ Team</p></div></body></html>`,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send rejection email:", emailError);
+        }
+      }
      },
      onSuccess: (_, variables) => {
        queryClient.invalidateQueries({ queryKey: ["doctor-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["doctors"] });
        toast.success(`Application ${variables.status === "approved" ? "approved" : "rejected"} successfully`);
        setActionDialogOpen(false);
        setSelectedApplication(null);
@@ -188,7 +188,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
        id: selectedApplication.id,
        status: actionType === "approve" ? "approved" : "rejected",
        notes: adminNotes,
-      application: actionType === "approve" ? selectedApplication : undefined,
+      application: selectedApplication,
      });
    };
 
@@ -226,6 +226,133 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
    }
  
    const pendingCount = applications?.filter((a) => a.status === "pending").length || 0;
+  const approvedCount = applications?.filter((a) => a.status === "approved").length || 0;
+  const rejectedCount = applications?.filter((a) => a.status === "rejected").length || 0;
+
+  const pendingApps = applications?.filter((a) => a.status === "pending") || [];
+  const approvedApps = applications?.filter((a) => a.status === "approved") || [];
+  const rejectedApps = applications?.filter((a) => a.status === "rejected") || [];
+
+  const renderApplicationCard = (app: DoctorApplication) => (
+    <Card key={app.id} className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="flex-1 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg">{app.full_name}</h4>
+                <p className="text-muted-foreground">{app.specialty}</p>
+              </div>
+              <div className="ml-auto">{getStatusBadge(app.status)}</div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Mail className="w-4 h-4" />
+                <span className="truncate">{app.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Phone className="w-4 h-4" />
+                <span>{app.phone}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span>{app.city}, {app.province}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>{format(new Date(app.created_at), "dd MMM yyyy")}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-primary" />
+                <span>{app.degree}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <span>{app.experience_years} years exp.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-primary" />
+                <span>Rs. {app.consultation_fee}</span>
+              </div>
+              {app.date_of_birth && (
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <span>Age: {calculateAge(app.date_of_birth)} years</span>
+                </div>
+              )}
+            </div>
+
+            {app.bio && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{app.bio}</p>
+            )}
+
+            {/* Documents */}
+            <div className="flex gap-2 flex-wrap">
+              {app.medical_license_path && (
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => handleViewApplication(app)}>
+                  <FileText className="w-3 h-3" />
+                  License Uploaded
+                </Badge>
+              )}
+              {app.degree_certificate_path && (
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => handleViewApplication(app)}>
+                  <FileText className="w-3 h-3" />
+                  Degree Uploaded
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleViewApplication(app)}
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              View Details
+            </Button>
+            {app.status === "pending" && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                  onClick={() => handleAction(app, "approve")}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  onClick={() => handleAction(app, "reject")}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Reject
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {app.admin_notes && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm font-medium mb-1">Admin Notes:</p>
+            <p className="text-sm text-muted-foreground">{app.admin_notes}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
  
    return (
      <div className="space-y-6">
@@ -233,145 +360,87 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
          <div>
            <h3 className="text-lg font-semibold">Doctor Applications</h3>
            <p className="text-sm text-muted-foreground">
-             {pendingCount} pending application{pendingCount !== 1 ? "s" : ""} to review
+              {pendingCount} pending, {approvedCount} approved, {rejectedCount} rejected
            </p>
          </div>
        </div>
  
-       {applications?.length === 0 ? (
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending" className="gap-2">
+              Pending
+              {pendingCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{pendingCount}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="gap-2">
+              Approved
+              {approvedCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{approvedCount}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="gap-2">
+              Rejected
+              {rejectedCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{rejectedCount}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pending" className="mt-4">
+            {pendingApps.length === 0 ? (
          <Card>
            <CardContent className="py-12 text-center">
              <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-             <h3 className="text-lg font-medium mb-2">No Applications Yet</h3>
+                  <h3 className="text-lg font-medium mb-2">No Pending Applications</h3>
              <p className="text-muted-foreground">
-               Doctor applications will appear here when submitted.
+                    All caught up! New applications will appear here.
              </p>
            </CardContent>
          </Card>
-       ) : (
-         <div className="space-y-4">
-           {applications?.map((app) => (
-             <Card key={app.id} className="hover:shadow-md transition-shadow">
-               <CardContent className="p-6">
-                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                   <div className="flex-1 space-y-3">
-                     <div className="flex items-start gap-3">
-                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                         <User className="w-6 h-6 text-primary" />
-                       </div>
-                       <div>
-                         <h4 className="font-semibold text-lg">{app.full_name}</h4>
-                         <p className="text-muted-foreground">{app.specialty}</p>
-                       </div>
-                       <div className="ml-auto">{getStatusBadge(app.status)}</div>
-                     </div>
- 
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                       <div className="flex items-center gap-2 text-muted-foreground">
-                         <Mail className="w-4 h-4" />
-                         <span className="truncate">{app.email}</span>
-                       </div>
-                       <div className="flex items-center gap-2 text-muted-foreground">
-                         <Phone className="w-4 h-4" />
-                         <span>{app.phone}</span>
-                       </div>
-                       <div className="flex items-center gap-2 text-muted-foreground">
-                         <MapPin className="w-4 h-4" />
-                         <span>{app.city}, {app.province}</span>
-                       </div>
-                       <div className="flex items-center gap-2 text-muted-foreground">
-                         <Calendar className="w-4 h-4" />
-                         <span>{format(new Date(app.created_at), "dd MMM yyyy")}</span>
-                       </div>
-                     </div>
- 
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                       <div className="flex items-center gap-2">
-                         <GraduationCap className="w-4 h-4 text-primary" />
-                         <span>{app.degree}</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <Clock className="w-4 h-4 text-primary" />
-                         <span>{app.experience_years} years exp.</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <DollarSign className="w-4 h-4 text-primary" />
-                         <span>Rs. {app.consultation_fee}</span>
-                       </div>
-                       {app.date_of_birth && (
-                         <div className="flex items-center gap-2">
-                           <User className="w-4 h-4 text-primary" />
-                           <span>Age: {calculateAge(app.date_of_birth)} years</span>
-                         </div>
-                       )}
-                     </div>
- 
-                     {app.bio && (
-                       <p className="text-sm text-muted-foreground line-clamp-2">{app.bio}</p>
-                     )}
- 
-                     {/* Documents */}
-                     <div className="flex gap-2 flex-wrap">
-                       {app.medical_license_path && (
-                        <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => handleViewApplication(app)}>
-                           <FileText className="w-3 h-3" />
-                           License Uploaded
-                         </Badge>
-                       )}
-                       {app.degree_certificate_path && (
-                        <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => handleViewApplication(app)}>
-                           <FileText className="w-3 h-3" />
-                           Degree Uploaded
-                         </Badge>
-                       )}
-                     </div>
-                   </div>
- 
-                  <div className="flex gap-2 flex-wrap">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewApplication(app)}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      View Details
-                    </Button>
-                    {app.status === "pending" && (
-                      <>
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         className="text-green-600 hover:bg-green-50 hover:text-green-700"
-                         onClick={() => handleAction(app, "approve")}
-                       >
-                         <Check className="w-4 h-4 mr-1" />
-                         Approve
-                       </Button>
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                         onClick={() => handleAction(app, "reject")}
-                       >
-                         <X className="w-4 h-4 mr-1" />
-                         Reject
-                       </Button>
-                      </>
-                    )}
-                  </div>
-                 </div>
- 
-                 {app.admin_notes && (
-                   <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                     <p className="text-sm font-medium mb-1">Admin Notes:</p>
-                     <p className="text-sm text-muted-foreground">{app.admin_notes}</p>
-                   </div>
-                 )}
-               </CardContent>
-             </Card>
-           ))}
-         </div>
-       )}
+            ) : (
+              <div className="space-y-4">
+                {pendingApps.map(renderApplicationCard)}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="approved" className="mt-4">
+            {approvedApps.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Check className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Approved Applications</h3>
+                  <p className="text-muted-foreground">
+                    Approved doctor applications will appear here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {approvedApps.map(renderApplicationCard)}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="rejected" className="mt-4">
+            {rejectedApps.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <X className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Rejected Applications</h3>
+                  <p className="text-muted-foreground">
+                    Rejected doctor applications will appear here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {rejectedApps.map(renderApplicationCard)}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
  
        {/* Action Confirmation Dialog */}
        <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
