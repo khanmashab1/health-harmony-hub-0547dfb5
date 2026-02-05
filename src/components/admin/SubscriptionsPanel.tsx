@@ -29,10 +29,12 @@ import {
   Crown,
   ChevronLeft,
   ChevronRight,
-  Star
+  Star,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { SubscriptionAnalyticsCharts } from "./SubscriptionAnalyticsCharts";
 
 interface DoctorWithPlan {
   user_id: string;
@@ -254,6 +256,21 @@ export function SubscriptionsPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Charts */}
+      {doctorsData && plans && doctorsData.length > 0 && (
+        <Card variant="glass" className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              Subscription Analytics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SubscriptionAnalyticsCharts doctors={doctorsData} plans={plans} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Plan Distribution */}
       <Card variant="glass" className="border-border/50">
