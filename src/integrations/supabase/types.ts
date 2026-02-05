@@ -240,6 +240,7 @@ export type Database = {
           qualifications: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          selected_plan_id: string | null
           specialty: string
           status: string
           updated_at: string
@@ -264,6 +265,7 @@ export type Database = {
           qualifications?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          selected_plan_id?: string | null
           specialty: string
           status?: string
           updated_at?: string
@@ -288,6 +290,7 @@ export type Database = {
           qualifications?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          selected_plan_id?: string | null
           specialty?: string
           status?: string
           updated_at?: string
@@ -298,6 +301,13 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_applications_selected_plan_id_fkey"
+            columns: ["selected_plan_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_payment_plans"
             referencedColumns: ["id"]
           },
         ]
