@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, 
   Edit, History, Heart, Pencil, PenSquare
@@ -409,7 +409,9 @@ export default function PatientDashboard() {
                           {[
                             { label: "Full Name", value: profile?.name },
                             { label: "Phone", value: profile?.phone },
-                            { label: "Age", value: profile?.age },
+                            { label: "Age", value: profile?.date_of_birth 
+                              ? `${differenceInYears(new Date(), new Date(profile.date_of_birth))} years`
+                              : null },
                             { label: "Gender", value: profile?.gender },
                             { label: "Blood Type", value: profile?.blood_type },
                             { label: "Location", value: profile?.city && profile?.province ? `${profile.city}, ${profile.province}` : null },

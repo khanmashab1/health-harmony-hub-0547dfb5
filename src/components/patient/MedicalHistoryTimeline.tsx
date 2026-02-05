@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -216,13 +216,16 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
     if (!appointments) return;
     setIsDownloading(true);
     try {
+      const calculatedAge = profile?.date_of_birth 
+        ? differenceInYears(new Date(), new Date(profile.date_of_birth)) 
+        : undefined;
       downloadMedicalHistoryPDF(
         appointments,
         medicalRecords || [],
         {
           name: profile?.name || "Patient",
           phone: profile?.phone || undefined,
-          age: profile?.age || undefined,
+          age: calculatedAge,
           gender: profile?.gender || undefined,
           blood_type: profile?.blood_type || undefined,
         }
@@ -246,13 +249,16 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
     if (!appointments) return;
     setIsSharing(true);
     try {
+      const calculatedAge = profile?.date_of_birth 
+        ? differenceInYears(new Date(), new Date(profile.date_of_birth)) 
+        : undefined;
       const blob = getMedicalHistoryPDFBlob(
         appointments,
         medicalRecords || [],
         {
           name: profile?.name || "Patient",
           phone: profile?.phone || undefined,
-          age: profile?.age || undefined,
+          age: calculatedAge,
           gender: profile?.gender || undefined,
           blood_type: profile?.blood_type || undefined,
         }
