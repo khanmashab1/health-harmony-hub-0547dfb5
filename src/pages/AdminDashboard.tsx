@@ -261,15 +261,17 @@ export default function AdminDashboard() {
 
   const deleteDoctor = useMutation({
     mutationFn: async (userId: string) => {
-      // Delete doctor record first
-      const { error: doctorError } = await supabase.from("doctors").delete().eq("user_id", userId);
-      if (doctorError) throw doctorError;
-      // Update profile status to inactive (we don't delete the profile/user as they may have appointments)
-      const { error: profileError } = await supabase.from("profiles").update({ status: "Deleted" }).eq("id", userId);
-      if (profileError) throw profileError;
+     // Hard delete via edge function (deletes all related data + auth user)
+     const { data, error } = await supabase.functions.invoke("delete-user", {
+       body: { userId },
+     });
+     if (error) throw error;
+     if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
+     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+     queryClient.invalidateQueries({ queryKey: ["admin-pas"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       toast({ title: "Doctor deleted successfully" });
     },
@@ -277,6 +279,27 @@ export default function AdminDashboard() {
       toast({ variant: "destructive", title: "Failed to delete doctor", description: error.message });
     },
   });
+
+ // Hard delete user mutation (uses edge function)
+ const deleteUser = useMutation({
+   mutationFn: async (userId: string) => {
+     const { data, error } = await supabase.functions.invoke("delete-user", {
+       body: { userId },
+     });
+     if (error) throw error;
+     if (data?.error) throw new Error(data.error);
+   },
+   onSuccess: () => {
+     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+     queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
+     queryClient.invalidateQueries({ queryKey: ["admin-pas"] });
+     queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+     toast({ title: "User deleted successfully" });
+   },
+   onError: (error: any) => {
+     toast({ variant: "destructive", title: "Failed to delete user", description: error.message });
+   },
+ });
 
   const handleSignOut = async () => {
     await signOut();
@@ -467,6 +490,13 @@ export default function AdminDashboard() {
                                         <Trash2 className="w-4 h-4 mr-2" />
                                         Delete User
                                       </DropdownMenuItem>
+                                     <DropdownMenuItem 
+                                       onClick={() => deleteUser.mutate(u.id)}
+                                       className="text-destructive focus:text-destructive"
+                                     >
+                                       <Trash2 className="w-4 h-4 mr-2" />
+                                       Permanently Delete
+                                     </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </td>
@@ -675,7 +705,7 @@ export default function AdminDashboard() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => updateUserStatus.mutate({ userId: pa.id, status: "Deleted" })}
+                               onClick={() => deleteUser.mutate(pa.id)}
                                 className="text-destructive hover:bg-destructive/10"
                               >
                                 <Trash2 className="w-4 h-4" />
