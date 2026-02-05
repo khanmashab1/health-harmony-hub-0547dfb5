@@ -134,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = "patient") => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Use the current origin for email verification redirect
+    // This ensures users are redirected back to the Medicare website, not Lovable
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { error } = await supabase.auth.signUp({
       email,
