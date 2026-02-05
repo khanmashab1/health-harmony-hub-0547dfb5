@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScheduleSettingsCard } from "./ScheduleSettingsCard";
 import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { BreakTimesCard } from "./BreakTimesCard";
+import { SubscriptionCard } from "./SubscriptionCard";
 
 interface DoctorSettingsPanelProps {
   doctorInfo: {
@@ -31,6 +32,12 @@ interface DoctorSettingsPanelProps {
     bank_name?: string | null;
     bank_account_number?: string | null;
     bank_account_title?: string | null;
+    selected_plan?: {
+      id: string;
+      name: string;
+      price: number;
+      billing_period: string;
+    } | null;
   } | null | undefined;
   userId: string | undefined;
   profileName?: string | null;
@@ -127,6 +134,12 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
 
   return (
     <div className="space-y-6">
+      {/* Subscription Plan Card */}
+      <SubscriptionCard 
+        userId={userId} 
+        currentPlan={doctorInfo?.selected_plan || null} 
+      />
+
       {/* Profile Photo Card */}
       <Card variant="glass" className="border-white/50">
         <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
