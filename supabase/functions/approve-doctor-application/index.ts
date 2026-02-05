@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create the doctors record
+    // Create the doctors record with selected plan
     const { error: doctorError } = await supabase
       .from("doctors")
       .upsert({
@@ -179,6 +179,7 @@ Deno.serve(async (req) => {
         city: application.city,
         province: application.province,
         max_patients_per_day: 30,
+        selected_plan_id: application.selected_plan_id,
       });
 
     if (doctorError) {

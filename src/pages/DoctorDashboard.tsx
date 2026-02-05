@@ -19,7 +19,9 @@ import {
   TrendingUp,
   Search,
   BarChart3,
-  Radio
+  Radio,
+  Crown,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,13 +61,13 @@ export default function DoctorDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [chartView, setChartView] = useState<"weekly" | "monthly">("weekly");
 
-  // Fetch doctor info
+  // Fetch doctor info with plan
   const { data: doctorInfo } = useQuery({
     queryKey: ["doctor-info", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("doctors")
-        .select("*")
+        .select("*, selected_plan:doctor_payment_plans(id, name, price, billing_period)")
         .eq("user_id", user!.id)
         .single();
       if (error) throw error;
@@ -261,7 +263,15 @@ export default function DoctorDashboard() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                   Dr. {profile?.name}
                 </h1>
-                <p className="text-muted-foreground font-medium">{doctorInfo?.specialty}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-muted-foreground font-medium">{doctorInfo?.specialty}</p>
+                  {doctorInfo?.selected_plan && (
+                    <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
+                      <Crown className="w-3 h-3" />
+                      {doctorInfo.selected_plan.name}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
