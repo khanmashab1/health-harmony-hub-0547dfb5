@@ -80,6 +80,7 @@ import { MedicinesPanel } from "@/components/admin/MedicinesPanel";
 import { VideoPanel } from "@/components/admin/VideoPanel";
 import { FooterSettingsPanel } from "@/components/admin/FooterSettingsPanel";
 import { DoctorApplicationsPanel } from "@/components/admin/DoctorApplicationsPanel";
+import { PaymentPlansPanel } from "@/components/admin/PaymentPlansPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -423,6 +424,9 @@ export default function AdminDashboard() {
                 <TabsTrigger value="video" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Video className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />Video
                 </TabsTrigger>
+                <TabsTrigger value="plans" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  Plans
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
@@ -432,6 +436,7 @@ export default function AdminDashboard() {
               <TabsContent value="footer"><FooterSettingsPanel /></TabsContent>
               <TabsContent value="video"><VideoPanel /></TabsContent>
               <TabsContent value="medicines"><MedicinesPanel /></TabsContent>
+              <TabsContent value="plans"><PaymentPlansPanel /></TabsContent>
 
               {/* Doctor Applications Tab */}
               <TabsContent value="applications">
