@@ -117,7 +117,20 @@ export default function Auth() {
       let message = error.message;
       // Check if email not verified
       if (message.includes("Email not confirmed")) {
-        message = "Please verify your email before logging in. Check your inbox for the verification link.";
+         // Auto-resend verification email
+         try {
+           const productionUrl = "https://medicare-nine-wine.vercel.app";
+           await supabase.auth.resend({
+             type: 'signup',
+             email: data.email,
+             options: {
+               emailRedirectTo: `${productionUrl}/auth`,
+             },
+           });
+           message = "Your email is not verified. We've sent a new verification link to your inbox.";
+         } catch (resendError) {
+           message = "Please verify your email before logging in. Check your inbox for the verification link.";
+         }
       }
       toast({
         variant: "destructive",
