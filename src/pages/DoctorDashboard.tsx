@@ -62,6 +62,7 @@ export default function DoctorDashboard() {
   const [blockReason, setBlockReason] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [chartView, setChartView] = useState<"weekly" | "monthly">("weekly");
+  const [activeTab, setActiveTab] = useState("queue");
 
   // Fetch doctor info with plan
   const { data: doctorInfo } = useQuery({
@@ -327,6 +328,7 @@ export default function DoctorDashboard() {
             <PlanRestrictionsCard 
               userId={user?.id} 
               currentPatientCount={todayAppointments.length}
+              onTabChange={(tab) => setActiveTab(tab)}
             />
           </motion.div>
 
@@ -336,7 +338,7 @@ export default function DoctorDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Tabs defaultValue="queue" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
                 <TabsTrigger value="queue" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Radio className="w-4 h-4 mr-1 sm:mr-2" />
