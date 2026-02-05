@@ -93,8 +93,12 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      productId = subscription.items.data[0].price.product as string;
+      // Safely handle the date conversion
+      if (subscription.current_period_end) {
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      }
+      const priceItem = subscription.items?.data?.[0]?.price;
+      productId = priceItem?.product as string || null;
       logStep("Active subscription found", { productId, subscriptionEnd });
 
       // Find the matching plan in our database and update doctor's selected_plan_id
