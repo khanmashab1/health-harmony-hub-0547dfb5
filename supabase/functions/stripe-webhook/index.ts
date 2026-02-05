@@ -12,10 +12,46 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Helper function to send subscription email notification
+async function sendSubscriptionEmail(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  email: string,
+  doctorName: string,
+  eventType: "upgrade" | "cancel" | "renewal" | "payment_failed",
+  planName?: string,
+  planPrice?: number,
+  subscriptionEnd?: string
+) {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-subscription-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        email,
+        doctorName,
+        eventType,
+        planName,
+        planPrice,
+        subscriptionEnd,
+      }),
+    });
+    logStep("Email notification sent", { eventType, email, success: response.ok });
+  } catch (error) {
+    logStep("Failed to send email notification", { error: String(error) });
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
   try {
     logStep("Webhook received");
@@ -53,8 +89,8 @@ serve(async (req) => {
     logStep("Event type", { type: event.type });
 
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      supabaseUrl,
+      serviceRoleKey,
       { auth: { persistSession: false } }
     );
 
@@ -65,36 +101,43 @@ serve(async (req) => {
         logStep("Checkout completed", { sessionId: session.id, customerId: session.customer });
         
         if (session.mode === "subscription" && session.customer_email) {
-          // Find user by email and update their plan
-          const { data: profiles } = await supabaseClient
-            .from("profiles")
-            .select("id")
-            .eq("role", "doctor");
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          const productId = subscription.items.data[0]?.price.product as string;
           
-          if (profiles) {
-            // Get user emails from auth
-            for (const profile of profiles) {
-              const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-              const productId = subscription.items.data[0]?.price.product as string;
-              
-              // Find matching plan
-              const { data: matchingPlan } = await supabaseClient
-                .from("doctor_payment_plans")
-                .select("id")
-                .eq("stripe_product_id", productId)
+          // Find matching plan
+          const { data: matchingPlan } = await supabaseClient
+            .from("doctor_payment_plans")
+            .select("id, name, price")
+            .eq("stripe_product_id", productId)
+            .single();
+          
+          if (matchingPlan) {
+            const userId = session.metadata?.user_id;
+            if (userId) {
+              await supabaseClient
+                .from("doctors")
+                .update({ selected_plan_id: matchingPlan.id })
+                .eq("user_id", userId);
+              logStep("Updated doctor plan from checkout", { userId, planId: matchingPlan.id });
+
+              // Get doctor name for email
+              const { data: profile } = await supabaseClient
+                .from("profiles")
+                .select("name")
+                .eq("id", userId)
                 .single();
-              
-              if (matchingPlan) {
-                // Update via metadata user_id if available
-                const userId = session.metadata?.user_id;
-                if (userId) {
-                  await supabaseClient
-                    .from("doctors")
-                    .update({ selected_plan_id: matchingPlan.id })
-                    .eq("user_id", userId);
-                  logStep("Updated doctor plan from checkout", { userId, planId: matchingPlan.id });
-                }
-              }
+
+              // Send upgrade email notification
+              await sendSubscriptionEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                session.customer_email,
+                profile?.name || "Doctor",
+                "upgrade",
+                matchingPlan.name,
+                matchingPlan.price,
+                new Date(subscription.current_period_end * 1000).toISOString()
+              );
             }
           }
         }
@@ -119,7 +162,7 @@ serve(async (req) => {
             // Find matching plan
             const { data: matchingPlan } = await supabaseClient
               .from("doctor_payment_plans")
-              .select("id")
+              .select("id, name, price")
               .eq("stripe_product_id", productId)
               .single();
             
@@ -134,6 +177,25 @@ serve(async (req) => {
                   .update({ selected_plan_id: matchingPlan.id })
                   .eq("user_id", user.id);
                 logStep("Updated doctor plan from subscription update", { userId: user.id, planId: matchingPlan.id });
+
+                // Get doctor name for email
+                const { data: profile } = await supabaseClient
+                  .from("profiles")
+                  .select("name")
+                  .eq("id", user.id)
+                  .single();
+
+                // Send upgrade email notification
+                await sendSubscriptionEmail(
+                  supabaseUrl,
+                  serviceRoleKey,
+                  customer.email,
+                  profile?.name || "Doctor",
+                  "upgrade",
+                  matchingPlan.name,
+                  matchingPlan.price,
+                  new Date(subscription.current_period_end * 1000).toISOString()
+                );
               }
             }
           }
@@ -168,6 +230,25 @@ serve(async (req) => {
               .update({ selected_plan_id: freePlan?.id || null })
               .eq("user_id", user.id);
             logStep("Reset doctor to free plan", { userId: user.id });
+
+            // Get doctor name for email
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("name")
+              .eq("id", user.id)
+              .single();
+
+            // Send cancellation email notification
+            await sendSubscriptionEmail(
+              supabaseUrl,
+              serviceRoleKey,
+              customer.email,
+              profile?.name || "Doctor",
+              "cancel",
+              undefined,
+              undefined,
+              new Date(subscription.current_period_end * 1000).toISOString()
+            );
           }
         }
         break;
@@ -176,14 +257,79 @@ serve(async (req) => {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         logStep("Invoice payment succeeded", { invoiceId: invoice.id, customerId: invoice.customer });
-        // Subscription renewal - plan stays the same, no action needed
+        
+        // Check if this is a renewal (not the first payment)
+        if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+          const customerId = invoice.customer as string;
+          const customer = await stripe.customers.retrieve(customerId);
+          
+          if (customer && !customer.deleted && customer.email) {
+            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+            const productId = subscription.items.data[0]?.price.product as string;
+            
+            const { data: matchingPlan } = await supabaseClient
+              .from("doctor_payment_plans")
+              .select("id, name, price")
+              .eq("stripe_product_id", productId)
+              .single();
+
+            // Find doctor by email
+            const { data: authUsers } = await supabaseClient.auth.admin.listUsers();
+            const user = authUsers?.users?.find(u => u.email === customer.email);
+
+            if (user && matchingPlan) {
+              const { data: profile } = await supabaseClient
+                .from("profiles")
+                .select("name")
+                .eq("id", user.id)
+                .single();
+
+              // Send renewal email notification
+              await sendSubscriptionEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                customer.email,
+                profile?.name || "Doctor",
+                "renewal",
+                matchingPlan.name,
+                matchingPlan.price,
+                new Date(subscription.current_period_end * 1000).toISOString()
+              );
+            }
+          }
+        }
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         logStep("Invoice payment failed", { invoiceId: invoice.id, customerId: invoice.customer });
-        // Could send notification or downgrade plan here
+        
+        const customerId = invoice.customer as string;
+        const customer = await stripe.customers.retrieve(customerId);
+        
+        if (customer && !customer.deleted && customer.email) {
+          // Find doctor by email
+          const { data: authUsers } = await supabaseClient.auth.admin.listUsers();
+          const user = authUsers?.users?.find(u => u.email === customer.email);
+
+          if (user) {
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("name")
+              .eq("id", user.id)
+              .single();
+
+            // Send payment failed email notification
+            await sendSubscriptionEmail(
+              supabaseUrl,
+              serviceRoleKey,
+              customer.email,
+              profile?.name || "Doctor",
+              "payment_failed"
+            );
+          }
+        }
         break;
       }
 
