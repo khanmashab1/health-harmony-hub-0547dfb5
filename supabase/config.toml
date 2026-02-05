@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.send-subscription-email]
+verify_jwt = false
+
+[functions.send-subscription-report]
+verify_jwt = false
