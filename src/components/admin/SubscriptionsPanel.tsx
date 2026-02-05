@@ -53,6 +53,35 @@ interface DoctorWithPlan {
   };
 }
 
+// Plan tier limits for display
+const PLAN_LIMITS = {
+  basic: {
+    maxPatientsPerDay: 10,
+    analyticsAccess: false,
+    teamManagement: false,
+  },
+  professional: {
+    maxPatientsPerDay: 30,
+    analyticsAccess: true,
+    teamManagement: true,
+  },
+  enterprise: {
+    maxPatientsPerDay: Infinity,
+    analyticsAccess: true,
+    teamManagement: true,
+  },
+} as const;
+
+type PlanTier = keyof typeof PLAN_LIMITS;
+
+const getPlanTier = (plan: DoctorWithPlan["plan"]): PlanTier => {
+  if (!plan) return "basic";
+  const name = plan.name.toLowerCase();
+  if (name.includes("enterprise")) return "enterprise";
+  if (name.includes("professional")) return "professional";
+  return "basic";
+};
+
 export function SubscriptionsPanel() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
@@ -309,52 +338,75 @@ export function SubscriptionsPanel() {
                     <TableHead>Doctor</TableHead>
                     <TableHead>Specialty</TableHead>
                     <TableHead>Plan</TableHead>
+                    <TableHead>Features</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedDoctors.map(doc => (
-                    <TableRow key={doc.user_id}>
-                      <TableCell className="font-medium">
-                        {doc.profile?.name || "Unknown"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {doc.specialty}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          {getPlanIcon(doc.plan)}
-                          <Badge variant={getPlanBadgeVariant(doc.plan)}>
-                            {doc.plan?.name || "Free"}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {doc.plan ? (
-                          <span className="text-sm">
-                            Rs. {doc.plan.price.toLocaleString()}
-                            <span className="text-muted-foreground text-xs">
-                              /{doc.plan.billing_period === "yearly" ? "yr" : "mo"}
+                  {paginatedDoctors.map(doc => {
+                    const planTier = getPlanTier(doc.plan);
+                    const limits = PLAN_LIMITS[planTier];
+                    
+                    return (
+                      <TableRow key={doc.user_id}>
+                        <TableCell className="font-medium">
+                          {doc.profile?.name || "Unknown"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {doc.specialty}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            {getPlanIcon(doc.plan)}
+                            <Badge variant={getPlanBadgeVariant(doc.plan)}>
+                              {doc.plan?.name || "Free"}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {limits.maxPatientsPerDay === Infinity ? "∞" : limits.maxPatientsPerDay} pts/day
+                            </Badge>
+                            {limits.analyticsAccess && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400">
+                                Analytics
+                              </Badge>
+                            )}
+                            {limits.teamManagement && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400">
+                                Team
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {doc.plan ? (
+                            <span className="text-sm">
+                              Rs. {doc.plan.price.toLocaleString()}
+                              <span className="text-muted-foreground text-xs">
+                                /{doc.plan.billing_period === "yearly" ? "yr" : "mo"}
+                              </span>
                             </span>
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(doc.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={doc.profile?.status === "Active" ? "status-completed" : "status-pending"}
-                        >
-                          {doc.profile?.status || "Unknown"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(doc.created_at), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={doc.profile?.status === "Active" ? "status-completed" : "status-pending"}
+                          >
+                            {doc.profile?.status || "Unknown"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
 
