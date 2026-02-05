@@ -229,6 +229,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Send approval email
+    const gmailUser = Deno.env.get("GMAIL_USER");
+    const gmailPass = Deno.env.get("GMAIL_APP_PASSWORD");
+    
+    if (gmailUser && gmailPass) {
+      try {
+        const emailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;"><div style="background:linear-gradient(135deg,#0d9488,#0284c7);padding:30px;text-align:center;border-radius:10px 10px 0 0;"><h1 style="color:#fff;margin:0;">🎉 Congratulations!</h1></div><div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px;"><h2 style="color:#0d9488;">Your Application Has Been Approved</h2><p>Dear Dr. ${application.full_name},</p><p>We are pleased to inform you that your application to join <strong>MediCare+</strong> as a healthcare provider has been <strong style="color:#0d9488;">approved</strong>!</p><div style="background:#fff;padding:20px;border-radius:8px;border-left:4px solid #0d9488;margin:20px 0;"><h3 style="margin-top:0;">Next Steps:</h3><ul><li>${existingUser ? 'Log in with your existing account' : 'Check your email for a password reset link to set up your account'}</li><li>Complete your profile in the Doctor Dashboard</li><li>Set your availability schedule</li><li>Start receiving patient appointments</li></ul></div><p>You can now access your Doctor Dashboard at:</p><p><a href="https://medicare-nine-wine.vercel.app/doctor" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;">Go to Doctor Dashboard</a></p><p style="color:#6b7280;font-size:14px;margin-top:30px;">Thank you for joining MediCare+. We look forward to working with you!</p></div></body></html>`;
+        
+        const emailData = {
+          to: application.email,
+          subject: "🎉 Your MediCare+ Doctor Application is Approved!",
+          html: emailHtml,
+        };
+        
+        // Use the send-email edge function
+        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify(emailData),
+        });
+      } catch (emailError) {
+        console.error("Failed to send approval email:", emailError);
+      }
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       doctorUserId,
