@@ -134,9 +134,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = "patient") => {
-    // Use the current origin for email verification redirect
-    // This ensures users are redirected back to the Medicare website, not Lovable
-    const redirectUrl = `${window.location.origin}/auth`;
+    // Use the production URL for email verification redirect
+    // This ensures users are redirected to the Medicare production website
+    const productionUrl = "https://medicare-nine-wine.vercel.app";
+    const redirectUrl = `${productionUrl}/auth`;
     
     const { error } = await supabase.auth.signUp({
       email,
