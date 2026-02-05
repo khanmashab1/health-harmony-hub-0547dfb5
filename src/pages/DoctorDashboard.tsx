@@ -48,6 +48,7 @@ import { QueueManagementPanel } from "@/components/doctor/QueueManagementPanel";
 import { PAManagementPanel } from "@/components/doctor/PAManagementPanel";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { FeatureGate, PatientLimitWarning } from "@/components/doctor/FeatureGate";
+import { PlanRestrictionsCard } from "@/components/doctor/PlanRestrictionsCard";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -316,7 +317,20 @@ export default function DoctorDashboard() {
             ))}
           </motion.div>
 
-          {/* Tabs */}
+          {/* Plan Restrictions Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mb-8"
+          >
+            <PlanRestrictionsCard 
+              userId={user?.id} 
+              currentPatientCount={todayAppointments.length}
+            />
+          </motion.div>
+
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
