@@ -21,7 +21,8 @@ import {
   BarChart3,
   Radio,
   Crown,
-  DollarSign
+  DollarSign,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate, Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { MedicineEntry } from "@/components/doctor/MedicineEntry";
@@ -483,6 +485,22 @@ export default function DoctorDashboard() {
 
               {/* Analytics Tab */}
               <TabsContent value="analytics">
+                {/* Free plan upgrade prompt */}
+                {doctorInfo?.selected_plan?.price === 0 && (
+                  <Alert className="mb-6 border-primary/30 bg-primary/5">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
+                      <span>
+                        <strong>Upgrade to Professional</strong> for advanced analytics, custom branding, and priority support.
+                      </span>
+                      <Button size="sm" variant="default" asChild>
+                        <Link to="/doctor?tab=settings">
+                          Upgrade Now
+                        </Link>
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card variant="glass" className="border-white/50">
                     <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
