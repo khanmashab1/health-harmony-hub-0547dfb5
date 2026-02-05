@@ -93,13 +93,15 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      // Safely handle the date conversion
-      if (subscription.current_period_end) {
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Get the end date from either the subscription level or item level
+      const periodEnd = subscription.current_period_end || 
+                        subscription.items?.data?.[0]?.current_period_end;
+      if (periodEnd) {
+        subscriptionEnd = new Date(periodEnd * 1000).toISOString();
       }
       const priceItem = subscription.items?.data?.[0]?.price;
       productId = priceItem?.product as string || null;
-      logStep("Active subscription found", { productId, subscriptionEnd });
+      logStep("Active subscription found", { productId, subscriptionEnd, periodEnd });
 
       // Find the matching plan in our database and update doctor's selected_plan_id
       const { data: matchingPlan } = await serviceClient
