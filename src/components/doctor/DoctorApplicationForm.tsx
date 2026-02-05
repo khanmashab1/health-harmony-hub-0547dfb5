@@ -389,7 +389,7 @@
                            <SelectValue placeholder="Select specialty" />
                          </SelectTrigger>
                        </FormControl>
-                       <SelectContent>
+                        <SelectContent side="bottom" sideOffset={8} avoidCollisions={false}>
                          {SPECIALTIES.map((s) => (
                            <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
                          ))}
