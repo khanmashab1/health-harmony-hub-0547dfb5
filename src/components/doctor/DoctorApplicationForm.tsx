@@ -1,31 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Upload, CheckCircle, Crown } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
- import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
- import { Textarea } from "@/components/ui/textarea";
- import { Calendar } from "@/components/ui/calendar";
- import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
- } from "@/components/ui/select";
- import {
-   Popover,
-   PopoverContent,
-   PopoverTrigger,
- } from "@/components/ui/popover";
- import {
-   DialogHeader,
-   DialogTitle,
-   DialogDescription,
- } from "@/components/ui/dialog";
+import { CalendarIcon, Loader2, Upload, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -34,7 +33,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
@@ -43,16 +41,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 const GENDERS = ["Male", "Female", "Other"];
 
-interface PaymentPlan {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  billing_period: string;
-  features: string[] | null;
-  is_popular: boolean | null;
-}
- 
 const applicationSchema = z.object({
   fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email").max(255),
@@ -67,35 +55,20 @@ const applicationSchema = z.object({
   experienceYears: z.coerce.number().min(0).max(70),
   consultationFee: z.coerce.number().min(100, "Minimum fee is Rs. 100").max(100000),
   bio: z.string().max(1000).optional(),
-  selectedPlanId: z.string().min(1, "Please select a plan"),
 });
- 
- type ApplicationFormValues = z.infer<typeof applicationSchema>;
- 
- interface DoctorApplicationFormProps {
-   onSuccess: () => void;
- }
- 
+
+type ApplicationFormValues = z.infer<typeof applicationSchema>;
+
+interface DoctorApplicationFormProps {
+  onSuccess: () => void;
+}
+
 export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [medicalLicenseFile, setMedicalLicenseFile] = useState<File | null>(null);
   const [degreeCertificateFile, setDegreeCertificateFile] = useState<File | null>(null);
-
-  // Fetch available payment plans
-  const { data: paymentPlans, isLoading: plansLoading } = useQuery({
-    queryKey: ["payment-plans-active"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("doctor_payment_plans")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return data as PaymentPlan[];
-    },
-  });
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
@@ -112,19 +85,8 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
       experienceYears: 0,
       consultationFee: 500,
       bio: "",
-      selectedPlanId: "",
     },
   });
-
-  // Auto-select the popular plan if available
-  useEffect(() => {
-    if (paymentPlans && paymentPlans.length > 0 && !form.getValues("selectedPlanId")) {
-      const popularPlan = paymentPlans.find(p => p.is_popular);
-      if (popularPlan) {
-        form.setValue("selectedPlanId", popularPlan.id);
-      }
-    }
-  }, [paymentPlans, form]);
  
    const selectedProvince = form.watch("province");
  
@@ -182,7 +144,6 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
         bio: values.bio?.trim() || null,
         medical_license_path: medicalLicensePath,
         degree_certificate_path: degreeCertificatePath,
-        selected_plan_id: values.selectedPlanId,
       });
  
        if (error) throw error;
@@ -514,94 +475,6 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
              />
            </div>
  
-          {/* Plan Selection */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Select Your Plan *
-            </h4>
-            <FormField
-              control={form.control}
-              name="selectedPlanId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                    >
-                      {plansLoading ? (
-                        <div className="col-span-full text-center py-4 text-muted-foreground">
-                          Loading plans...
-                        </div>
-                      ) : paymentPlans && paymentPlans.length > 0 ? (
-                        paymentPlans.map((plan) => (
-                          <label
-                            key={plan.id}
-                            className={cn(
-                              "relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-primary/50",
-                              field.value === plan.id
-                                ? "border-primary bg-primary/5 shadow-md"
-                                : "border-border bg-card"
-                            )}
-                          >
-                            <RadioGroupItem
-                              value={plan.id}
-                              className="sr-only"
-                            />
-                            {plan.is_popular && (
-                              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                                  <Crown className="w-3 h-3" />
-                                  Popular
-                                </span>
-                              </div>
-                            )}
-                            <div className="text-center pt-2">
-                              <h5 className="font-semibold text-lg">{plan.name}</h5>
-                              <div className="mt-2">
-                                <span className="text-2xl font-bold">
-                                  Rs. {plan.price.toLocaleString()}
-                                </span>
-                                <span className="text-muted-foreground text-sm">
-                                  /{plan.billing_period}
-                                </span>
-                              </div>
-                              {plan.description && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  {plan.description}
-                                </p>
-                              )}
-                            </div>
-                            {plan.features && plan.features.length > 0 && (
-                              <ul className="mt-4 space-y-1 text-sm">
-                                {plan.features.slice(0, 3).map((feature, idx) => (
-                                  <li key={idx} className="flex items-center gap-2">
-                                    <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                    <span className="text-muted-foreground truncate">{feature}</span>
-                                  </li>
-                                ))}
-                                {plan.features.length > 3 && (
-                                  <li className="text-xs text-muted-foreground">
-                                    +{plan.features.length - 3} more features
-                                  </li>
-                                )}
-                              </ul>
-                            )}
-                          </label>
-                        ))
-                      ) : (
-                        <div className="col-span-full text-center py-4 text-muted-foreground">
-                          No plans available. Please try again later.
-                        </div>
-                      )}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           {/* Document Uploads */}
           <div className="space-y-4">
