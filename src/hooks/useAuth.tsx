@@ -11,7 +11,7 @@ interface Profile {
   status: string;
   name: string | null;
   phone: string | null;
-  age: number | null;
+  date_of_birth: string | null;
   gender: string | null;
   blood_type: string | null;
   province: string | null;

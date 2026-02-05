@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { Printer, ArrowLeft, Stethoscope, Phone, Mail, MapPin, Pill, FlaskConical, FileText, Activity, CheckCircle, Send, Loader2, User, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -50,10 +50,18 @@ export default function PrescriptionPrint() {
       if (data.patient_user_id) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("age, gender, patient_id")
+          .select("date_of_birth, gender, patient_id")
           .eq("id", data.patient_user_id)
           .single();
-        patientProfile = profile;
+        // Calculate age from date_of_birth
+        if (profile) {
+          patientProfile = {
+            ...profile,
+            age: profile.date_of_birth 
+              ? differenceInYears(new Date(), new Date(profile.date_of_birth))
+              : null
+          };
+        }
       }
 
       return { ...data, doctor, doctorProfile, patientProfile };

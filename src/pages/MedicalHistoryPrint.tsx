@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { 
   Stethoscope, 
@@ -134,7 +134,9 @@ export default function MedicalHistoryPrint() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Age</p>
-              <p className="font-medium">{profile?.age ? `${profile.age} years` : "N/A"}</p>
+              <p className="font-medium">{profile?.date_of_birth 
+                ? `${differenceInYears(new Date(), new Date(profile.date_of_birth))} years` 
+                : "N/A"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Gender</p>
