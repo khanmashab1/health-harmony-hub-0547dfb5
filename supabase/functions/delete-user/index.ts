@@ -70,52 +70,85 @@
        { auth: { autoRefreshToken: false, persistSession: false } }
      );
  
-     // Delete all related data in correct order (foreign key constraints)
-     // 1. Delete PA assignments
-     await supabaseAdmin.from("pa_assignments").delete().or(`pa_user_id.eq.${userId},doctor_user_id.eq.${userId}`);
-     
-     // 2. Delete doctor schedules and breaks
-     await supabaseAdmin.from("doctor_schedules").delete().eq("doctor_user_id", userId);
-     await supabaseAdmin.from("doctor_breaks").delete().eq("doctor_user_id", userId);
-     await supabaseAdmin.from("blocked_slots").delete().eq("doctor_user_id", userId);
-     
-     // 3. Delete reviews (both as patient and doctor)
-     await supabaseAdmin.from("reviews").delete().or(`patient_user_id.eq.${userId},doctor_user_id.eq.${userId}`);
-     
-     // 4. Delete health metrics
-     await supabaseAdmin.from("health_metrics").delete().eq("patient_user_id", userId);
-     
-     // 5. Delete medical records
-     await supabaseAdmin.from("medical_records").delete().eq("patient_user_id", userId);
-     
-     // 6. Delete symptom submissions
-     await supabaseAdmin.from("symptom_submissions").delete().eq("patient_user_id", userId);
-     
-     // 7. Delete managed patients
-     await supabaseAdmin.from("managed_patients").delete().or(`manager_user_id.eq.${userId},patient_user_id.eq.${userId}`);
-     
-     // 8. Delete appointments (both as patient and doctor)
-     await supabaseAdmin.from("appointments").delete().or(`patient_user_id.eq.${userId},doctor_user_id.eq.${userId}`);
-     
-     // 9. Delete doctor record
-     await supabaseAdmin.from("doctors").delete().eq("user_id", userId);
-     
-     // 10. Delete user roles
-     await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-     
-     // 11. Delete profile
-     const { error: profileDeleteError } = await supabaseAdmin.from("profiles").delete().eq("id", userId);
-     if (profileDeleteError) {
-       console.error("Profile delete error:", profileDeleteError);
-       throw new Error(`Failed to delete profile: ${profileDeleteError.message}`);
-     }
-     
-     // 12. Delete auth user
-     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-     if (authDeleteError) {
-       console.error("Auth delete error:", authDeleteError);
-       throw new Error(`Failed to delete auth user: ${authDeleteError.message}`);
-     }
+      console.log(`Starting deletion for user: ${userId}`);
+
+      // Delete all related data in correct order (foreign key constraints)
+      // 1. Delete PA assignments (as PA or as doctor)
+      const { error: paError1 } = await supabaseAdmin.from("pa_assignments").delete().eq("pa_user_id", userId);
+      const { error: paError2 } = await supabaseAdmin.from("pa_assignments").delete().eq("doctor_user_id", userId);
+      console.log("PA assignments deleted", { paError1, paError2 });
+      
+      // 2. Delete doctor schedules and breaks
+      await supabaseAdmin.from("doctor_schedules").delete().eq("doctor_user_id", userId);
+      await supabaseAdmin.from("doctor_breaks").delete().eq("doctor_user_id", userId);
+      await supabaseAdmin.from("blocked_slots").delete().eq("doctor_user_id", userId);
+      console.log("Doctor schedules/breaks deleted");
+      
+      // 3. Delete email logs for appointments (before appointments)
+      const { data: userAppointments } = await supabaseAdmin
+        .from("appointments")
+        .select("id")
+        .or(`patient_user_id.eq.${userId},doctor_user_id.eq.${userId}`);
+      
+      if (userAppointments && userAppointments.length > 0) {
+        const appointmentIds = userAppointments.map(a => a.id);
+        await supabaseAdmin.from("email_logs").delete().in("appointment_id", appointmentIds);
+        console.log("Email logs deleted for appointments");
+      }
+      
+      // 4. Delete reviews (both as patient and doctor)
+      await supabaseAdmin.from("reviews").delete().eq("patient_user_id", userId);
+      await supabaseAdmin.from("reviews").delete().eq("doctor_user_id", userId);
+      console.log("Reviews deleted");
+      
+      // 5. Delete health metrics
+      await supabaseAdmin.from("health_metrics").delete().eq("patient_user_id", userId);
+      console.log("Health metrics deleted");
+      
+      // 6. Delete medical records
+      await supabaseAdmin.from("medical_records").delete().eq("patient_user_id", userId);
+      console.log("Medical records deleted");
+      
+      // 7. Delete symptom submissions
+      await supabaseAdmin.from("symptom_submissions").delete().eq("patient_user_id", userId);
+      console.log("Symptom submissions deleted");
+      
+      // 8. Delete managed patients
+      await supabaseAdmin.from("managed_patients").delete().eq("manager_user_id", userId);
+      await supabaseAdmin.from("managed_patients").delete().eq("patient_user_id", userId);
+      console.log("Managed patients deleted");
+      
+      // 9. Delete audit logs
+      await supabaseAdmin.from("audit_logs").delete().eq("user_id", userId);
+      console.log("Audit logs deleted");
+      
+      // 10. Delete appointments (both as patient and doctor)
+      await supabaseAdmin.from("appointments").delete().eq("patient_user_id", userId);
+      await supabaseAdmin.from("appointments").delete().eq("doctor_user_id", userId);
+      console.log("Appointments deleted");
+      
+      // 11. Delete doctor record
+      await supabaseAdmin.from("doctors").delete().eq("user_id", userId);
+      console.log("Doctor record deleted");
+      
+      // 12. Delete user roles
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+      console.log("User roles deleted");
+      
+      // 13. Delete profile
+      const { error: profileDeleteError } = await supabaseAdmin.from("profiles").delete().eq("id", userId);
+      if (profileDeleteError) {
+        console.error("Profile delete error:", profileDeleteError);
+        throw new Error(`Failed to delete profile: ${profileDeleteError.message}`);
+      }
+      console.log("Profile deleted");
+      
+      // 14. Delete auth user
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authDeleteError) {
+        console.error("Auth delete error:", authDeleteError);
+        throw new Error(`Failed to delete auth user: ${authDeleteError.message}`);
+      }
  
      console.log(`User ${userId} and all related data deleted successfully`);
  
