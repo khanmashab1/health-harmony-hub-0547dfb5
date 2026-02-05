@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Stethoscope, 
   Phone, 
@@ -14,6 +14,7 @@ import { useFooterSettings } from "@/hooks/useFooterSettings";
 import medicareLogo from "@/assets/medicare-logo.png";
 
 export function Footer() {
+  const navigate = useNavigate();
   const { logoUrl, siteName } = useSiteSettings();
   const { 
     address, 
@@ -87,22 +88,37 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
             <ul className="space-y-3">
-              {[
-                { label: "Book Appointment", href: "/booking" },
-                { label: "Find Doctors", href: "/booking" },
-                { label: "Symptoms Checker", href: "/symptoms" },
-                { label: "Become a Doctor", href: "/become-doctor" },
-                { label: "My Profile", href: "/profile" },
-              ].map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link to="/booking" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Book Appointment
+                </Link>
+              </li>
+              <li>
+                <Link to="/booking" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Find Doctors
+                </Link>
+              </li>
+              <li>
+                <Link to="/symptoms" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Symptoms Checker
+                </Link>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    navigate("/become-doctor");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm text-left"
+                >
+                  Become a Doctor
+                </button>
+              </li>
+              <li>
+                <Link to="/profile" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  My Profile
+                </Link>
+              </li>
             </ul>
           </div>
 
