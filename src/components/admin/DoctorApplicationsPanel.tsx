@@ -37,27 +37,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "sonner";
  
- interface DoctorApplication {
-   id: string;
-   full_name: string;
-   email: string;
-   phone: string;
-   date_of_birth: string | null;
-   gender: string | null;
-   city: string | null;
-   province: string | null;
-   specialty: string;
-   degree: string;
-   qualifications: string | null;
-   experience_years: number;
-   consultation_fee: number;
-   bio: string | null;
-   medical_license_path: string | null;
-   degree_certificate_path: string | null;
-   status: string;
-   admin_notes: string | null;
-   created_at: string;
- }
+interface PaymentPlan {
+  id: string;
+  name: string;
+  price: number;
+  billing_period: string;
+}
+
+interface DoctorApplication {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  date_of_birth: string | null;
+  gender: string | null;
+  city: string | null;
+  province: string | null;
+  specialty: string;
+  degree: string;
+  qualifications: string | null;
+  experience_years: number;
+  consultation_fee: number;
+  bio: string | null;
+  medical_license_path: string | null;
+  degree_certificate_path: string | null;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  selected_plan_id: string | null;
+  selected_plan?: PaymentPlan | null;
+}
  
  export function DoctorApplicationsPanel() {
    const queryClient = useQueryClient();
@@ -69,17 +78,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
   const [viewApplication, setViewApplication] = useState<DoctorApplication | null>(null);
   const [documentUrls, setDocumentUrls] = useState<{ license: string | null; degree: string | null }>({ license: null, degree: null });
  
-   const { data: applications, isLoading } = useQuery({
-     queryKey: ["doctor-applications"],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("doctor_applications")
-         .select("*")
-         .order("created_at", { ascending: false });
-       if (error) throw error;
-       return data as DoctorApplication[];
-     },
-   });
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ["doctor-applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("doctor_applications")
+        .select("*, selected_plan:doctor_payment_plans(id, name, price, billing_period)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as DoctorApplication[];
+    },
+  });
  
   // Fetch document URLs when viewing an application
   useEffect(() => {
@@ -288,6 +297,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
                 </div>
               )}
             </div>
+
+            {/* Selected Plan */}
+            {app.selected_plan && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="default" className="gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {app.selected_plan.name} - Rs. {app.selected_plan.price.toLocaleString()}/{app.selected_plan.billing_period}
+                </Badge>
+              </div>
+            )}
 
             {app.bio && (
               <p className="text-sm text-muted-foreground line-clamp-2">{app.bio}</p>
