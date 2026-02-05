@@ -292,8 +292,8 @@ export function HeroSlidesPanel() {
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No hero slides yet</p>
-            <p className="text-sm">Add your first slide to customize the homepage hero section</p>
+            <p>No main page pictures yet</p>
+            <p className="text-sm">Add your first picture to customize the homepage. Recommended size: 1920×800px</p>
           </div>
         )}
       </CardContent>
@@ -302,9 +302,9 @@ export function HeroSlidesPanel() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedSlide ? "Edit Slide" : "Add New Slide"}</DialogTitle>
+            <DialogTitle>{selectedSlide ? "Edit Picture" : "Add New Picture"}</DialogTitle>
             <DialogDescription>
-              {selectedSlide ? "Update the slide details below" : "Create a new hero slide for the homepage"}
+              {selectedSlide ? "Update the picture details below" : "Add a new main page picture. Recommended size: 1920×800px"}
             </DialogDescription>
           </DialogHeader>
 
@@ -402,7 +402,7 @@ export function HeroSlidesPanel() {
               disabled={createSlide.isPending || updateSlide.isPending}
               variant="hero"
             >
-              {selectedSlide ? "Update Slide" : "Create Slide"}
+              {selectedSlide ? "Update Picture" : "Add Picture"}
             </Button>
           </DialogFooter>
         </DialogContent>

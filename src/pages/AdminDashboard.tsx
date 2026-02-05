@@ -25,7 +25,9 @@ import {
   ExternalLink,
   HardDrive,
   Pill,
-  Video
+  Video,
+  Trash2,
+  Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -386,7 +388,9 @@ export default function AdminDashboard() {
                   <HardDrive className="w-4 h-4 mr-1 sm:mr-2" />Backup
                 </TabsTrigger>
                 <TabsTrigger value="slides" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  Slides
+                  <Image className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Main Pic</span>
+                  <span className="sm:hidden">Pic</span>
                 </TabsTrigger>
                 <TabsTrigger value="branding" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Palette className="w-4 h-4 mr-1 sm:mr-2" />Branding
@@ -452,7 +456,18 @@ export default function AdminDashboard() {
                                 <td className="py-3 px-4">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent><DropdownMenuItem onClick={() => updateUserStatus.mutate({ userId: u.id, status: u.status === "Active" ? "Inactive" : "Active" })}>{u.status === "Active" ? "Deactivate" : "Activate"}</DropdownMenuItem></DropdownMenuContent>
+                                    <DropdownMenuContent>
+                                      <DropdownMenuItem onClick={() => updateUserStatus.mutate({ userId: u.id, status: u.status === "Active" ? "Inactive" : "Active" })}>
+                                        {u.status === "Active" ? "Deactivate" : "Activate"}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => updateUserStatus.mutate({ userId: u.id, status: "Deleted" })}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete User
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
                                   </DropdownMenu>
                                 </td>
                               </tr>
@@ -645,9 +660,27 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                       {pas && pas.length > 0 ? (
                         <div className="space-y-3">{pas.map((pa) => (
-                          <div key={pa.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50">
-                            <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center"><UserCog className="w-5 h-5 text-purple-600 dark:text-purple-400" /></div><div><p className="font-medium">{pa.name || "Unnamed PA"}</p><p className="text-xs text-muted-foreground">{pa.phone || "No phone"}</p></div></div>
-                            <Badge className={pa.status === "Active" ? "status-completed" : "status-pending"}>{pa.status}</Badge>
+                          <div key={pa.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white/50 dark:bg-card/30">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center">
+                                <UserCog className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{pa.name || "Unnamed PA"}</p>
+                                <p className="text-xs text-muted-foreground">{pa.phone || "No phone"}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={pa.status === "Active" ? "status-completed" : "status-pending"}>{pa.status}</Badge>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => updateUserStatus.mutate({ userId: pa.id, status: "Deleted" })}
+                                className="text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}</div>
                       ) : (<p className="text-center py-8 text-muted-foreground">No PAs found</p>)}
