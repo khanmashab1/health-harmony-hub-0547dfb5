@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Crown, Users, BarChart3, Palette, Headphones, Lock, Check, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,23 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
   const [supportDialogOpen, setSupportDialogOpen] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<FeatureItem | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [selectedPlanTier, setSelectedPlanTier] = useState<"professional" | "enterprise" | null>(null);
+  const [plans, setPlans] = useState<Array<{ id: string; name: string; stripe_price_id: string | null }>>([]);
+
+  // Fetch available plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      const { data } = await supabase
+        .from("doctor_payment_plans")
+        .select("id, name, stripe_price_id, price")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (data) {
+        setPlans(data);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   const maxPatients = features.maxPatientsPerDay === Infinity ? "Unlimited" : features.maxPatientsPerDay;
   const patientPercentage = features.maxPatientsPerDay === Infinity 
@@ -70,6 +87,7 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
     if (!hasAccess) {
       // Show upgrade dialog
       setSelectedFeature(feature);
+      setSelectedPlanTier(null);
       setUpgradeDialogOpen(true);
       return;
     }
@@ -89,6 +107,11 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
   };
 
   const handleUpgradeNow = async () => {
+    if (!selectedPlanTier) {
+      toast({ title: "Please select a plan", variant: "destructive" });
+      return;
+    }
+
     setLoadingPortal(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -97,34 +120,37 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
         return;
       }
 
-      // Try customer portal first for existing subscribers
-      const { data, error } = await supabase.functions.invoke("doctor-customer-portal", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      // Find the selected plan
+      const selectedPlan = plans.find(p => 
+        p.name.toLowerCase().includes(selectedPlanTier)
+      );
 
-      if (error || !data?.url) {
-        // No existing customer - redirect to checkout for upgrade
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-plan-checkout", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: { planId: null }, // Will show plan selection
-        });
-        
-        if (checkoutError || !checkoutData?.url) {
-          throw new Error("Failed to create checkout session");
-        }
-        window.open(checkoutData.url, "_blank");
-      } else {
-        window.open(data.url, "_blank");
+      if (!selectedPlan) {
+        throw new Error("Selected plan not found");
       }
-    } catch (err) {
+
+      if (!selectedPlan.stripe_price_id) {
+        throw new Error("This plan is not available for online payment");
+      }
+
+      // Create checkout session for the selected plan
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-plan-checkout", {
+        body: { planId: selectedPlan.id },
+      });
+      
+      if (checkoutError || !checkoutData?.url) {
+        throw new Error(checkoutData?.error || "Failed to create checkout session");
+      }
+      window.open(checkoutData.url, "_blank");
+      setUpgradeDialogOpen(false);
+    } catch (err: any) {
       toast({ 
         title: "Error", 
-        description: "Could not open subscription management. Please try again.", 
+        description: err.message || "Could not open subscription management. Please try again.", 
         variant: "destructive" 
       });
     } finally {
       setLoadingPortal(false);
-      setUpgradeDialogOpen(false);
     }
   };
 
@@ -247,32 +273,55 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-3">Select a plan to upgrade:</p>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+              <button
+                type="button"
+                onClick={() => setSelectedPlanTier("professional")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 text-left ${
+                  selectedPlanTier === "professional"
+                    ? "bg-primary/10 border-primary ring-2 ring-primary/20"
+                    : "bg-muted/50 border-border/50 hover:border-primary/50"
+                }`}
+              >
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
                   <Crown className="w-4 h-4 text-white" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-medium text-sm">Professional Plan</p>
                   <p className="text-xs text-muted-foreground">30 patients/day, analytics, team management</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                {selectedPlanTier === "professional" && (
+                  <Check className="w-5 h-5 text-primary" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPlanTier("enterprise")}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 text-left ${
+                  selectedPlanTier === "enterprise"
+                    ? "bg-primary/10 border-primary ring-2 ring-primary/20"
+                    : "bg-muted/50 border-border/50 hover:border-primary/50"
+                }`}
+              >
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
                   <Crown className="w-4 h-4 text-white" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-medium text-sm">Enterprise Plan</p>
                   <p className="text-xs text-muted-foreground">Unlimited patients, API access, 24/7 support</p>
                 </div>
-              </div>
+                {selectedPlanTier === "enterprise" && (
+                  <Check className="w-5 h-5 text-primary" />
+                )}
+              </button>
             </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setUpgradeDialogOpen(false)}>
               Maybe Later
             </Button>
-            <Button onClick={handleUpgradeNow} disabled={loadingPortal}>
+            <Button onClick={handleUpgradeNow} disabled={loadingPortal || !selectedPlanTier}>
               {loadingPortal ? "Loading..." : "Upgrade Now"}
               <ArrowUpRight className="w-4 h-4 ml-1" />
             </Button>
