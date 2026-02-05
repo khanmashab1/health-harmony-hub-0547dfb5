@@ -219,6 +219,89 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_applications: {
+        Row: {
+          admin_notes: string | null
+          bio: string | null
+          city: string | null
+          consultation_fee: number
+          created_at: string
+          date_of_birth: string | null
+          degree: string
+          degree_certificate_path: string | null
+          email: string
+          experience_years: number
+          full_name: string
+          gender: string | null
+          id: string
+          medical_license_path: string | null
+          phone: string
+          province: string | null
+          qualifications: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialty: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          bio?: string | null
+          city?: string | null
+          consultation_fee: number
+          created_at?: string
+          date_of_birth?: string | null
+          degree: string
+          degree_certificate_path?: string | null
+          email: string
+          experience_years: number
+          full_name: string
+          gender?: string | null
+          id?: string
+          medical_license_path?: string | null
+          phone: string
+          province?: string | null
+          qualifications?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          bio?: string | null
+          city?: string | null
+          consultation_fee?: number
+          created_at?: string
+          date_of_birth?: string | null
+          degree?: string
+          degree_certificate_path?: string | null
+          email?: string
+          experience_years?: number
+          full_name?: string
+          gender?: string | null
+          id?: string
+          medical_license_path?: string | null
+          phone?: string
+          province?: string | null
+          qualifications?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_breaks: {
         Row: {
           applies_to_days: number[] | null
@@ -708,6 +791,7 @@ export type Database = {
           blood_type: string | null
           city: string | null
           created_at: string
+          date_of_birth: string | null
           first_login_welcomed: boolean | null
           gender: string | null
           id: string
@@ -725,6 +809,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           created_at?: string
+          date_of_birth?: string | null
           first_login_welcomed?: boolean | null
           gender?: string | null
           id: string
@@ -742,6 +827,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           created_at?: string
+          date_of_birth?: string | null
           first_login_welcomed?: boolean | null
           gender?: string | null
           id?: string
@@ -949,6 +1035,7 @@ export type Database = {
         Args: { p_date: string; p_doctor_id: string }
         Returns: number
       }
+      calculate_age: { Args: { birth_date: string }; Returns: number }
       get_available_slots: {
         Args: { p_date: string; p_doctor_id: string }
         Returns: number
