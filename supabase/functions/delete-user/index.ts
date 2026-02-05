@@ -7,12 +7,12 @@
  
  Deno.serve(async (req) => {
    if (req.method === "OPTIONS") {
-     return new Response(null, { headers: corsHeaders });
+      return new Response("ok", { headers: corsHeaders });
    }
  
    try {
-     const authHeader = req.headers.get("authorization");
-     if (!authHeader) {
+      const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
        return new Response(JSON.stringify({ error: "No authorization header" }), {
          status: 401,
          headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -23,31 +23,25 @@
      const supabaseClient = createClient(
        Deno.env.get("SUPABASE_URL")!,
        Deno.env.get("SUPABASE_ANON_KEY")!,
-       { global: { headers: { authorization: authHeader } } }
+        { global: { headers: { Authorization: authHeader } } }
      );
- 
-     const { data: { user: callingUser }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError) {
-      console.error("Auth error:", authError);
-      return new Response(JSON.stringify({ error: "Authentication failed: " + authError.message }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    
-    if (!callingUser) {
-      console.error("No user found");
-      return new Response(JSON.stringify({ error: "No authenticated user found" }), {
-         status: 401,
-         headers: { ...corsHeaders, "Content-Type": "application/json" },
-       });
-     }
- 
-    console.log("Calling user:", callingUser.id);
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        console.error("Claims error:", claimsError);
+        return new Response(JSON.stringify({ error: "Authentication failed" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const callingUserId = String(claimsData.claims.sub);
+      console.log("Calling user:", callingUserId);
 
      // Check if calling user is admin using our helper function
-    const { data: isAdmin, error: roleError } = await supabaseClient.rpc("has_role", {
-       user_uuid: callingUser.id,
+     const { data: isAdmin, error: roleError } = await supabaseClient.rpc("has_role", {
+        user_uuid: callingUserId,
        check_role: "admin",
      });
  
@@ -69,7 +63,7 @@
      }
  
      // Prevent self-delete
-     if (userId === callingUser.id) {
+      if (userId === callingUserId) {
        return new Response(JSON.stringify({ error: "Cannot delete your own account" }), {
          status: 400,
          headers: { ...corsHeaders, "Content-Type": "application/json" },
