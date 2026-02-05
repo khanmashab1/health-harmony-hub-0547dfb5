@@ -458,6 +458,7 @@ export type Database = {
           province: string | null
           qualifications: string | null
           rating: number | null
+          selected_plan_id: string | null
           specialty: string
           updated_at: string
           user_id: string
@@ -480,6 +481,7 @@ export type Database = {
           province?: string | null
           qualifications?: string | null
           rating?: number | null
+          selected_plan_id?: string | null
           specialty: string
           updated_at?: string
           user_id: string
@@ -502,11 +504,19 @@ export type Database = {
           province?: string | null
           qualifications?: string | null
           rating?: number | null
+          selected_plan_id?: string | null
           specialty?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "doctors_selected_plan_id_fkey"
+            columns: ["selected_plan_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_payment_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doctors_user_id_fkey"
             columns: ["user_id"]
