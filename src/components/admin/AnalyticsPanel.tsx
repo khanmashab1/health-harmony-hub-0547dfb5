@@ -344,27 +344,44 @@ export function AnalyticsPanel() {
   return (
     <div className="space-y-6">
       {/* Date Range Filter & Export */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-4">
+        {/* Preset buttons - grid on mobile for better touch targets */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
           {presetRanges.map((preset) => (
             <Button
               key={preset.label}
               variant="outline"
               size="sm"
               onClick={() => handlePresetClick(preset.days)}
-              className="text-xs"
+              className="text-xs justify-center"
             >
               {preset.label}
             </Button>
           ))}
+        </div>
+        
+        {/* Calendar picker and export - always visible */}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs">
+              <Button variant="outline" size="sm" className="text-xs flex-1 sm:flex-none justify-start">
                 <CalendarIcon className="w-3 h-3 mr-1" />
                 {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="start" side="bottom">
+              <Calendar
+                mode="range"
+                selected={{ from: dateRange.from, to: dateRange.to }}
+                onSelect={(range) => {
+                  if (range?.from && range?.to) {
+                    setDateRange({ from: range.from, to: range.to });
+                    setCalendarOpen(false);
+                  }
+                }}
+                numberOfMonths={1}
+                className="sm:hidden"
+              />
               <Calendar
                 mode="range"
                 selected={{ from: dateRange.from, to: dateRange.to }}
@@ -375,88 +392,89 @@ export function AnalyticsPanel() {
                   }
                 }}
                 numberOfMonths={2}
+                className="hidden sm:block"
               />
             </PopoverContent>
           </Popover>
-        </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={exportToCSV}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Export as CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={exportToPDF}>
-              <FileText className="w-4 h-4 mr-2" />
-              Export as PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
+          <CardContent className="p-4 sm:pt-6 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">Rs. {metrics.totalRevenue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">In selected period</p>
+                <p className="text-lg sm:text-2xl font-bold truncate">Rs. {metrics.totalRevenue.toLocaleString()}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">In selected period</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
+          <CardContent className="p-4 sm:pt-6 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground">Appointments</p>
-                <p className="text-2xl font-bold">{metrics.totalAppointments}</p>
-                <p className="text-xs text-muted-foreground">In selected period</p>
+                <p className="text-lg sm:text-2xl font-bold">{metrics.totalAppointments}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">In selected period</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <CalendarIcon className="w-6 h-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
+          <CardContent className="p-4 sm:pt-6 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground">New Users</p>
-                <p className="text-2xl font-bold">{metrics.newUsers}</p>
-                <p className="text-xs text-muted-foreground">In selected period</p>
+                <p className="text-lg sm:text-2xl font-bold">{metrics.newUsers}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">In selected period</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-purple-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
+          <CardContent className="p-4 sm:pt-6 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground">Avg/Day</p>
-                <p className="text-2xl font-bold">{metrics.avgPerDay}</p>
-                <p className="text-xs text-muted-foreground">Appointments</p>
+                <p className="text-lg sm:text-2xl font-bold">{metrics.avgPerDay}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Appointments</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                <Activity className="w-6 h-6 text-amber-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
           </CardContent>
@@ -464,18 +482,18 @@ export function AnalyticsPanel() {
       </div>
 
       {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Appointment Trends */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Activity className="w-5 h-5 text-primary" />
               Appointment Trends
             </CardTitle>
-            <CardDescription>Daily appointments in selected period</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Daily appointments in selected period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               {appointmentTrends.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={appointmentTrends}>
@@ -516,14 +534,14 @@ export function AnalyticsPanel() {
         {/* Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <DollarSign className="w-5 h-5 text-green-600" />
               Revenue by Month
             </CardTitle>
-            <CardDescription>Monthly revenue breakdown</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Monthly revenue breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               {revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueData}>
@@ -553,14 +571,14 @@ export function AnalyticsPanel() {
         {/* User Growth */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Users className="w-5 h-5 text-purple-600" />
               User Growth
             </CardTitle>
-            <CardDescription>Total and new users over time</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Total and new users over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               {userGrowth.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={userGrowth}>
@@ -604,14 +622,14 @@ export function AnalyticsPanel() {
         {/* Distribution Charts */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Stethoscope className="w-5 h-5 text-primary" />
               Top Specialties
             </CardTitle>
-            <CardDescription>Most booked specialties</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Most booked specialties</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               {specialtyDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -619,11 +637,11 @@ export function AnalyticsPanel() {
                       data={specialtyDistribution}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
+                      innerRadius={40}
+                      outerRadius={70}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name.substring(0, 10)}... ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {specialtyDistribution.map((_, index) => (
@@ -652,13 +670,13 @@ export function AnalyticsPanel() {
       {/* Status Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Appointment Status Distribution</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Appointment Status Distribution</CardTitle>
         </CardHeader>
         <CardContent>
           {statusDistribution.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4">
               {statusDistribution.map((status, index) => (
-                <div key={status.name} className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+                <div key={status.name} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/50">
                   <div
                     className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}

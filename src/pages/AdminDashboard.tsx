@@ -327,33 +327,35 @@ export default function AdminDashboard() {
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg flex-shrink-0">
+                <Shield className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
                 <p className="text-muted-foreground font-medium">Manage your platform</p>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => navigate("/admin/reviews")} className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300">
+            <div className="flex gap-2 flex-wrap justify-start sm:justify-end">
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin/reviews")} className="text-xs sm:text-sm hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300">
                 <Star className="w-4 h-4 mr-2" />
                 Reviews
               </Button>
-              <Button variant="outline" onClick={() => navigate("/admin/email-templates")} className="hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300">
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin/email-templates")} className="text-xs sm:text-sm hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300">
                 <Palette className="w-4 h-4 mr-2" />
-                Email Templates
+                <span className="hidden sm:inline">Email Templates</span>
+                <span className="sm:hidden">Templates</span>
               </Button>
-              <Button variant="outline" onClick={() => navigate("/admin/symptom-checker")} className="hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300">
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin/symptom-checker")} className="text-xs sm:text-sm hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300">
                 <Database className="w-4 h-4 mr-2" />
-                Symptom Checker
+                <span className="hidden sm:inline">Symptom Checker</span>
+                <span className="sm:hidden">Symptoms</span>
               </Button>
             </div>
           </motion.div>
 
           {/* Stats */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             {[
               { label: "Total Users", value: stats?.users || 0, icon: Users, color: "from-blue-500 to-blue-600" },
               { label: "Doctors", value: stats?.doctors || 0, icon: Stethoscope, color: "from-green-500 to-green-600" },
@@ -362,14 +364,14 @@ export default function AdminDashboard() {
             ].map((stat, index) => (
               <motion.div key={stat.label} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + index * 0.05 }}>
                 <Card variant="glass" className="border-border/50 dark:border-border/30 hover:shadow-lg transition-all dark:bg-card/50">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                        <stat.icon className="w-6 h-6 text-white" />
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
+                        <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-3xl font-bold">{stat.value}</p>
-                        <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                      <div className="min-w-0">
+                        <p className="text-2xl sm:text-3xl font-bold">{stat.value}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{stat.label}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -381,48 +383,45 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <Tabs defaultValue="analytics" className="space-y-6">
-              <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
-                <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Analytics</span>
-                  <span className="sm:hidden">Stats</span>
+              <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1 sm:p-1.5 rounded-xl shadow-sm flex flex-wrap h-auto gap-0.5 sm:gap-1 justify-start">
+                <TabsTrigger value="analytics" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Stats
                 </TabsTrigger>
-                <TabsTrigger value="performance" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Performance</span>
-                  <span className="sm:hidden">Perf</span>
+                <TabsTrigger value="performance" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Perf
                 </TabsTrigger>
-                <TabsTrigger value="users" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Users</TabsTrigger>
-                <TabsTrigger value="doctors" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Doctors</TabsTrigger>
-                <TabsTrigger value="applications" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  Applications
+                <TabsTrigger value="users" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Users</TabsTrigger>
+                <TabsTrigger value="doctors" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Doctors</TabsTrigger>
+                <TabsTrigger value="applications" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <span className="hidden sm:inline">Applications</span>
+                  <span className="sm:hidden">Apps</span>
                 </TabsTrigger>
-                <TabsTrigger value="pas" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">PAs</TabsTrigger>
-                <TabsTrigger value="medicines" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Pill className="w-4 h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Medicines</span>
-                  <span className="sm:hidden">Meds</span>
+                <TabsTrigger value="pas" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">PAs</TabsTrigger>
+                <TabsTrigger value="medicines" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Pill className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Meds
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Reviews</TabsTrigger>
-                <TabsTrigger value="emails" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Mail className="w-4 h-4 mr-1 sm:mr-2" />Emails
+                <TabsTrigger value="reviews" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Reviews</TabsTrigger>
+                <TabsTrigger value="emails" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />Emails
                 </TabsTrigger>
-                <TabsTrigger value="backup" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <HardDrive className="w-4 h-4 mr-1 sm:mr-2" />Backup
+                <TabsTrigger value="backup" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <HardDrive className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />Backup
                 </TabsTrigger>
-                <TabsTrigger value="slides" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Image className="w-4 h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Main Pic</span>
-                  <span className="sm:hidden">Pic</span>
+                <TabsTrigger value="slides" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Image className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Slides
                 </TabsTrigger>
-                <TabsTrigger value="branding" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Palette className="w-4 h-4 mr-1 sm:mr-2" />Branding
+                <TabsTrigger value="branding" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Palette className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />Branding
                 </TabsTrigger>
-                <TabsTrigger value="footer" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                <TabsTrigger value="footer" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   Footer
                 </TabsTrigger>
-                <TabsTrigger value="video" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Video className="w-4 h-4 mr-1 sm:mr-2" />Video
+                <TabsTrigger value="video" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Video className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />Video
                 </TabsTrigger>
               </TabsList>
 
