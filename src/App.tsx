@@ -24,6 +24,7 @@ import SymptomsChecker from "./pages/SymptomsChecker";
 import Reviews from "./pages/Reviews";
 import DoctorProfile from "./pages/DoctorProfile";
 import NotFound from "./pages/NotFound";
+import BecomeDoctor from "./pages/BecomeDoctor";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/admin/reviews" element={<AdminReviews />} />
               <Route path="/symptoms" element={<SymptomsChecker />} />
               <Route path="/reviews" element={<Reviews />} />
+              <Route path="/become-doctor" element={<BecomeDoctor />} />
               <Route path="/token/:appointmentId" element={<TokenPrint />} />
               <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
               <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />

@@ -59,13 +59,13 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-border/40 bg-header text-header-foreground">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-[110px]">
+        <div className="flex items-center justify-between h-[120px]">
           {/* Logo */}
           <Link to="/" className="flex items-center group py-2">
             <img 
               src={logoUrl || medicareLogo} 
               alt={`${siteName} Logo`} 
-              className="h-[95px] sm:h-[110px] w-auto max-w-[520px] object-contain group-hover:scale-105 transition-transform"
+              className="h-[100px] sm:h-[120px] w-auto max-w-[600px] object-contain group-hover:scale-105 transition-transform"
             />
           </Link>
 
