@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,6 +53,7 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_path);
+  const [dobPopoverOpen, setDobPopoverOpen] = useState(false);
 
   // Calculate age from date of birth
   const calculateAge = (dob: Date | null | undefined): number | null => {
@@ -225,7 +227,7 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Date of Birth</FormLabel>
-                <Popover>
+                <Popover open={dobPopoverOpen} onOpenChange={setDobPopoverOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
@@ -248,14 +250,17 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
                     <Calendar
                       mode="single"
                       selected={field.value || undefined}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                        field.onChange(date);
+                        setDobPopoverOpen(false);
+                      }}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
                       }
-                      initialFocus
                       captionLayout="dropdown-buttons"
                       fromYear={1900}
                       toYear={new Date().getFullYear()}
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
