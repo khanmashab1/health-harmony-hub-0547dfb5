@@ -257,7 +257,13 @@
                            </Button>
                          </FormControl>
                        </PopoverTrigger>
-                       <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent
+                          className="w-auto p-0 z-50"
+                          align="start"
+                          side="bottom"
+                          sideOffset={8}
+                          avoidCollisions={false}
+                        >
                          <Calendar
                            mode="single"
                            selected={field.value}
@@ -266,9 +272,10 @@
                              date > new Date() || date < new Date("1940-01-01")
                            }
                            initialFocus
-            captionLayout="dropdown"
+                            captionLayout="dropdown"
                            fromYear={1940}
                            toYear={new Date().getFullYear() - 20}
+                            className="p-3 pointer-events-auto"
                          />
                        </PopoverContent>
                      </Popover>
