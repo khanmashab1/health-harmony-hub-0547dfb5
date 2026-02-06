@@ -128,6 +128,7 @@ serve(async (req) => {
       user_metadata: {
         name,
         role: "doctor",
+        requires_password_change: true, // Flag for first-login password change
       },
     });
 

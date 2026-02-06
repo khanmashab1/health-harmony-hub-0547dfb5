@@ -24,6 +24,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  requiresPasswordChange: boolean;
+  setRequiresPasswordChange: (value: boolean) => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string, role?: UserRole) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -88,6 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Check if user requires password change
+        if (session?.user?.user_metadata?.requires_password_change) {
+          setRequiresPasswordChange(true);
+        } else {
+          setRequiresPasswordChange(false);
+        }
         
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
@@ -195,6 +205,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        requiresPasswordChange,
+        setRequiresPasswordChange,
         signIn,
         signUp,
         signOut,

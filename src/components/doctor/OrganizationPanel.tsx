@@ -16,6 +16,7 @@ import {
   ExternalLink,
   MoreVertical,
   Eye,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,6 +186,41 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-doctors"] });
       toast({ title: "Doctor removed from organization" });
+    },
+  });
+
+  // Resend credentials mutation
+  const resendCredentials = useMutation({
+    mutationFn: async (doctorUserId: string) => {
+      const response = await supabase.functions.invoke("resend-doctor-credentials", {
+        body: {
+          doctorUserId,
+          organizationId: organization!.id,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to resend credentials");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Credentials Sent", 
+        description: data.message || "New login credentials have been emailed to the doctor." 
+      });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -421,13 +457,22 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
                               View Dashboard
                             </DropdownMenuItem>
                             {doctor.user_id !== userId && (
-                              <DropdownMenuItem
-                                onClick={() => removeDoctor.mutate(doctor.user_id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Remove from Organization
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => resendCredentials.mutate(doctor.user_id)}
+                                  disabled={resendCredentials.isPending}
+                                >
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  Resend Credentials
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => removeDoctor.mutate(doctor.user_id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remove from Organization
+                                </DropdownMenuItem>
+                              </>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
