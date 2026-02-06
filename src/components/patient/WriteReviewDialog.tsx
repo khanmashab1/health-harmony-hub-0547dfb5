@@ -79,8 +79,8 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
       }
 
       // Validate comment length
-      if (comment.trim().length < 20) {
-        throw new Error("Comment must be at least 20 characters long.");
+      if (comment.trim().length < 3) {
+        throw new Error("Comment must be at least 3 characters long.");
       }
 
       if (comment.trim().length > 500) {
@@ -218,7 +218,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
               <Label htmlFor="comment">Your Review</Label>
               <Textarea
                 id="comment"
-                placeholder="Share your experience... (min 20 characters)"
+                placeholder="Share your experience..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={4}
@@ -247,7 +247,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createReview.isPending || comment.trim().length < 20}
+                  disabled={createReview.isPending || comment.trim().length < 3}
                 >
                   {createReview.isPending ? "Saving..." : isEditing ? "Update Review" : "Submit Review"}
                 </Button>

@@ -52,7 +52,7 @@ export function TopDoctorsSlider() {
           image_path
         `)
         .order("rating", { ascending: false })
-        .limit(10);
+        .limit(3);
 
       if (doctorsError) throw doctorsError;
 
