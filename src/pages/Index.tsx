@@ -216,6 +216,69 @@ export default function Index() {
       {/* Top Doctors Section - Right after hero */}
       <TopDoctorsSlider />
 
+      {/* Become a Doctor CTA */}
+      <section className="py-12 md:py-16 overflow-hidden">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative rounded-2xl md:rounded-3xl overflow-hidden bg-gradient-to-r from-primary/90 via-primary to-accent/80 dark:from-primary/80 dark:via-primary/70 dark:to-accent/60 p-8 md:p-12 lg:p-16"
+          >
+            {/* Decorative elements */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-40 h-40 md:w-64 md:h-64 bg-white/10 rounded-full blur-2xl" />
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 md:w-72 md:h-72 bg-white/5 rounded-full blur-3xl" />
+            </div>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+              <div className="text-center md:text-left max-w-xl">
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
+                  <Stethoscope className="w-5 h-5 text-primary-foreground" />
+                  <span className="text-sm font-medium text-primary-foreground/80 uppercase tracking-wider">
+                    Join Our Team
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
+                  Become a Doctor
+                </h2>
+                <p className="text-primary-foreground/80 text-sm md:text-base leading-relaxed">
+                  Join our growing network of healthcare professionals. Manage your practice, 
+                  reach more patients, and make a difference in people's lives.
+                </p>
+                <div className="flex flex-wrap gap-4 mt-4 justify-center md:justify-start">
+                  <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Easy Setup</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Queue Management</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Digital Prescriptions</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-shrink-0">
+                <Link to="/become-doctor">
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-primary hover:bg-white/90 font-semibold gap-2 shadow-xl px-6 md:px-8"
+                  >
+                    Apply Now
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Specialties Section */}
       <section className="py-20 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4">
