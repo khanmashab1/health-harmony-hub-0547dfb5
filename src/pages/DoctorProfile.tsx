@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -33,6 +34,11 @@ interface Review {
 export default function DoctorProfile() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+
+  // Scroll to top when page loads
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [doctorId]);
 
   // Fetch doctor details
   const { data: doctor, isLoading: loadingDoctor } = useQuery({
@@ -108,7 +114,9 @@ export default function DoctorProfile() {
     : doctor.rating || 4.0;
 
   const imageUrl = doctor.image_path
-    ? supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
+    ? doctor.image_path.startsWith("http")
+      ? doctor.image_path
+      : supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
     : null;
 
   return (
