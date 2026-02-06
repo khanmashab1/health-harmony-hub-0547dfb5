@@ -362,53 +362,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Symptoms Checker CTA */}
-      <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 overflow-hidden">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12"
-          >
-            <div className="flex-1 text-center md:text-left">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
-              >
-                <Activity className="w-4 h-4" />
-                AI-Powered
-              </motion.div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                Not Sure What's Wrong? <span className="gradient-text">Check Your Symptoms</span>
-              </h2>
-              <p className="text-muted-foreground max-w-lg">
-                Use our AI-powered symptom checker to get instant health insights, possible conditions, and recommendations — before visiting a doctor.
-              </p>
-            </div>
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="shrink-0"
-            >
-              <Link to="/symptoms">
-                <Button variant="hero" size="xl" className="gap-2 shadow-xl">
-                  <Activity className="w-5 h-5" />
-                  Check Symptoms Now
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Patients Section */}
       <section className="py-20 overflow-hidden">
         <div className="container mx-auto px-4">
