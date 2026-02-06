@@ -30,11 +30,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
-  BarChart3
+  BarChart3,
+  Mail,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { SubscriptionAnalyticsCharts } from "./SubscriptionAnalyticsCharts";
+import { toast } from "sonner";
 
 interface DoctorWithPlan {
   user_id: string;
@@ -88,7 +91,28 @@ export function SubscriptionsPanel() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [isSendingReport, setIsSendingReport] = useState(false);
   const perPage = 10;
+
+  const handleSendReport = async () => {
+    try {
+      setIsSendingReport(true);
+      const { data, error } = await supabase.functions.invoke("send-subscription-report");
+      
+      if (error) throw error;
+      
+      toast.success("Subscription report sent successfully!", {
+        description: `Total Doctors: ${data.metrics?.totalDoctors || 0}, Monthly Revenue: Rs. ${(data.metrics?.monthlyRevenue || 0).toLocaleString()}`,
+      });
+    } catch (err: any) {
+      console.error("Failed to send report:", err);
+      toast.error("Failed to send report", {
+        description: err.message || "An error occurred",
+      });
+    } finally {
+      setIsSendingReport(false);
+    }
+  };
 
   // Fetch all payment plans
   const { data: plans } = useQuery({
@@ -199,6 +223,22 @@ export function SubscriptionsPanel() {
   return (
     <div className="space-y-6">
       {/* Revenue Metrics */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold">Revenue Overview</h2>
+        <Button
+          onClick={handleSendReport}
+          disabled={isSendingReport}
+          className="gap-2"
+        >
+          {isSendingReport ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Mail className="w-4 h-4" />
+          )}
+          {isSendingReport ? "Sending..." : "Send Report to Email"}
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card variant="glass" className="border-border/50">
           <CardContent className="p-4">
