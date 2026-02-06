@@ -11,15 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layout } from "@/components/layout/Layout";
 import { DoctorApplicationForm } from "@/components/doctor/DoctorApplicationForm";
 import { PaymentPlansSection } from "@/components/doctor/PaymentPlansSection";
-import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
  
 export default function BecomeDoctor() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const { user } = useAuth();
-  const navigate = useNavigate();
  
    const benefits = [
      {
@@ -53,10 +49,6 @@ export default function BecomeDoctor() {
    ];
  
    const handleApplyClick = () => {
-     if (!user) {
-       navigate("/auth?mode=signup&redirect=/become-doctor");
-       return;
-     }
      setFormOpen(true);
    };
  

@@ -74,12 +74,12 @@ Deno.serve(async (req) => {
 
     // Check if a user with this email already exists
     const { data: existingAuth } = await supabase.auth.admin.listUsers();
-    const existingUser = existingAuth?.users?.find(u => u.email === application.email);
+    const existingUser = existingAuth?.users?.find(u => u.email?.toLowerCase() === application.email.toLowerCase());
 
     let doctorUserId: string;
 
     if (existingUser) {
-      // User already exists, update their profile to doctor role
+      // User already exists - this shouldn't happen with new flow but handle it
       doctorUserId = existingUser.id;
       
       // Update profiles table role
@@ -114,12 +114,12 @@ Deno.serve(async (req) => {
           .insert({ user_id: doctorUserId, role: "doctor" });
       }
     } else {
-      // Create a new user with a temporary password
-      const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
+      // Create new user with the password from application
+      const password = application.password_hash || crypto.randomUUID().slice(0, 16) + "Aa1!";
       
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: application.email,
-        password: tempPassword,
+        password: password,
         email_confirm: true,
         user_metadata: {
           name: application.full_name,
@@ -154,15 +154,6 @@ Deno.serve(async (req) => {
       await supabase
         .from("user_roles")
         .upsert({ user_id: doctorUserId, role: "doctor" });
-
-      // Send password reset email so doctor can set their own password
-      await supabase.auth.admin.generateLink({
-        type: "recovery",
-        email: application.email,
-        options: {
-          redirectTo: "https://medicare-nine-wine.vercel.app/auth",
-        },
-      });
     }
 
     // Create the doctors record with selected plan
@@ -231,39 +222,86 @@ Deno.serve(async (req) => {
     }
 
     // Send approval email
-    const gmailUser = Deno.env.get("GMAIL_USER");
-    const gmailPass = Deno.env.get("GMAIL_APP_PASSWORD");
-    
-    if (gmailUser && gmailPass) {
-      try {
-        const emailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;"><div style="background:linear-gradient(135deg,#0d9488,#0284c7);padding:30px;text-align:center;border-radius:10px 10px 0 0;"><h1 style="color:#fff;margin:0;">🎉 Congratulations!</h1></div><div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px;"><h2 style="color:#0d9488;">Your Application Has Been Approved</h2><p>Dear Dr. ${application.full_name},</p><p>We are pleased to inform you that your application to join <strong>MediCare+</strong> as a healthcare provider has been <strong style="color:#0d9488;">approved</strong>!</p><div style="background:#fff;padding:20px;border-radius:8px;border-left:4px solid #0d9488;margin:20px 0;"><h3 style="margin-top:0;">Next Steps:</h3><ul><li>${existingUser ? 'Log in with your existing account' : 'Check your email for a password reset link to set up your account'}</li><li>Complete your profile in the Doctor Dashboard</li><li>Set your availability schedule</li><li>Start receiving patient appointments</li></ul></div><p>You can now access your Doctor Dashboard at:</p><p><a href="https://medicare-nine-wine.vercel.app/doctor" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;">Go to Doctor Dashboard</a></p><p style="color:#6b7280;font-size:14px;margin-top:30px;">Thank you for joining MediCare+. We look forward to working with you!</p></div></body></html>`;
-        
-        const emailData = {
-          to: application.email,
-          subject: "🎉 Your MediCare+ Doctor Application is Approved!",
-          html: emailHtml,
-        };
-        
-        // Use the send-email edge function
-        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify(emailData),
-        });
-      } catch (emailError) {
-        console.error("Failed to send approval email:", emailError);
+    try {
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;">
+          <div style="background:linear-gradient(135deg,#0d9488,#0284c7);padding:30px;text-align:center;border-radius:10px 10px 0 0;">
+            <h1 style="color:#fff;margin:0;">🎉 Congratulations!</h1>
+          </div>
+          <div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px;">
+            <h2 style="color:#0d9488;">Your Application Has Been Approved</h2>
+            <p>Dear Dr. ${application.full_name},</p>
+            <p>We are pleased to inform you that your application to join <strong>MediCare+</strong> as a healthcare provider has been <strong style="color:#0d9488;">approved</strong>!</p>
+            
+            <div style="background:#fff;padding:20px;border-radius:8px;border:2px solid #0d9488;margin:20px 0;">
+              <h3 style="margin-top:0;color:#0d9488;">Your Account is Ready!</h3>
+              <p style="margin:8px 0;"><strong>Email:</strong> ${application.email}</p>
+              <p style="margin:8px 0;"><strong>Password:</strong> The password you set during application</p>
+            </div>
+            
+            <div style="background:#fff;padding:20px;border-radius:8px;border-left:4px solid #0d9488;margin:20px 0;">
+              <h3 style="margin-top:0;">Next Steps:</h3>
+              <ul>
+                <li>Log in with your email and password</li>
+                <li>Complete your profile in the Doctor Dashboard</li>
+                <li>Set your availability schedule</li>
+                <li>Start receiving patient appointments</li>
+              </ul>
+            </div>
+            
+            <div style="text-align:center;margin:30px 0;">
+              <a href="https://medicare-nine-wine.vercel.app/auth" style="display:inline-block;background:linear-gradient(135deg,#0d9488,#0284c7);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;">
+                Login to Your Dashboard
+              </a>
+            </div>
+            
+            <p style="color:#6b7280;font-size:14px;margin-top:30px;text-align:center;">
+              Thank you for joining MediCare+. We look forward to working with you!
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      const emailData = {
+        to: application.email,
+        subject: "🎉 Your MediCare+ Doctor Application is Approved!",
+        html: emailHtml,
+        recipientName: application.full_name,
+      };
+      
+      // Use the send-email edge function
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify(emailData),
+      });
+      
+      if (!emailResponse.ok) {
+        console.error("Failed to send approval email:", await emailResponse.text());
+      } else {
+        console.log("Approval email sent successfully to:", application.email);
       }
+    } catch (emailError) {
+      console.error("Failed to send approval email:", emailError);
     }
+
+    // Clear the password_hash after account creation for security
+    await supabase
+      .from("doctor_applications")
+      .update({ password_hash: null })
+      .eq("id", applicationId);
 
     return new Response(JSON.stringify({ 
       success: true, 
       doctorUserId,
-      message: existingUser 
-        ? "Existing user promoted to doctor" 
-        : "New doctor account created. Password reset email sent."
+      message: "Doctor account created successfully. Approval notification sent."
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
