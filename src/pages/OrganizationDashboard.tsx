@@ -6,7 +6,6 @@ import {
   Users,
   TrendingUp,
   DollarSign,
-  Plus,
   Settings,
   BarChart3,
   Stethoscope,
@@ -14,12 +13,10 @@ import {
   CheckCircle2,
   Crown,
   Search,
-  Mail,
-  Phone,
   MoreVertical,
-  UserPlus,
-  Edit,
   Trash2,
+  Eye,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,14 +31,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -49,16 +38,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { CreateDoctorDialog } from "@/components/organization/CreateDoctorDialog";
+import { DoctorDashboardView } from "@/components/organization/DoctorDashboardView";
 
-const CHART_COLORS = ["#14b8a6", "#3b82f6", "#a855f7", "#f59e0b", "#22c55e"];
+const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function OrganizationDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
-  const [newDoctorEmail, setNewDoctorEmail] = useState("");
+  const [viewingDoctor, setViewingDoctor] = useState<{ id: string; name: string } | null>(null);
 
   // Fetch organization for current user
   const { data: organization, isLoading: loadingOrg } = useQuery({
@@ -122,61 +112,6 @@ export default function OrganizationDashboard() {
     enabled: !!orgDoctors && orgDoctors.length > 0,
   });
 
-  // Fetch organization members
-  const { data: orgMembers } = useQuery({
-    queryKey: ["org-members", organization?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organization_members")
-        .select("*, profile:profiles!organization_members_user_id_fkey(name, avatar_path)")
-        .eq("organization_id", organization!.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!organization?.id,
-  });
-
-  // Add doctor to organization mutation
-  const addDoctor = useMutation({
-    mutationFn: async (email: string) => {
-      // Find doctor by email
-      const { data: userAuth } = await supabase.auth.admin?.listUsers?.() || { data: null };
-      // Since we can't access auth.users, we'll need to find via profiles
-      const { data: targetProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, name")
-        .eq("role", "doctor")
-        .single();
-      
-      if (!targetProfile) throw new Error("Doctor not found with that email");
-
-      // Update doctor's organization_id
-      const { error } = await supabase
-        .from("doctors")
-        .update({ organization_id: organization!.id })
-        .eq("user_id", targetProfile.id);
-      
-      if (error) throw error;
-
-      // Add to organization_members
-      await supabase.from("organization_members").insert({
-        organization_id: organization!.id,
-        user_id: targetProfile.id,
-        role: "member",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["org-doctors"] });
-      queryClient.invalidateQueries({ queryKey: ["org-members"] });
-      toast({ title: "Doctor added to organization" });
-      setIsAddDoctorOpen(false);
-      setNewDoctorEmail("");
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
   // Remove doctor from organization
   const removeDoctor = useMutation({
     mutationFn: async (doctorUserId: string) => {
@@ -234,7 +169,7 @@ export default function OrganizationDashboard() {
   if (loading || loadingOrg) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20">
+        <div className="min-h-screen bg-gradient-to-br from-muted/50 via-background to-primary/5">
           <div className="container mx-auto px-4 py-8">
             <Skeleton className="h-12 w-64 mb-8" />
             <div className="grid md:grid-cols-4 gap-4">
@@ -249,7 +184,7 @@ export default function OrganizationDashboard() {
   if (!organization) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-background to-medical-light/20 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-muted/50 via-background to-primary/5 flex items-center justify-center">
           <Card className="max-w-md">
             <CardHeader className="text-center">
               <Building2 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
@@ -269,9 +204,11 @@ export default function OrganizationDashboard() {
     );
   }
 
+  const isOwnerOrAdmin = organization.role === "owner" || organization.role === "admin";
+
   return (
     <Layout showFooter={false}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div 
@@ -280,59 +217,28 @@ export default function OrganizationDashboard() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
           >
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-500/25">
-                <Building2 className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
+                <Building2 className="w-8 h-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-3xl font-bold">
                   {organization.name}
                 </h1>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="gap-1 border-teal-500/50 text-teal-400">
+                  <Badge variant="outline" className="gap-1 border-primary/50 text-primary">
                     <Crown className="w-3 h-3" />
                     {organization.subscription_plan?.name || "Enterprise"}
                   </Badge>
-                  <span className="text-slate-400">•</span>
-                  <span className="text-slate-400 text-sm">
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground text-sm">
                     {orgDoctors?.length || 0} / {organization.max_doctors} Doctors
                   </span>
                 </div>
               </div>
             </div>
-            <Dialog open={isAddDoctorOpen} onOpenChange={setIsAddDoctorOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700">
-                  <UserPlus className="w-4 h-4" />
-                  Add Doctor
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Doctor to Organization</DialogTitle>
-                  <DialogDescription>
-                    Enter the email of an existing doctor to add them to your organization.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Doctor Email</Label>
-                    <Input
-                      type="email"
-                      placeholder="doctor@example.com"
-                      value={newDoctorEmail}
-                      onChange={(e) => setNewDoctorEmail(e.target.value)}
-                    />
-                  </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => addDoctor.mutate(newDoctorEmail)}
-                    disabled={addDoctor.isPending}
-                  >
-                    {addDoctor.isPending ? "Adding..." : "Add Doctor"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {isOwnerOrAdmin && organization?.id && (
+              <CreateDoctorDialog organizationId={organization.id} />
+            )}
           </motion.div>
 
           {/* Stats */}
@@ -354,15 +260,15 @@ export default function OrganizationDashboard() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
               >
-                <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+                <Card className="bg-card/80 backdrop-blur-sm border-border/50">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
                         <stat.icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-white">{stat.value}</p>
-                        <p className="text-sm text-slate-400">{stat.label}</p>
+                        <p className="text-2xl font-bold">{stat.value}</p>
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -373,16 +279,16 @@ export default function OrganizationDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="doctors" className="space-y-6">
-            <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1.5 rounded-xl">
-              <TabsTrigger value="doctors" className="rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            <TabsList className="bg-muted/50 p-1.5 rounded-xl">
+              <TabsTrigger value="doctors" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Users className="w-4 h-4 mr-2" />
                 Doctors
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+              <TabsTrigger value="analytics" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+              <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </TabsTrigger>
@@ -390,22 +296,22 @@ export default function OrganizationDashboard() {
 
             {/* Doctors Tab */}
             <TabsContent value="doctors">
-              <Card className="bg-slate-800/50 border-slate-700/50">
-                <CardHeader className="border-b border-slate-700/50">
+              <Card className="border-border/50">
+                <CardHeader className="border-b border-border/50">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-white">Organization Doctors</CardTitle>
-                      <CardDescription className="text-slate-400">
+                      <CardTitle>Organization Doctors</CardTitle>
+                      <CardDescription>
                         Manage doctors in your organization
                       </CardDescription>
                     </div>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         placeholder="Search doctors..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -413,7 +319,7 @@ export default function OrganizationDashboard() {
                 <CardContent className="p-6">
                   {loadingDoctors ? (
                     <div className="space-y-3">
-                      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 bg-slate-700/50" />)}
+                      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
                     </div>
                   ) : filteredDoctors.length > 0 ? (
                     <div className="grid gap-4">
@@ -427,61 +333,72 @@ export default function OrganizationDashboard() {
                             key={doctor.user_id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-700/50 hover:border-teal-500/30 transition-colors"
+                            className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors"
                           >
                             <div className="flex items-center gap-4">
-                              <Avatar className="h-12 w-12 border-2 border-slate-600">
+                              <Avatar className="h-12 w-12 border-2 border-border">
                                 <AvatarImage src={doctor.image_path || doctor.profile?.avatar_path} />
-                                <AvatarFallback className="bg-gradient-to-br from-teal-500 to-teal-600 text-white">
+                                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                                   {doctor.profile?.name?.charAt(0) || "D"}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <h4 className="font-semibold text-white">
+                                <h4 className="font-semibold">
                                   Dr. {doctor.profile?.name}
                                 </h4>
-                                <p className="text-sm text-slate-400">{doctor.specialty}</p>
+                                <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-6">
                               <div className="hidden sm:flex items-center gap-6 text-sm">
                                 <div className="text-center">
-                                  <p className="font-semibold text-white">{todayCount}</p>
-                                  <p className="text-slate-500 text-xs">Today</p>
+                                  <p className="font-semibold">{todayCount}</p>
+                                  <p className="text-muted-foreground text-xs">Today</p>
                                 </div>
                                 <div className="text-center">
-                                  <p className="font-semibold text-green-400">{completedCount}</p>
-                                  <p className="text-slate-500 text-xs">Completed</p>
+                                  <p className="font-semibold text-green-600">{completedCount}</p>
+                                  <p className="text-muted-foreground text-xs">Completed</p>
                                 </div>
                                 <div className="text-center">
-                                  <p className="font-semibold text-teal-400">PKR {doctor.fee?.toLocaleString()}</p>
-                                  <p className="text-slate-500 text-xs">Fee</p>
+                                  <p className="font-semibold text-primary">PKR {doctor.fee?.toLocaleString()}</p>
+                                  <p className="text-muted-foreground text-xs">Fee</p>
                                 </div>
                               </div>
                               <Badge 
                                 variant="outline" 
                                 className={doctor.profile?.status === "Active" 
-                                  ? "border-green-500/50 text-green-400" 
-                                  : "border-slate-500/50 text-slate-400"
+                                  ? "border-green-500/50 text-green-600" 
+                                  : "border-muted-foreground/50 text-muted-foreground"
                                 }
                               >
                                 {doctor.profile?.status || "Active"}
                               </Badge>
-                              {(organization.role === "owner" || organization.role === "admin") && (
+                              {isOwnerOrAdmin && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                    <Button variant="ghost" size="icon">
                                       <MoreVertical className="w-4 h-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                  <DropdownMenuContent align="end">
                                     <DropdownMenuItem 
-                                      className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
-                                      onClick={() => removeDoctor.mutate(doctor.user_id)}
+                                      onClick={() => setViewingDoctor({ 
+                                        id: doctor.user_id, 
+                                        name: doctor.profile?.name || "Doctor" 
+                                      })}
                                     >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Remove from Org
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      View Dashboard
                                     </DropdownMenuItem>
+                                    {doctor.user_id !== user?.id && (
+                                      <DropdownMenuItem
+                                        onClick={() => removeDoctor.mutate(doctor.user_id)}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Remove from Org
+                                      </DropdownMenuItem>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               )}
@@ -492,15 +409,21 @@ export default function OrganizationDashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                      <p className="text-slate-400">No doctors in your organization yet</p>
-                      <Button 
-                        className="mt-4 bg-teal-600 hover:bg-teal-700"
-                        onClick={() => setIsAddDoctorOpen(true)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add First Doctor
-                      </Button>
+                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No doctors in your organization yet</p>
+                      {isOwnerOrAdmin && organization?.id && (
+                        <div className="mt-4">
+                          <CreateDoctorDialog 
+                            organizationId={organization.id}
+                            trigger={
+                              <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add First Doctor
+                              </Button>
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -511,45 +434,44 @@ export default function OrganizationDashboard() {
             <TabsContent value="analytics">
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Doctor Performance Chart */}
-                <Card className="bg-slate-800/50 border-slate-700/50">
+                <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-teal-500" />
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
                       Doctor Performance
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription>
                       Appointments by doctor
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={doctorPerformanceData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis dataKey="name" stroke="#94a3b8" />
-                        <YAxis stroke="#94a3b8" />
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="name" className="text-xs" />
+                        <YAxis className="text-xs" />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: "#1e293b", 
-                            border: "1px solid #334155",
+                            backgroundColor: "hsl(var(--card))", 
+                            border: "1px solid hsl(var(--border))",
                             borderRadius: "8px",
-                            color: "#fff"
                           }}
                         />
-                        <Bar dataKey="appointments" fill="#14b8a6" name="Total" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="completed" fill="#22c55e" name="Completed" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="appointments" fill="hsl(var(--primary))" name="Total" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="completed" fill="hsl(var(--chart-2))" name="Completed" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
 
                 {/* Specialty Distribution */}
-                <Card className="bg-slate-800/50 border-slate-700/50">
+                <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5 text-purple-500" />
+                    <CardTitle className="flex items-center gap-2">
+                      <Stethoscope className="w-5 h-5 text-primary" />
                       Specialty Distribution
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription>
                       Doctors by specialty
                     </CardDescription>
                   </CardHeader>
@@ -572,10 +494,9 @@ export default function OrganizationDashboard() {
                         </Pie>
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: "#1e293b", 
-                            border: "1px solid #334155",
+                            backgroundColor: "hsl(var(--card))", 
+                            border: "1px solid hsl(var(--border))",
                             borderRadius: "8px",
-                            color: "#fff"
                           }}
                         />
                       </PieChart>
@@ -584,10 +505,10 @@ export default function OrganizationDashboard() {
                 </Card>
 
                 {/* Revenue Overview */}
-                <Card className="md:col-span-2 bg-slate-800/50 border-slate-700/50">
+                <Card className="md:col-span-2 border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-amber-500" />
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-primary" />
                       Revenue by Doctor
                     </CardTitle>
                   </CardHeader>
@@ -599,9 +520,9 @@ export default function OrganizationDashboard() {
                           .length * (doctor.fee || 0);
                         
                         return (
-                          <div key={doctor.user_id} className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                            <p className="text-sm text-slate-400 truncate">Dr. {doctor.profile?.name}</p>
-                            <p className="text-xl font-bold text-white mt-1">
+                          <div key={doctor.user_id} className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                            <p className="text-sm text-muted-foreground truncate">Dr. {doctor.profile?.name}</p>
+                            <p className="text-xl font-bold mt-1">
                               PKR {doctorRevenue.toLocaleString()}
                             </p>
                           </div>
@@ -615,10 +536,10 @@ export default function OrganizationDashboard() {
 
             {/* Settings Tab */}
             <TabsContent value="settings">
-              <Card className="bg-slate-800/50 border-slate-700/50">
+              <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-white">Organization Settings</CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardTitle>Organization Settings</CardTitle>
+                  <CardDescription>
                     Manage your organization profile and subscription
                   </CardDescription>
                 </CardHeader>
@@ -626,49 +547,49 @@ export default function OrganizationDashboard() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-slate-300">Organization Name</Label>
+                        <Label className="text-muted-foreground">Organization Name</Label>
                         <Input 
                           value={organization.name} 
-                          className="mt-1 bg-slate-900/50 border-slate-600 text-white"
+                          className="mt-1"
                           readOnly
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-300">Email</Label>
+                        <Label className="text-muted-foreground">Email</Label>
                         <Input 
                           value={organization.email || ""} 
-                          className="mt-1 bg-slate-900/50 border-slate-600 text-white"
+                          className="mt-1"
                           readOnly
                         />
                       </div>
                       <div>
-                        <Label className="text-slate-300">Phone</Label>
+                        <Label className="text-muted-foreground">Phone</Label>
                         <Input 
                           value={organization.phone || ""} 
-                          className="mt-1 bg-slate-900/50 border-slate-600 text-white"
+                          className="mt-1"
                           readOnly
                         />
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-teal-500/10 to-teal-600/10 border border-teal-500/30">
+                      <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30">
                         <div className="flex items-center gap-2 mb-2">
-                          <Crown className="w-5 h-5 text-teal-400" />
-                          <span className="font-semibold text-white">Subscription</span>
+                          <Crown className="w-5 h-5 text-primary" />
+                          <span className="font-semibold">Subscription</span>
                         </div>
-                        <p className="text-2xl font-bold text-teal-400">
+                        <p className="text-2xl font-bold text-primary">
                           {organization.subscription_plan?.name || "Enterprise"}
                         </p>
-                        <p className="text-sm text-slate-400 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           Up to {organization.max_doctors} doctors
                         </p>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                        <p className="text-sm text-slate-400">Status</p>
+                      <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                        <p className="text-sm text-muted-foreground">Status</p>
                         <Badge 
                           className={organization.subscription_status === "active" 
-                            ? "bg-green-500/20 text-green-400 border-green-500/30 mt-2" 
-                            : "bg-red-500/20 text-red-400 border-red-500/30 mt-2"
+                            ? "bg-green-500/20 text-green-600 border-green-500/30 mt-2" 
+                            : "bg-destructive/20 text-destructive border-destructive/30 mt-2"
                           }
                         >
                           {organization.subscription_status}
@@ -682,6 +603,16 @@ export default function OrganizationDashboard() {
           </Tabs>
         </div>
       </div>
+
+      {/* Doctor Dashboard View Modal */}
+      {viewingDoctor && (
+        <DoctorDashboardView
+          doctorUserId={viewingDoctor.id}
+          doctorName={viewingDoctor.name}
+          open={!!viewingDoctor}
+          onClose={() => setViewingDoctor(null)}
+        />
+      )}
     </Layout>
   );
 }

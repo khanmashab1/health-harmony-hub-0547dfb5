@@ -5,25 +5,23 @@ import {
   Building2,
   Users,
   Plus,
-  Settings,
   Stethoscope,
   Calendar,
   CheckCircle2,
   Crown,
   Search,
-  UserPlus,
   Trash2,
-  TrendingUp,
   DollarSign,
   BarChart3,
   ExternalLink,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -43,9 +41,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Link } from "react-router-dom";
+import { CreateDoctorDialog } from "@/components/organization/CreateDoctorDialog";
+import { DoctorDashboardView } from "@/components/organization/DoctorDashboardView";
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -59,10 +58,9 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
-  const [newDoctorEmail, setNewDoctorEmail] = useState("");
   const [newOrgName, setNewOrgName] = useState("");
+  const [viewingDoctor, setViewingDoctor] = useState<{ id: string; name: string } | null>(null);
 
   // Fetch organization for current user
   const { data: organization, isLoading: loadingOrg } = useQuery({
@@ -167,30 +165,6 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
-  // Add doctor to organization mutation
-  const addDoctor = useMutation({
-    mutationFn: async (email: string) => {
-      // Find profile by searching for doctor with this user
-      // Since we can't access auth.users, we'll need an edge function for this
-      toast({ 
-        title: "Coming Soon", 
-        description: "Invite doctors by email will be available soon. For now, doctors can request to join.",
-      });
-      throw new Error("Feature coming soon");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["org-doctors"] });
-      toast({ title: "Doctor added to organization" });
-      setIsAddDoctorOpen(false);
-      setNewDoctorEmail("");
-    },
-    onError: (error: any) => {
-      if (error.message !== "Feature coming soon") {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      }
     },
   });
 
@@ -329,40 +303,9 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
               </div>
             </div>
             <div className="flex gap-2">
-              <Dialog open={isAddDoctorOpen} onOpenChange={setIsAddDoctorOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <UserPlus className="w-4 h-4" />
-                    Add Doctor
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Doctor to Organization</DialogTitle>
-                    <DialogDescription>
-                      Enter the email of an existing doctor to add them to your organization.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Doctor Email</Label>
-                      <Input
-                        type="email"
-                        placeholder="doctor@example.com"
-                        value={newDoctorEmail}
-                        onChange={(e) => setNewDoctorEmail(e.target.value)}
-                      />
-                    </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => addDoctor.mutate(newDoctorEmail)}
-                      disabled={addDoctor.isPending}
-                    >
-                      {addDoctor.isPending ? "Adding..." : "Add Doctor"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              {organization?.id && (
+                <CreateDoctorDialog organizationId={organization.id} />
+              )}
               <Button variant="outline" asChild>
                 <Link to="/organization">
                   <ExternalLink className="w-4 h-4 mr-2" />
@@ -460,7 +403,7 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
                       <Badge variant={doctor.profile?.status === "Active" ? "default" : "secondary"}>
                         {doctor.profile?.status || "Active"}
                       </Badge>
-                      {organization.role === "owner" && doctor.user_id !== userId && (
+                      {organization.role === "owner" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -469,12 +412,23 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => removeDoctor.mutate(doctor.user_id)}
-                              className="text-destructive"
+                              onClick={() => setViewingDoctor({ 
+                                id: doctor.user_id, 
+                                name: doctor.profile?.name || "Doctor" 
+                              })}
                             >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove from Organization
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Dashboard
                             </DropdownMenuItem>
+                            {doctor.user_id !== userId && (
+                              <DropdownMenuItem
+                                onClick={() => removeDoctor.mutate(doctor.user_id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove from Organization
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
@@ -487,14 +441,19 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
             <div className="text-center py-12">
               <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">No doctors in organization yet</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => setIsAddDoctorOpen(true)}
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add Your First Doctor
-              </Button>
+              {organization?.id && (
+                <div className="mt-4">
+                  <CreateDoctorDialog 
+                    organizationId={organization.id}
+                    trigger={
+                      <Button variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Doctor
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -531,6 +490,16 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Doctor Dashboard View Modal */}
+      {viewingDoctor && (
+        <DoctorDashboardView
+          doctorUserId={viewingDoctor.id}
+          doctorName={viewingDoctor.name}
+          open={!!viewingDoctor}
+          onClose={() => setViewingDoctor(null)}
+        />
       )}
     </div>
   );
