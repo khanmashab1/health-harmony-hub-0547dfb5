@@ -51,6 +51,7 @@ import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { FeatureGate, PatientLimitWarning } from "@/components/doctor/FeatureGate";
 import { PlanRestrictionsCard } from "@/components/doctor/PlanRestrictionsCard";
 import { OrganizationPanel } from "@/components/doctor/OrganizationPanel";
+import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -761,7 +762,29 @@ export default function DoctorDashboard() {
 
               {/* Settings */}
               <TabsContent value="settings">
-                <DoctorSettingsPanel doctorInfo={doctorInfo} userId={user?.id} profileName={profile?.name} />
+                <div className="space-y-6">
+                  <DoctorSettingsPanel doctorInfo={doctorInfo} userId={user?.id} profileName={profile?.name} />
+                  
+                  {/* Change Password Section */}
+                  <Card variant="glass" className="border-border/30 dark:border-border/20">
+                    <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Lock className="w-5 h-5 text-primary" />
+                        Account Security
+                      </CardTitle>
+                      <CardDescription>Manage your account password</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Password</p>
+                          <p className="text-sm text-muted-foreground">Change your account password</p>
+                        </div>
+                        <ChangePasswordDialog />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
           </motion.div>

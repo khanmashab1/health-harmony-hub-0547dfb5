@@ -24,6 +24,8 @@ import { AppointmentsSection } from "@/components/patient/AppointmentsSection";
 import { PatientSwitcher } from "@/components/patient/PatientSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
+import { KeyRound } from "lucide-react";
 
 export default function PatientDashboard() {
   const { user, profile, loading, refreshProfile } = useRequireAuth(["patient"]);
@@ -375,12 +377,15 @@ export default function PatientDashboard() {
                       <User className="w-5 h-5 text-primary" />
                       Profile Information
                     </CardTitle>
-                    {!isEditingProfile && (
-                      <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="hover:bg-primary/10">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <ChangePasswordDialog />
+                      {!isEditingProfile && (
+                        <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="hover:bg-primary/10">
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Profile
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="p-6">
                     {isEditingProfile && profile ? (
