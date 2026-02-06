@@ -99,8 +99,8 @@
     --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
     
-    /* Header specific - lighter in dark mode */
-    --header-bg: 217 33% 17%;
+    /* Header specific - dark navy matching logo/brand colors */
+    --header-bg: 220 30% 13%;
     --header-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;
