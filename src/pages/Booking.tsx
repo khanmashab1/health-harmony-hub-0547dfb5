@@ -383,23 +383,7 @@ export default function Booking() {
     }
   }, [profile, user]);
 
-  // Show loading while checking auth or preloading doctor
-  if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
-    return (
-      <Layout showFooter={false}>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Don't render if not authenticated
-  if (!user) {
-    return null;
-  }
-
-  // Filter and sort doctors
+  // Filter and sort doctors - MUST be called before any conditional returns
   const filteredDoctors = useMemo(() => {
     if (!doctors) return [];
     
@@ -442,6 +426,22 @@ export default function Booking() {
     
     return filtered;
   }, [doctors, searchQuery, minRating, sortBy]);
+
+  // Show loading while checking auth or preloading doctor
+  if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   const hasActiveFilters = searchQuery !== "" || minRating > 0;
 
