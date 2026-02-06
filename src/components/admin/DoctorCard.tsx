@@ -68,7 +68,9 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
           <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
             {(() => {
               const imageUrl = doctor.image_path
-                ? supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
+                ? doctor.image_path.startsWith("http")
+                  ? doctor.image_path
+                  : supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
                 : null;
               return (
                 <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0">
