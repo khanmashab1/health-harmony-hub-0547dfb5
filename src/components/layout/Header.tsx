@@ -68,11 +68,13 @@ export function Header() {
               alt={`${siteName} Logo`} 
               className="h-14 sm:h-16 md:h-[72px] w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span 
-              className="font-semibold text-base sm:text-lg tracking-tight whitespace-nowrap leading-none text-blue-600 dark:text-foreground -ml-1 italic"
-              style={{ fontFamily: "'Algerian', 'Copperplate', 'Cinzel Decorative', serif" }}
-            >
-              {siteName}
+            <span className="font-bold text-lg sm:text-xl tracking-tight whitespace-nowrap leading-none -ml-1">
+              <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
+              {siteName?.includes('+') && (
+                <span className="text-teal-500 dark:text-teal-400 font-extrabold ml-0.5">
+                  {siteName.match(/\++/)?.[0] || ''}
+                </span>
+              )}
             </span>
           </Link>
 
