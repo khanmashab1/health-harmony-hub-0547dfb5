@@ -1,13 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const GMAIL_USER = Deno.env.get("GMAIL_USER");
+const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -36,7 +37,7 @@ serve(async (req) => {
 
     const siteName = settings?.find(s => s.setting_key === "site_name")?.setting_value || "MediCare+";
     const siteUrl = settings?.find(s => s.setting_key === "site_url")?.setting_value || "https://medicare-nine-wine.vercel.app";
-    const adminEmail = settings?.find(s => s.setting_key === "admin_email")?.setting_value || GMAIL_USER;
+    const adminEmail = settings?.find(s => s.setting_key === "admin_email")?.setting_value;
 
     if (!adminEmail) {
       logStep("No admin email configured, skipping report");
@@ -45,6 +46,8 @@ serve(async (req) => {
         status: 200,
       });
     }
+
+    logStep("Admin email found", { adminEmail });
 
     // Calculate date 10 days ago
     const tenDaysAgo = new Date();
@@ -98,8 +101,6 @@ serve(async (req) => {
       const monthlyPrice = plan.billing_period === "yearly" ? plan.price / 12 : plan.price;
       return sum + monthlyPrice;
     }, 0) || 0;
-
-    const yearlyRevenue = monthlyRevenue * 12;
 
     // Plan distribution
     const planDistribution = plans.map(plan => ({
@@ -266,30 +267,53 @@ serve(async (req) => {
 
     const subject = `📊 Subscription Report - ${new Date().toLocaleDateString('en-PK')} | ${siteName}`;
 
-    // Send email via Resend
-    if (RESEND_API_KEY) {
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: `${siteName} Reports <noreply@${new URL(siteUrl).hostname}>`,
-          to: [adminEmail],
-          subject: subject,
-          html: htmlContent,
-        }),
-      });
+    // Send email via Gmail SMTP
+    if (GMAIL_USER && GMAIL_APP_PASSWORD) {
+      logStep("Sending email via Gmail SMTP", { to: adminEmail, from: GMAIL_USER });
+      
+      try {
+        const client = new SMTPClient({
+          connection: {
+            hostname: "smtp.gmail.com",
+            port: 465,
+            tls: true,
+            auth: {
+              username: GMAIL_USER,
+              password: GMAIL_APP_PASSWORD,
+            },
+          },
+        });
 
-      if (!emailResponse.ok) {
-        const errorData = await emailResponse.text();
-        logStep("Resend API error", { status: emailResponse.status, error: errorData });
-      } else {
-        logStep("Subscription report email sent successfully", { to: adminEmail });
+        // Minify HTML to prevent encoding issues
+        const minifiedHtml = htmlContent
+          .replace(/>\s+</g, '><')
+          .replace(/\n\s*/g, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+
+        await client.send({
+          from: GMAIL_USER,
+          to: adminEmail,
+          subject: subject,
+          content: `Subscription Report - ${new Date().toLocaleDateString('en-PK')}`,
+          html: minifiedHtml,
+        });
+
+        await client.close();
+        logStep("Email sent successfully via Gmail SMTP", { to: adminEmail });
+      } catch (emailError) {
+        logStep("Gmail SMTP error", { error: emailError instanceof Error ? emailError.message : String(emailError) });
+        throw emailError;
       }
     } else {
-      logStep("RESEND_API_KEY not configured, skipping email send");
+      logStep("Gmail credentials not configured, skipping email send");
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: "Gmail credentials not configured" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     // Log the report
@@ -297,12 +321,13 @@ serve(async (req) => {
       email_type: "subscription_report",
       recipient_email: adminEmail,
       subject: subject,
-      status: RESEND_API_KEY ? "sent" : "skipped",
+      status: "sent",
       sent_at: new Date().toISOString(),
     });
 
     return new Response(JSON.stringify({ 
       success: true,
+      message: `Report sent to ${adminEmail}`,
       metrics: {
         totalDoctors,
         subscribedDoctors,
