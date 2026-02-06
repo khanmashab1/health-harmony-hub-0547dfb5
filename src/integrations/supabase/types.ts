@@ -235,6 +235,7 @@ export type Database = {
           gender: string | null
           id: string
           medical_license_path: string | null
+          password_hash: string | null
           phone: string
           province: string | null
           qualifications: string | null
@@ -260,6 +261,7 @@ export type Database = {
           gender?: string | null
           id?: string
           medical_license_path?: string | null
+          password_hash?: string | null
           phone: string
           province?: string | null
           qualifications?: string | null
@@ -285,6 +287,7 @@ export type Database = {
           gender?: string | null
           id?: string
           medical_license_path?: string | null
+          password_hash?: string | null
           phone?: string
           province?: string | null
           qualifications?: string | null
