@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { format, differenceInYears } from "date-fns";
+import { formatMedicinesText } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { 
   Stethoscope, 
@@ -306,7 +307,7 @@ export default function MedicalHistoryPrint() {
                         <Pill className="w-4 h-4" />
                         Prescription
                       </h4>
-                      <p className="text-sm whitespace-pre-line">{apt.medicines}</p>
+                      <p className="text-sm whitespace-pre-line">{formatMedicinesText(apt.medicines)}</p>
                     </div>
                   )}
 

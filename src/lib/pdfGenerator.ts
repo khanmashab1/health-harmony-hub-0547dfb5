@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { formatMedicinesText } from "./utils";
 
 interface Appointment {
   id: string;
@@ -217,7 +218,8 @@ export function generateMedicalHistoryPDF(
         doc.setTextColor(100);
         doc.text("Prescription:", 16, yPosition);
         doc.setTextColor(0);
-        const medLines = doc.splitTextToSize(apt.medicines, pageWidth - 60);
+        const formattedMeds = formatMedicinesText(apt.medicines);
+        const medLines = doc.splitTextToSize(formattedMeds, pageWidth - 60);
         doc.text(medLines, 42, yPosition);
         yPosition += medLines.length * 5 + 3;
       }
