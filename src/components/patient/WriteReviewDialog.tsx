@@ -105,7 +105,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
           display_name: userName || "Anonymous",
           rating,
           comment: comment.trim(),
-          status: "Pending",
+          status: "Approved",
           source: "internal",
         });
 
@@ -119,7 +119,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
         title: isEditing ? "Review Updated" : "Review Submitted",
         description: isEditing 
           ? "Your review has been updated." 
-          : "Your review has been submitted and is pending approval.",
+          : "Your review is now live. Thank you for your feedback!",
       });
       setRating(5);
       setComment("");
@@ -180,8 +180,8 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
             <DialogTitle>{isEditing ? "Edit Review" : "Write a Review"}</DialogTitle>
             <DialogDescription>
               {isEditing 
-                ? "Update your review. Note: Only pending reviews can be edited."
-                : "Share your experience with our healthcare services. Your review will be visible after admin approval."}
+                ? "Update your review."
+                : "Share your experience with this doctor. Your review will be published immediately."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
