@@ -66,7 +66,7 @@ export function Header() {
             <img 
               src={logoUrl || medicareLogo} 
               alt={`${siteName} Logo`} 
-              className="h-7 sm:h-8 md:h-9 w-auto object-contain group-hover:scale-105 transition-transform"
+              className="h-14 sm:h-16 md:h-[72px] w-auto object-contain group-hover:scale-105 transition-transform"
             />
             <span className="font-semibold text-base sm:text-lg tracking-tight whitespace-nowrap text-foreground leading-none">
               Medi Care ++
