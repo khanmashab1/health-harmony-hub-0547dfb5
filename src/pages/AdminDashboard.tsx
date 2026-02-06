@@ -526,16 +526,21 @@ export default function AdminDashboard() {
               <TabsContent value="doctors">
                 <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-900/10 dark:to-transparent">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          <Stethoscope className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          Doctor Management
-                          {doctors && <Badge variant="secondary" className="ml-2">{doctors.length}</Badge>}
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                          <Stethoscope className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+                          <span className="hidden sm:inline">Doctor Management</span>
+                          <span className="sm:hidden">Doctors</span>
+                          {doctors && <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">{doctors.length}</Badge>}
                         </CardTitle>
                         <Dialog open={createDoctorOpen} onOpenChange={setCreateDoctorOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="hero"><Plus className="w-4 h-4 mr-2" />Add Doctor</Button>
+                            <Button variant="hero" size="sm" className="text-xs sm:text-sm">
+                              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                              <span className="hidden sm:inline">Add Doctor</span>
+                              <span className="sm:hidden">Add</span>
+                            </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-lg">
                             <CreateDoctorForm onSuccess={() => { 
@@ -598,7 +603,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6">
+                  <CardContent className="p-3 sm:p-6">
                     {loadingDoctors ? (
                       <div className="space-y-3">
                         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
@@ -621,21 +626,22 @@ export default function AdminDashboard() {
                         
                         {/* Pagination */}
                         {doctors.length > doctorsPerPage && (
-                          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
-                            <p className="text-sm text-muted-foreground">
-                              Showing {((doctorPage - 1) * doctorsPerPage) + 1} to {Math.min(doctorPage * doctorsPerPage, doctors.length)} of {doctors.length} doctors
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 sm:mt-6 pt-4 border-t border-border/30">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              Showing {((doctorPage - 1) * doctorsPerPage) + 1}-{Math.min(doctorPage * doctorsPerPage, doctors.length)} of {doctors.length}
                             </p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setDoctorPage(p => Math.max(1, p - 1))}
                                 disabled={doctorPage === 1}
+                                className="text-xs px-2 sm:px-3"
                               >
-                                <ChevronLeft className="w-4 h-4 mr-1" />
-                                Previous
+                                <ChevronLeft className="w-4 h-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Previous</span>
                               </Button>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-0.5 sm:gap-1">
                                 {Array.from({ length: Math.ceil(doctors.length / doctorsPerPage) }, (_, i) => i + 1)
                                   .filter(page => {
                                     const totalPages = Math.ceil(doctors.length / doctorsPerPage);
@@ -647,12 +653,12 @@ export default function AdminDashboard() {
                                   .map((page, idx, arr) => (
                                     <span key={page} className="flex items-center">
                                       {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                        <span className="px-2 text-muted-foreground">...</span>
+                                        <span className="px-1 text-muted-foreground text-xs">...</span>
                                       )}
                                       <Button
                                         variant={doctorPage === page ? "default" : "ghost"}
                                         size="sm"
-                                        className="w-8 h-8 p-0"
+                                        className="w-7 h-7 sm:w-8 sm:h-8 p-0 text-xs"
                                         onClick={() => setDoctorPage(page)}
                                       >
                                         {page}
@@ -665,9 +671,10 @@ export default function AdminDashboard() {
                                 size="sm"
                                 onClick={() => setDoctorPage(p => Math.min(Math.ceil(doctors.length / doctorsPerPage), p + 1))}
                                 disabled={doctorPage >= Math.ceil(doctors.length / doctorsPerPage)}
+                                className="text-xs px-2 sm:px-3"
                               >
-                                Next
-                                <ChevronRight className="w-4 h-4 ml-1" />
+                                <span className="hidden sm:inline">Next</span>
+                                <ChevronRight className="w-4 h-4 sm:ml-1" />
                               </Button>
                             </div>
                           </div>
