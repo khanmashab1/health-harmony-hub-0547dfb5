@@ -461,6 +461,7 @@ export type Database = {
           image_path: string | null
           jazzcash_number: string | null
           max_patients_per_day: number
+          organization_id: string | null
           province: string | null
           qualifications: string | null
           rating: number | null
@@ -484,6 +485,7 @@ export type Database = {
           image_path?: string | null
           jazzcash_number?: string | null
           max_patients_per_day?: number
+          organization_id?: string | null
           province?: string | null
           qualifications?: string | null
           rating?: number | null
@@ -507,6 +509,7 @@ export type Database = {
           image_path?: string | null
           jazzcash_number?: string | null
           max_patients_per_day?: number
+          organization_id?: string | null
           province?: string | null
           qualifications?: string | null
           rating?: number | null
@@ -516,6 +519,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "doctors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doctors_selected_plan_id_fkey"
             columns: ["selected_plan_id"]
@@ -815,6 +825,94 @@ export type Database = {
           strength?: string | null
         }
         Relationships: []
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          max_doctors: number | null
+          name: string
+          owner_user_id: string
+          phone: string | null
+          stripe_customer_id: string | null
+          subscription_plan_id: string | null
+          subscription_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          max_doctors?: number | null
+          name: string
+          owner_user_id: string
+          phone?: string | null
+          stripe_customer_id?: string | null
+          subscription_plan_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          max_doctors?: number | null
+          name?: string
+          owner_user_id?: string
+          phone?: string | null
+          stripe_customer_id?: string | null
+          subscription_plan_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pa_assignments: {
         Row: {
@@ -1117,6 +1215,10 @@ export type Database = {
           check_role: Database["public"]["Enums"]["app_role"]
           user_uuid: string
         }
+        Returns: boolean
+      }
+      is_org_admin: {
+        Args: { check_user_id: string; org_id: string }
         Returns: boolean
       }
       is_pa_for_doctor: {
