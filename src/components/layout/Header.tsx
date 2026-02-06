@@ -10,7 +10,8 @@ import {
   Activity,
   Shield,
   UserCog,
-  Stethoscope
+  Stethoscope,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +72,14 @@ export function Header() {
 
           {/* Desktop Nav - Center */}
           <nav className="hidden md:flex items-center gap-1">
+            <Link to="/our-doctors">
+              <button
+                className={`nav-pill ${isActiveLink('/our-doctors') ? 'active' : ''}`}
+              >
+                <Users className="w-4 h-4" />
+                Our Doctors
+              </button>
+            </Link>
             <Link to="/booking">
               <button
                 className={`nav-pill ${isActiveLink('/booking') ? 'active' : ''}`}
@@ -132,6 +141,14 @@ export function Header() {
 
         {/* Mobile Navigation Pills */}
         <div className="md:hidden pb-3 flex gap-2 overflow-x-auto">
+          <Link to="/our-doctors">
+            <button
+              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/our-doctors') ? 'active' : ''}`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Our Doctors
+            </button>
+          </Link>
           <Link to="/booking">
             <button
               className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/booking') ? 'active' : ''}`}
