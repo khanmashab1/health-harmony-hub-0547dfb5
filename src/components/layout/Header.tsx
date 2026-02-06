@@ -62,13 +62,13 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group py-2">
+          <Link to="/" className="flex items-center gap-2 group py-2">
             <img 
               src={logoUrl || medicareLogo} 
               alt={`${siteName} Logo`} 
-              className="h-[44px] sm:h-[52px] w-auto object-contain group-hover:scale-105 transition-transform"
+              className="h-[36px] sm:h-[42px] w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="font-bold text-xl sm:text-2xl tracking-tight whitespace-nowrap text-foreground">
+            <span className="font-semibold text-base sm:text-lg tracking-tight whitespace-nowrap text-foreground">
               Medi Care ++
             </span>
           </Link>
