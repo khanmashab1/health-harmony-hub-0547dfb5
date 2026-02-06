@@ -73,17 +73,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Function to sync subscription status for doctors
+  const syncDoctorSubscription = async () => {
+    try {
+      await supabase.functions.invoke("check-doctor-subscription");
+    } catch (err) {
+      console.error("Failed to sync subscription:", err);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+          setTimeout(async () => {
+            const fetchedProfile = await fetchProfile(session.user.id);
+            setProfile(fetchedProfile);
+            
+            // Sync subscription status for doctors on login
+            if (fetchedProfile?.role === "doctor" && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+              syncDoctorSubscription();
+            }
           }, 0);
           // Mark session as active for security - when tab closes, we'll sign out
           sessionStorage.setItem("session_active", "true");
@@ -96,13 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        const fetchedProfile = await fetchProfile(session.user.id);
+        setProfile(fetchedProfile);
         // Mark session as active
         sessionStorage.setItem("session_active", "true");
+        
+        // Sync subscription for doctors on initial load
+        if (fetchedProfile?.role === "doctor") {
+          syncDoctorSubscription();
+        }
       }
       setLoading(false);
     });

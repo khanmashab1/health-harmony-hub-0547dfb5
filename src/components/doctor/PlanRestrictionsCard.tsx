@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Users, BarChart3, Palette, Headphones, Lock, Check, ArrowUpRight, ExternalLink } from "lucide-react";
+import { Crown, Users, BarChart3, Palette, Headphones, Lock, Check, ArrowUpRight, ExternalLink, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -37,6 +37,7 @@ const FEATURE_LIST: FeatureItem[] = [
   { key: "analyticsAccess", label: "Analytics Dashboard", icon: BarChart3, description: "View performance insights", tabTarget: "analytics", action: "tab" },
   { key: "teamManagement", label: "Team Management", icon: Users, description: "Manage PAs & staff", tabTarget: "team", action: "tab" },
   { key: "customBranding", label: "Custom Branding", icon: Palette, description: "Personalize your profile", tabTarget: "settings", action: "tab" },
+  { key: "multiDoctorSupport", label: "Multi-Doctor Org", icon: Building2, description: "Manage multiple doctors", tabTarget: "organization", action: "tab" },
   { key: "prioritySupport", label: "Priority Support", icon: Headphones, description: "Faster response times", action: "dialog" },
 ];
 

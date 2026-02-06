@@ -19,7 +19,8 @@ import {
   BarChart3,
   Radio,
   Crown,
-  Lock
+  Lock,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,7 @@ import { PAManagementPanel } from "@/components/doctor/PAManagementPanel";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { FeatureGate, PatientLimitWarning } from "@/components/doctor/FeatureGate";
 import { PlanRestrictionsCard } from "@/components/doctor/PlanRestrictionsCard";
+import { OrganizationPanel } from "@/components/doctor/OrganizationPanel";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -375,6 +377,13 @@ export default function DoctorDashboard() {
                   <span className="hidden sm:inline">My Team</span>
                   <span className="sm:hidden">Team</span>
                 </TabsTrigger>
+                {canAccessFeature("multiDoctorSupport") && (
+                  <TabsTrigger value="organization" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                    <Building2 className="w-4 h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Organization</span>
+                    <span className="sm:hidden">Org</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />
                   Settings
@@ -742,6 +751,13 @@ export default function DoctorDashboard() {
                   {user && <PAManagementPanel doctorId={user.id} />}
                 </FeatureGate>
               </TabsContent>
+
+              {/* Organization (Enterprise Only) */}
+              {canAccessFeature("multiDoctorSupport") && (
+                <TabsContent value="organization">
+                  {user && <OrganizationPanel userId={user.id} userEmail={user.email} userName={profile?.name || undefined} />}
+                </TabsContent>
+              )}
 
               {/* Settings */}
               <TabsContent value="settings">
