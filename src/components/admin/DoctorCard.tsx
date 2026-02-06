@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Stethoscope, Star, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -64,9 +66,21 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center flex-shrink-0">
-              <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-            </div>
+            {(() => {
+              const imageUrl = doctor.image_path
+                ? supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
+                : null;
+              return (
+                <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0">
+                  {imageUrl ? (
+                    <AvatarImage src={imageUrl} alt={`Dr. ${doctor.profile?.name || "Unknown"}`} className="object-cover rounded-xl" />
+                  ) : null}
+                  <AvatarFallback className="rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30">
+                    <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                  </AvatarFallback>
+                </Avatar>
+              );
+            })()}
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-sm sm:text-base truncate">Dr. {doctor.profile?.name || "Unknown"}</p>
               <p className="text-xs sm:text-sm text-muted-foreground">{doctor.specialty}</p>
