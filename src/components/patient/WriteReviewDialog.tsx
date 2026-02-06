@@ -167,13 +167,15 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (createReview.isPending || comment.trim().length < 3) return;
     createReview.mutate();
   };
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Review" : "Write a Review"}</DialogTitle>
             <DialogDescription>
@@ -248,6 +250,9 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
                 <Button
                   type="submit"
                   disabled={createReview.isPending || comment.trim().length < 3}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
                 >
                   {createReview.isPending ? "Saving..." : isEditing ? "Update Review" : "Submit Review"}
                 </Button>
