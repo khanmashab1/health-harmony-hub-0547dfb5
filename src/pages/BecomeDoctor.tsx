@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Stethoscope, CheckCircle, FileText, Award, Clock, Users, ArrowRight, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,16 @@ export default function BecomeDoctor() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // Scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeTab]);
  
    const benefits = [
      {
