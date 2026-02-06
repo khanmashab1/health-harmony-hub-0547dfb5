@@ -25,6 +25,7 @@ import Reviews from "./pages/Reviews";
 import DoctorProfile from "./pages/DoctorProfile";
 import NotFound from "./pages/NotFound";
 import BecomeDoctor from "./pages/BecomeDoctor";
+import OrganizationDashboard from "./pages/OrganizationDashboard";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/symptoms" element={<SymptomsChecker />} />
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/become-doctor" element={<BecomeDoctor />} />
+              <Route path="/organization" element={<OrganizationDashboard />} />
               <Route path="/token/:appointmentId" element={<TokenPrint />} />
               <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
               <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
