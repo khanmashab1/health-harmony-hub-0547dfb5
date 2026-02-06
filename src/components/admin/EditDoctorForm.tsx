@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,10 +26,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PROVINCES, CITIES, SPECIALTIES } from "@/lib/constants";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera, X } from "lucide-react";
 
 const editDoctorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -57,6 +58,7 @@ interface Doctor {
   bio: string | null;
   max_patients_per_day: number;
   easypaisa_number: string | null;
+  image_path: string | null;
   profile?: {
     name: string | null;
     phone: string | null;
@@ -71,6 +73,10 @@ interface EditDoctorFormProps {
 
 export function EditDoctorForm({ doctor, onSuccess }: EditDoctorFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(doctor.image_path || null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const form = useForm<EditDoctorFormValues>({
@@ -92,9 +98,61 @@ export function EditDoctorForm({ doctor, onSuccess }: EditDoctorFormProps) {
 
   const selectedProvince = form.watch("province");
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ variant: "destructive", title: "Invalid file", description: "Please select an image file." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "File too large", description: "Image must be less than 5MB." });
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return imagePreview; // Return existing path if no new file
+
+    setIsUploadingImage(true);
+    try {
+      const fileExt = imageFile.name.split(".").pop();
+      const filePath = `${doctor.user_id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, imageFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Image upload failed", description: error.message });
+      return doctor.image_path;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const onSubmit = async (values: EditDoctorFormValues) => {
     setIsLoading(true);
     try {
+      // Upload image if changed
+      const imagePath = await uploadImage();
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -121,6 +179,7 @@ export function EditDoctorForm({ doctor, onSuccess }: EditDoctorFormProps) {
           bio: values.bio || null,
           max_patients_per_day: values.maxPatientsPerDay || 30,
           easypaisa_number: values.easypaisaNumber || null,
+          image_path: imagePath,
         })
         .eq("user_id", doctor.user_id);
 
@@ -155,6 +214,61 @@ export function EditDoctorForm({ doctor, onSuccess }: EditDoctorFormProps) {
         </DialogHeader>
 
         <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+          {/* Profile Picture */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Profile Picture
+            </h4>
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <Avatar className="w-20 h-20 border-2 border-border">
+                  <AvatarImage src={imagePreview || undefined} className="object-cover" />
+                  <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+                    {doctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Camera className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  {imagePreview ? "Change Photo" : "Upload Photo"}
+                </Button>
+                {imagePreview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeImage}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Remove
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           {/* Personal Information */}
           <div className="space-y-2">
             <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

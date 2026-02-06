@@ -37,6 +37,7 @@ interface Doctor {
   max_patients_per_day: number;
   easypaisa_number: string | null;
   rating: number | null;
+  image_path: string | null;
   profile?: {
     name: string | null;
     phone: string | null;
