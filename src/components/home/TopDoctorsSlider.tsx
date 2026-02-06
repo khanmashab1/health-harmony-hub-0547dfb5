@@ -300,7 +300,7 @@ export function TopDoctorsSlider() {
           </AnimatePresence>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Arrows */}
         {doctors.length > 1 && (
           <>
             <button
@@ -315,21 +315,24 @@ export function TopDoctorsSlider() {
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </button>
-
-            <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2 z-20">
-              {doctors.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`transition-all duration-300 rounded-full ${
-                    index === currentIndex 
-                      ? "w-6 md:w-8 h-2 md:h-3 bg-primary" 
-                      : "w-2 md:w-3 h-2 md:h-3 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  }`}
-                />
-              ))}
-            </div>
           </>
+        )}
+
+        {/* Dot Indicators - Below content */}
+        {doctors.length > 1 && (
+          <div className="flex justify-center gap-1.5 md:gap-2 mt-6 md:mt-8">
+            {doctors.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`transition-all duration-300 rounded-full ${
+                  index === currentIndex 
+                    ? "w-6 md:w-8 h-2 md:h-3 bg-primary" 
+                    : "w-2 md:w-3 h-2 md:h-3 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+              />
+            ))}
+          </div>
         )}
       </div>
     </section>
