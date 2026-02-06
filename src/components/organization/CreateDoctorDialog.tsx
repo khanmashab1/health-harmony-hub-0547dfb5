@@ -249,7 +249,7 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
                   <SelectTrigger>
                     <SelectValue placeholder="Select specialty" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent side="bottom" avoidCollisions={false} className="max-h-60">
                     {SPECIALTIES.map((s) => (
                       <SelectItem key={s} value={s}>
                         {s}

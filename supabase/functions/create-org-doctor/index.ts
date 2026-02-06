@@ -197,11 +197,80 @@ serve(async (req) => {
 
     await supabaseAdmin.from("doctor_schedules").insert(defaultSchedules);
 
+    // Send welcome email with login credentials
+    try {
+      const emailResponse = await fetch(
+        `${supabaseUrl}/functions/v1/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            subject: "Welcome to Medicare - Your Doctor Account is Ready",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                  <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Medicare!</h1>
+                </div>
+                <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none;">
+                  <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">
+                    Dear <strong>Dr. ${name}</strong>,
+                  </p>
+                  <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">
+                    Your doctor account has been created by <strong>${org.name}</strong>. You now have access to your Professional dashboard.
+                  </p>
+                  
+                  <div style="background: white; border: 2px solid #14b8a6; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                    <h3 style="color: #0f766e; margin-top: 0; margin-bottom: 15px;">Your Login Credentials</h3>
+                    <p style="margin: 8px 0; font-size: 15px;">
+                      <strong>Email:</strong> <span style="color: #0d9488;">${email}</span>
+                    </p>
+                    <p style="margin: 8px 0; font-size: 15px;">
+                      <strong>Password:</strong> <span style="color: #0d9488;">${password}</span>
+                    </p>
+                  </div>
+                  
+                  <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+                    <strong>⚠️ Important:</strong> Please change your password after your first login for security purposes.
+                  </p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://medicare-nine-wine.vercel.app/auth" 
+                       style="background: linear-gradient(135deg, #14b8a6, #0d9488); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                      Login to Your Dashboard
+                    </a>
+                  </div>
+                  
+                  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;">
+                  
+                  <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0;">
+                    This email was sent by Medicare. If you didn't expect this email, please contact your organization administrator.
+                  </p>
+                </div>
+              </div>
+            `,
+          }),
+        }
+      );
+      
+      if (!emailResponse.ok) {
+        console.error("Failed to send welcome email:", await emailResponse.text());
+      } else {
+        console.log("Welcome email sent successfully to:", email);
+      }
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Don't fail the whole operation if email fails
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         doctorId: newUserId,
-        message: `Doctor ${name} created successfully` 
+        message: `Doctor ${name} created successfully. Login credentials sent to ${email}.` 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
