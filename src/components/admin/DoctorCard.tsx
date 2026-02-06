@@ -102,10 +102,10 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive font-medium"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Doctor
+                Permanently Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -127,12 +127,25 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
 
       {/* Delete Confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-destructive/50">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Doctor</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete Dr. {doctor.profile?.name || "Unknown"}? 
-              This action cannot be undone. All associated appointments and records will be affected.
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Permanently Delete Doctor
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to <strong>permanently delete</strong> Dr. {doctor.profile?.name || "Unknown"}?
+              </p>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-destructive text-sm">
+                <p className="font-semibold mb-1">⚠️ This action is irreversible!</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>Doctor's account will be permanently removed</li>
+                  <li>All appointments and medical records will be deleted</li>
+                  <li>Reviews, schedules, and PA assignments will be removed</li>
+                  <li>This data cannot be recovered</li>
+                </ul>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -142,7 +155,7 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting..." : "Permanently Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
