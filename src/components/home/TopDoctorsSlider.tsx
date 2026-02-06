@@ -283,15 +283,15 @@ export function TopDoctorsSlider() {
               )}
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-2 md:pt-4 justify-center lg:justify-start">
-                <Link to={`/booking?doctor=${currentDoctor.user_id}`}>
-                  <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2">
-                    <Calendar className="w-4 h-4 md:w-5 md:h-5" />
+              <div className="flex flex-row gap-2 sm:gap-3 md:gap-4 pt-2 md:pt-4 justify-center lg:justify-start">
+                <Link to={`/booking?doctor=${currentDoctor.user_id}`} className="flex-1 sm:flex-none">
+                  <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2 text-xs sm:text-sm md:text-base px-3 sm:px-6 md:px-8 h-10 sm:h-11 md:h-12">
+                    <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                     Book Appointment
                   </Button>
                 </Link>
-                <Link to="/booking">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2">
+                <Link to="/our-doctors" className="flex-1 sm:flex-none">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 text-xs sm:text-sm md:text-base px-3 sm:px-6 md:px-8 h-10 sm:h-11 md:h-12">
                     View All Doctors
                   </Button>
                 </Link>
