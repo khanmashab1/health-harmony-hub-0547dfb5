@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2 } from "lucide-react";
+import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ import { ScheduleSettingsCard } from "./ScheduleSettingsCard";
 import { PaymentSettingsCard } from "./PaymentSettingsCard";
 import { BreakTimesCard } from "./BreakTimesCard";
 import { SubscriptionCard } from "./SubscriptionCard";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 interface DoctorSettingsPanelProps {
   doctorInfo: {
@@ -52,6 +54,10 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
   const [qualifications, setQualifications] = useState(doctorInfo?.qualifications || "");
   const [bio, setBio] = useState(doctorInfo?.bio || "");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isEditingMaxPatients, setIsEditingMaxPatients] = useState(false);
+  const [maxPatientsValue, setMaxPatientsValue] = useState(doctorInfo?.max_patients_per_day?.toString() || "30");
+  
+  const { isEnterprise, isProfessional, features } = usePlanFeatures(userId);
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -70,6 +76,26 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
       queryClient.invalidateQueries({ queryKey: ["doctor-info"] });
       toast({ title: "Profile updated successfully" });
       setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMaxPatients = useMutation({
+    mutationFn: async (value: number) => {
+      if (!userId) throw new Error("User not found");
+      const { error } = await supabase
+        .from("doctors")
+        .update({ max_patients_per_day: value })
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["doctor-info"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-plan-info"] });
+      toast({ title: "Max patients/day updated successfully" });
+      setIsEditingMaxPatients(false);
     },
     onError: (error: any) => {
       toast({ title: "Update failed", description: error.message, variant: "destructive" });
@@ -208,8 +234,71 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Max Patients/Day - Editable for Enterprise */}
+            <div className="p-4 rounded-xl border border-border/50 bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-brand-500" />
+                  <p className="text-sm text-muted-foreground font-medium">Max Patients/Day</p>
+                </div>
+                {isEnterprise && !isEditingMaxPatients && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setMaxPatientsValue(doctorInfo?.max_patients_per_day?.toString() || "30");
+                      setIsEditingMaxPatients(true);
+                    }}
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              {isEditingMaxPatients && isEnterprise ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={maxPatientsValue}
+                    onChange={(e) => setMaxPatientsValue(e.target.value)}
+                    className="h-9 w-20 text-lg font-bold"
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8"
+                    disabled={updateMaxPatients.isPending}
+                    onClick={() => {
+                      const val = parseInt(maxPatientsValue);
+                      if (val > 0 && val <= 500) {
+                        updateMaxPatients.mutate(val);
+                      } else {
+                        toast({ title: "Invalid value", description: "Enter a number between 1 and 500", variant: "destructive" });
+                      }
+                    }}
+                  >
+                    {updateMaxPatients.isPending ? "..." : "Save"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setIsEditingMaxPatients(false)}>
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-xl">
+                    {isEnterprise ? (doctorInfo?.max_patients_per_day || "Unlimited") : features.maxPatientsPerDay}
+                  </p>
+                  {!isEnterprise && (
+                    <Badge variant="outline" className="text-xs">Plan</Badge>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Other stats - static */}
             {[
-              { label: "Max Patients/Day", value: doctorInfo?.max_patients_per_day || 30, icon: Users },
               { label: "Consultation Fee", value: `Rs. ${doctorInfo?.fee || 500}`, icon: TrendingUp },
               { label: "Experience", value: `${doctorInfo?.experience_years || 0} years`, icon: Activity },
               { label: "Rating", value: `${doctorInfo?.rating || 4.0} ⭐`, icon: CheckCircle2 },
