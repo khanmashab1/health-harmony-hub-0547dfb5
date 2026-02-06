@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Authentication check - verify user is authenticated
+    // Authentication check - verify user is authenticated or service role key
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       console.error("No authorization header provided");
@@ -72,25 +72,33 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    // Validate JWT
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
     
-    if (authError || !claims?.claims) {
-      console.error("Invalid JWT token:", authError?.message);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - Invalid token" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    // Check if this is a service role key (for internal edge function calls)
+    const isServiceRole = token === supabaseServiceKey;
+    
+    if (isServiceRole) {
+      console.log("Authenticated via service role key (internal call)");
+    } else {
+      // Validate JWT for regular user requests
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
 
-    const userId = claims.claims.sub;
-    console.log(`Authenticated user: ${userId}`);
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (authError || !user) {
+        console.error("Invalid JWT token:", authError?.message);
+        return new Response(
+          JSON.stringify({ error: "Unauthorized - Invalid token" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      console.log(`Authenticated user: ${user.id}`);
+    }
 
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");

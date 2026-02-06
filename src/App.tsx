@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { PasswordChangeDialog } from "@/components/auth/PasswordChangeDialog";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Booking from "./pages/Booking";
@@ -29,39 +30,57 @@ import OrganizationDashboard from "./pages/OrganizationDashboard";
 
 const queryClient = new QueryClient();
 
+function PasswordChangeWrapper({ children }: { children: React.ReactNode }) {
+  const { requiresPasswordChange, setRequiresPasswordChange, user } = useAuth();
+  
+  if (!user) return <>{children}</>;
+  
+  return (
+    <>
+      {children}
+      <PasswordChangeDialog
+        open={requiresPasswordChange}
+        onComplete={() => setRequiresPasswordChange(false)}
+      />
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TooltipProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/booking" element={<Booking />} />
-              <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
-              <Route path="/profile" element={<PatientDashboard />} />
-              <Route path="/doctor" element={<DoctorDashboard />} />
-              <Route path="/pa" element={<PADashboard />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
-              <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
-              <Route path="/admin/reviews" element={<AdminReviews />} />
-              <Route path="/symptoms" element={<SymptomsChecker />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/become-doctor" element={<BecomeDoctor />} />
-              <Route path="/organization" element={<OrganizationDashboard />} />
-              <Route path="/token/:appointmentId" element={<TokenPrint />} />
-              <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
-              <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
-              <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
-              <Route path="/print/history" element={<MedicalHistoryPrint />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <PasswordChangeWrapper>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/booking" element={<Booking />} />
+                <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
+                <Route path="/profile" element={<PatientDashboard />} />
+                <Route path="/doctor" element={<DoctorDashboard />} />
+                <Route path="/pa" element={<PADashboard />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
+                <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+                <Route path="/admin/reviews" element={<AdminReviews />} />
+                <Route path="/symptoms" element={<SymptomsChecker />} />
+                <Route path="/reviews" element={<Reviews />} />
+                <Route path="/become-doctor" element={<BecomeDoctor />} />
+                <Route path="/organization" element={<OrganizationDashboard />} />
+                <Route path="/token/:appointmentId" element={<TokenPrint />} />
+                <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
+                <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
+                <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
+                <Route path="/print/history" element={<MedicalHistoryPrint />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </PasswordChangeWrapper>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
