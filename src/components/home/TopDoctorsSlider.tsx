@@ -92,7 +92,7 @@ export function TopDoctorsSlider() {
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % doctors.length);
-    }, 6000);
+    }, 3500);
 
     return () => clearInterval(interval);
   }, [doctors?.length, isPaused]);
