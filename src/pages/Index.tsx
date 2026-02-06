@@ -116,7 +116,7 @@ export default function Index() {
   return (
     <Layout>
       {/* Hero Section - Theme aware */}
-      <section className="relative min-h-[calc(100vh-72px)] md:min-h-[calc(100vh-72px)] flex items-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted dark:from-[#0a1628] dark:via-[#0d1d35] dark:to-[#0a1628]">
+      <section className="relative min-h-0 md:min-h-[calc(100vh-144px)] flex items-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted dark:from-[#0a1628] dark:via-[#0d1d35] dark:to-[#0a1628]">
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
