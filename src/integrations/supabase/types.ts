@@ -1221,6 +1221,14 @@ export type Database = {
         Args: { check_user_id: string; org_id: string }
         Returns: boolean
       }
+      is_org_member: {
+        Args: { check_user_id: string; org_id: string }
+        Returns: boolean
+      }
+      is_org_owner: {
+        Args: { check_user_id: string; org_id: string }
+        Returns: boolean
+      }
       is_pa_for_doctor: {
         Args: { doctor_uuid: string; pa_uuid: string }
         Returns: boolean
