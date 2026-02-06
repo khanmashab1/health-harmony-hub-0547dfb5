@@ -19,7 +19,10 @@ import {
   Filter,
   Search,
   Activity,
-  FileText
+  FileText,
+  Settings,
+  KeyRound,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +57,7 @@ import { useNavigate } from "react-router-dom";
 import { VitalsEntryDialog } from "@/components/pa/VitalsEntryDialog";
 import { WalkInPatientDialog } from "@/components/pa/WalkInPatientDialog";
 import { exportPaymentHistoryCSV, exportPaymentHistoryPDF } from "@/lib/exportUtils";
+import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 
 export default function PADashboard() {
   const { user, profile, loading } = useRequireAuth(["pa"]);
@@ -617,6 +621,10 @@ export default function PADashboard() {
                   <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">Blocked Slots</span>
                   <span className="sm:hidden">Slots</span>
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Settings className="w-4 h-4 mr-1 sm:mr-2" />
+                  Settings
                 </TabsTrigger>
               </TabsList>
 
@@ -1307,6 +1315,28 @@ export default function PADashboard() {
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* Settings */}
+              <TabsContent value="settings">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="w-5 h-5 text-primary" />
+                      Account Security
+                    </CardTitle>
+                    <CardDescription>Manage your account password</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Password</p>
+                        <p className="text-sm text-muted-foreground">Change your account password</p>
+                      </div>
+                      <ChangePasswordDialog />
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </motion.div>
