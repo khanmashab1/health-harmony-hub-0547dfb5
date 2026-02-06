@@ -68,8 +68,11 @@ export function Header() {
               alt={`${siteName} Logo`} 
               className="h-14 sm:h-16 md:h-[72px] w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="font-semibold text-base sm:text-lg tracking-tight whitespace-nowrap leading-none text-blue-600 dark:text-foreground -ml-1">
-              Medi Care ++
+            <span 
+              className="font-semibold text-base sm:text-lg tracking-tight whitespace-nowrap leading-none text-blue-600 dark:text-foreground -ml-1 italic"
+              style={{ fontFamily: "'Algerian', 'Copperplate', 'Cinzel Decorative', serif" }}
+            >
+              {siteName}
             </span>
           </Link>
 
