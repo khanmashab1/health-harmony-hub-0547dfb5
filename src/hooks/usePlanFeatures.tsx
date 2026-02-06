@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 // Plan tier definitions with feature limits
@@ -14,6 +14,7 @@ const PLAN_LIMITS = {
     apiAccess: false,
     prioritySupport: false,
     phoneSupport: false,
+    multiDoctorSupport: false,
   },
   professional: {
     tier: "professional",
@@ -25,6 +26,7 @@ const PLAN_LIMITS = {
     apiAccess: false,
     prioritySupport: true,
     phoneSupport: false,
+    multiDoctorSupport: false,
   },
   enterprise: {
     tier: "enterprise",
@@ -36,6 +38,7 @@ const PLAN_LIMITS = {
     apiAccess: true,
     prioritySupport: true,
     phoneSupport: true,
+    multiDoctorSupport: true,
   },
 } as const;
 
@@ -60,9 +63,13 @@ interface UsePlanFeaturesResult {
   isLoading: boolean;
   canAccessFeature: (feature: keyof PlanFeatures) => boolean;
   getUpgradeMessage: (feature: keyof PlanFeatures) => string;
+  refreshSubscription: () => Promise<void>;
 }
 
 export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResult {
+  const queryClient = useQueryClient();
+
+  // Fetch doctor info with plan
   const { data: doctorInfo, isLoading } = useQuery({
     queryKey: ["doctor-plan-info", userId],
     queryFn: async () => {
@@ -75,8 +82,36 @@ export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResu
       return data;
     },
     enabled: !!userId,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 30000, // Cache for 30 seconds
   });
+
+  // Function to sync subscription status from Stripe
+  const refreshSubscription = async () => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("check-doctor-subscription");
+      if (error) {
+        console.error("Error checking subscription:", error);
+        return;
+      }
+      
+      // If subscription status changed, invalidate the query to refetch
+      if (data?.subscribed !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["doctor-plan-info", userId] });
+        queryClient.invalidateQueries({ queryKey: ["doctor-info", userId] });
+      }
+    } catch (err) {
+      console.error("Failed to refresh subscription:", err);
+    }
+  };
+
+  // Auto-sync subscription on mount
+  useEffect(() => {
+    if (userId) {
+      refreshSubscription();
+    }
+  }, [userId]);
 
   const planInfo = useMemo(() => {
     if (!doctorInfo?.selected_plan) return null;
@@ -93,8 +128,12 @@ export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResu
   const planTier = useMemo((): PlanTier => {
     if (!planInfo) return "basic";
     const name = planInfo.name.toLowerCase();
-    if (name.includes("enterprise")) return "enterprise";
-    if (name.includes("professional")) return "professional";
+    // Check for enterprise first (more specific)
+    if (name.includes("enterprise") || name.includes("unlimited")) return "enterprise";
+    if (name.includes("professional") || name.includes("pro")) return "professional";
+    // Also check if price indicates a higher tier
+    if (planInfo.price >= 7000) return "enterprise";
+    if (planInfo.price >= 2000) return "professional";
     return "basic";
   }, [planInfo]);
 
@@ -122,6 +161,7 @@ export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResu
       apiAccess: "Upgrade to Enterprise for API access.",
       prioritySupport: "Upgrade to Professional for priority support.",
       phoneSupport: "Upgrade to Enterprise for 24/7 phone support.",
+      multiDoctorSupport: "Upgrade to Enterprise to manage multiple doctors under one organization.",
     };
     return messages[feature];
   };
@@ -136,5 +176,6 @@ export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResu
     isLoading,
     canAccessFeature,
     getUpgradeMessage,
+    refreshSubscription,
   };
 }
