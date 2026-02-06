@@ -102,37 +102,37 @@ export default function OurDoctors() {
     <Layout>
       <div className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative py-16 md:py-24 overflow-hidden">
+        <section className="relative py-10 md:py-24 overflow-hidden">
           <div className="absolute inset-0 bg-[var(--gradient-hero)]" />
           <div className="absolute inset-0" style={{ background: "var(--gradient-mesh)" }} />
           <div className="container mx-auto px-4 relative z-10 text-center">
-            <Badge variant="secondary" className="mb-4 px-4 py-1.5">
-              <Stethoscope className="w-3.5 h-3.5 mr-1.5" />
+            <Badge variant="secondary" className="mb-3 md:mb-4 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm">
+              <Stethoscope className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 md:mr-1.5" />
               Trusted Healthcare Professionals
             </Badge>
-            <h1 className="text-3xl md:text-5xl font-bold mb-4">
+            <h1 className="text-2xl md:text-5xl font-bold mb-3 md:mb-4">
               Our <span className="text-primary">Doctors</span>
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
+            <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto mb-6 md:mb-8 px-2">
               Meet our team of experienced and qualified doctors committed to providing
               the best healthcare services across Pakistan
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <div className="max-w-xl mx-auto relative px-2">
+              <Search className="absolute left-6 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
               <Input
-                placeholder="Search by doctor name or specialty..."
+                placeholder="Search by name or specialty..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-base rounded-full border-border/60 bg-background/80 backdrop-blur-sm"
+                className="pl-10 md:pl-12 h-10 md:h-12 text-sm md:text-base rounded-full border-border/60 bg-background/80 backdrop-blur-sm"
               />
             </div>
           </div>
         </section>
 
         {/* Filters & Content */}
-        <section className="container mx-auto px-4 py-8">
+        <section className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           {/* Filter Row */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -183,13 +183,13 @@ export default function OurDoctors() {
 
           {/* Doctor Grid */}
           {isLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="h-72 rounded-2xl" />
               ))}
             </div>
           ) : filteredDoctors && filteredDoctors.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredDoctors.map((doctor) => (
                 <DoctorCard 
                   key={doctor.user_id} 
@@ -232,26 +232,26 @@ function DoctorCard({
         {/* Top colored strip */}
         <div className="h-2 bg-gradient-to-r from-primary to-primary/60" />
         
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Doctor Info */}
-          <div className="flex items-start gap-4 mb-4">
-            <Avatar className="w-16 h-16 ring-2 ring-primary/10">
+          <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
+            <Avatar className="w-12 h-12 md:w-16 md:h-16 ring-2 ring-primary/10">
               <AvatarImage src={imageUrl || undefined} alt={doctor.profile?.name || "Doctor"} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+              <AvatarFallback className="bg-primary/10 text-primary text-lg md:text-xl font-bold">
                 {doctor.profile?.name?.charAt(0)?.toUpperCase() || "D"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg truncate">
+              <h3 className="font-bold text-base md:text-lg truncate">
                 Dr. {doctor.profile?.name || "Doctor"}
               </h3>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                <Stethoscope className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground mb-1">
+                <Stethoscope className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary flex-shrink-0" />
                 <span className="truncate">{doctor.specialty}</span>
               </div>
               {doctor.degree && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <GraduationCap className="w-3.5 h-3.5 flex-shrink-0" />
+                  <GraduationCap className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
                   <span className="truncate">{doctor.degree}</span>
                 </div>
               )}
@@ -259,18 +259,18 @@ function DoctorCard({
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-4 mb-4 text-sm">
+          <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 text-xs md:text-sm">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 fill-amber-500" />
               <span className="font-semibold">{doctor.rating || "4.0"}</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />
               <span>{doctor.experience_years || 0} yrs</span>
             </div>
             {doctor.city && (
               <div className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5" />
+                <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 <span className="truncate">{doctor.city}</span>
               </div>
             )}
@@ -278,23 +278,23 @@ function DoctorCard({
 
           {/* Bio snippet */}
           {doctor.bio && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-3 md:mb-4">
               {doctor.bio}
             </p>
           )}
 
           {/* Fee & Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+          <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-border/50">
             <div>
               <p className="text-xs text-muted-foreground">Consultation Fee</p>
-              <p className="text-lg font-bold text-primary">Rs. {doctor.fee}</p>
+              <p className="text-base md:text-lg font-bold text-primary">Rs. {doctor.fee}</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={onViewProfile}>
-                View Profile
+            <div className="flex gap-1.5 md:gap-2">
+              <Button variant="outline" size="sm" onClick={onViewProfile} className="text-xs md:text-sm px-2.5 md:px-4">
+                Profile
               </Button>
-              <Button size="sm" onClick={onBookNow}>
-                <Calendar className="w-3.5 h-3.5 mr-1" />
+              <Button size="sm" onClick={onBookNow} className="text-xs md:text-sm px-2.5 md:px-4">
+                <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1" />
                 Book
               </Button>
             </div>
