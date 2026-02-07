@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Upload, Image, RefreshCw, Sun, Moon } from "lucide-react";
+import { Palette, Upload, Image, RefreshCw, Sun, Moon, Stamp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ export function BrandingPanel() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoDarkFile, setLogoDarkFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [stampFile, setStampFile] = useState<File | null>(null);
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -342,6 +343,78 @@ export function BrandingPanel() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">Recommended: ICO, PNG or SVG, 32x32px or 64x64px</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Prescription Stamp */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-semibold">Prescription Stamp</Label>
+            <Badge variant="secondary" className="gap-1">
+              <Stamp className="w-3 h-3" />
+              Official
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            This stamp appears on all printed prescriptions next to the doctor's signature area.
+          </p>
+          <div className="flex items-start gap-6">
+            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-white overflow-hidden">
+              {settings?.prescription_stamp_url ? (
+                <img src={settings.prescription_stamp_url} alt="Prescription Stamp" className="w-full h-full object-contain" />
+              ) : (
+                <img src="/stamp-medicare.png" alt="Default Stamp" className="w-full h-full object-contain opacity-60" />
+              )}
+            </div>
+            <div className="flex-1 space-y-3">
+              <Input
+                type="file"
+                accept="image/png,image/jpg,image/jpeg,image/webp"
+                onChange={(e) => setStampFile(e.target.files?.[0] || null)}
+                className="max-w-xs"
+              />
+              <div className="flex gap-2">
+                <Button 
+                  onClick={async () => {
+                    if (!stampFile) return;
+                    setUploading(true);
+                    try {
+                      const fileName = `stamp-${Date.now()}.${stampFile.name.split('.').pop()}`;
+                      const { error: uploadError } = await supabase.storage
+                        .from("hero-slides")
+                        .upload(fileName, stampFile, { upsert: true });
+                      if (uploadError) throw uploadError;
+                      const { data: { publicUrl } } = supabase.storage
+                        .from("hero-slides")
+                        .getPublicUrl(fileName);
+                      await updateSetting.mutateAsync({ key: "prescription_stamp_url", value: publicUrl });
+                      toast({ title: "Prescription stamp updated successfully" });
+                      setStampFile(null);
+                    } catch (error: any) {
+                      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+                    } finally {
+                      setUploading(false);
+                    }
+                  }} 
+                  disabled={!stampFile || uploading}
+                  size="sm"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploading ? "Uploading..." : "Upload Stamp"}
+                </Button>
+                {settings?.prescription_stamp_url && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => resetToDefault("prescription_stamp_url")}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reset to Default
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Recommended: PNG with transparent background, 200x200px or larger</p>
             </div>
           </div>
         </div>

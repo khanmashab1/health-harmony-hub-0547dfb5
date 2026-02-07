@@ -31,6 +31,7 @@ import { Link } from "react-router-dom";
 import { downloadMedicalHistoryPDF, getMedicalHistoryPDFBlob } from "@/lib/pdfGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { MedicinesList } from "@/components/shared/MedicinesList";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface TimelineAppointment {
   id: string;
@@ -59,6 +60,7 @@ interface MedicalHistoryTimelineProps {
 export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId }: MedicalHistoryTimelineProps = {}) {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { stampUrl } = useSiteSettings();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -228,7 +230,8 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
           age: calculatedAge,
           gender: profile?.gender || undefined,
           blood_type: profile?.blood_type || undefined,
-        }
+        },
+        stampUrl
       );
       toast({
         title: "PDF Downloaded",
@@ -261,7 +264,8 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
           age: calculatedAge,
           gender: profile?.gender || undefined,
           blood_type: profile?.blood_type || undefined,
-        }
+        },
+        stampUrl
       );
       
       const file = new File(

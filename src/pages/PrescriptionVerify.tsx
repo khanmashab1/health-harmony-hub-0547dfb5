@@ -28,7 +28,7 @@ import {
 
 export default function PrescriptionVerify() {
   const { appointmentId } = useParams();
-  const { siteName } = useSiteSettings();
+  const { siteName, stampUrl } = useSiteSettings();
 
   const { data: appointment, isLoading, error } = useQuery({
     queryKey: ["prescription-verify", appointmentId],
@@ -296,7 +296,7 @@ export default function PrescriptionVerify() {
               </div>
             )}
 
-            {/* Footer with Stamp & Signature */}
+            {/* Footer with Signature & Stamp */}
             <div className="mt-6 pt-3 border-t border-dashed border-border print:mt-4 print:pt-2">
               <div className="flex justify-between items-end">
                 <div className="text-[10px] text-muted-foreground space-y-0.5">
@@ -308,16 +308,14 @@ export default function PrescriptionVerify() {
                   <p>For refills, please consult your physician</p>
                 </div>
 
-                {/* Official Stamp */}
-                <div className="flex flex-col items-center">
+                {/* Signature with Stamp overlay */}
+                <div className="relative text-right">
+                  {/* Stamp positioned overlapping signature */}
                   <img 
-                    src="/stamp-medicare.png" 
-                    alt="MediCare+ Official Stamp" 
-                    className="w-20 h-20 object-contain opacity-80 print:w-16 print:h-16 print:opacity-70"
+                    src={stampUrl}
+                    alt="Official Stamp" 
+                    className="absolute -top-10 -left-14 w-24 h-24 object-contain opacity-70 rotate-[-12deg] print:w-20 print:h-20 print:opacity-60 print:-top-8 print:-left-12 pointer-events-none"
                   />
-                </div>
-
-                <div className="text-right">
                   <div className="border-t border-foreground/50 pt-1 px-4 inline-block">
                     <p className="text-xs font-medium text-foreground">Dr. {appointment.doctorProfile?.name}</p>
                     <p className="text-[10px] text-muted-foreground">{appointment.doctor?.specialty}</p>
