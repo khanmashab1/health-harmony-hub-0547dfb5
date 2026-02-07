@@ -52,7 +52,14 @@ interface Doctor {
   degree: string | null;
   qualifications: string | null;
   consultation_duration: number | null;
+  image_path: string | null;
   profile?: { name: string | null };
+}
+
+function getDoctorImageUrl(imagePath: string | null | undefined): string | undefined {
+  if (!imagePath) return undefined;
+  if (imagePath.startsWith("http")) return imagePath;
+  return supabase.storage.from("avatars").getPublicUrl(imagePath).data.publicUrl;
 }
 
 const steps = [
@@ -642,9 +649,20 @@ export default function Booking() {
                         >
                           <div className="flex items-start gap-3">
                             {/* Avatar */}
-                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <User className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-                            </div>
+                            {(() => {
+                              const imgUrl = getDoctorImageUrl(doc.image_path);
+                              return imgUrl ? (
+                                <img
+                                  src={imgUrl}
+                                  alt={`Dr. ${doc.profile?.name || "Doctor"}`}
+                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover shrink-0 border-2 border-primary/20"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <User className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                                </div>
+                              );
+                            })()}
 
                             {/* Info */}
                             <div className="flex-1 min-w-0">
@@ -734,9 +752,20 @@ export default function Booking() {
                     {selectedDoctor && (
                       <div className="p-4 rounded-xl border bg-muted/50 space-y-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <User className="w-6 h-6 text-primary" />
-                          </div>
+                          {(() => {
+                            const imgUrl = getDoctorImageUrl(selectedDoctor.image_path);
+                            return imgUrl ? (
+                              <img
+                                src={imgUrl}
+                                alt={`Dr. ${selectedDoctor.profile?.name || "Doctor"}`}
+                                className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-primary/20"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User className="w-6 h-6 text-primary" />
+                              </div>
+                            );
+                          })()}
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold truncate">
                               Dr. {selectedDoctor.profile?.name || "Doctor"}
