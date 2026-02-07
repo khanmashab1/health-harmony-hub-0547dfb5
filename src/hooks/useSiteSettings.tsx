@@ -9,6 +9,7 @@ interface SiteSettings {
   favicon_url: string | null;
   site_name: string | null;
   site_url: string | null;
+  prescription_stamp_url: string | null;
 }
 
 export function useSiteSettings() {
@@ -24,7 +25,7 @@ export function useSiteSettings() {
       return data?.reduce((acc, item) => {
         acc[item.setting_key as keyof SiteSettings] = item.setting_value;
         return acc;
-      }, {} as SiteSettings) || { logo_url: null, logo_url_dark: null, favicon_url: null, site_name: null, site_url: null };
+      }, {} as SiteSettings) || { logo_url: null, logo_url_dark: null, favicon_url: null, site_name: null, site_url: null, prescription_stamp_url: null };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -54,6 +55,7 @@ export function useSiteSettings() {
     faviconUrl: settings?.favicon_url || null,
     siteName: settings?.site_name || "MediCare+",
     siteUrl: settings?.site_url || null,
+    stampUrl: settings?.prescription_stamp_url || "/stamp-medicare.png",
     isLoading,
   };
 }

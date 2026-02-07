@@ -60,14 +60,15 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 export async function generateMedicalHistoryPDF(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
-  patientInfo: PatientInfo
+  patientInfo: PatientInfo,
+  stampImageUrl?: string
 ): Promise<jsPDF> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
 
-  // Load stamp image
-  const stampBase64 = await loadImageAsBase64("/stamp-medicare.png");
+  // Load stamp image (use provided URL or fallback to default)
+  const stampBase64 = await loadImageAsBase64(stampImageUrl || "/stamp-medicare.png");
 
   // Header
   doc.setFontSize(24);
@@ -311,9 +312,10 @@ export async function generateMedicalHistoryPDF(
 export async function downloadMedicalHistoryPDF(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
-  patientInfo: PatientInfo
+  patientInfo: PatientInfo,
+  stampImageUrl?: string
 ) {
-  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
+  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo, stampImageUrl);
   const fileName = `medical-history-${patientInfo.name?.replace(/\s+/g, "-").toLowerCase() || "patient"}-${format(new Date(), "yyyy-MM-dd")}.pdf`;
   doc.save(fileName);
 }
@@ -321,8 +323,9 @@ export async function downloadMedicalHistoryPDF(
 export async function getMedicalHistoryPDFBlob(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
-  patientInfo: PatientInfo
+  patientInfo: PatientInfo,
+  stampImageUrl?: string
 ): Promise<Blob> {
-  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
+  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo, stampImageUrl);
   return doc.output("blob");
 }
