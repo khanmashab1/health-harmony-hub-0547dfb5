@@ -278,7 +278,7 @@ function DoctorCard({
                 <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               </div>
               <div className="text-left">
-                <p className="text-base md:text-lg font-bold text-foreground leading-none">{doctor.rating?.toFixed(1) || "N/A"}</p>
+                <p className="text-base md:text-lg font-bold text-foreground leading-none">{doctor.rating ? doctor.rating.toFixed(1) : "New"}</p>
                 <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-0.5">Rating</p>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
