@@ -61,23 +61,6 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
 
   const createReview = useMutation({
     mutationFn: async () => {
-      // Check for rate limiting - max 1 review per day (only for new reviews)
-      if (!isEditing) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const { data: existingReviews, error: checkError } = await supabase
-          .from("reviews")
-          .select("id, created_at")
-          .eq("patient_user_id", userId)
-          .gte("created_at", today.toISOString());
-
-        if (checkError) throw checkError;
-
-        if (existingReviews && existingReviews.length > 0) {
-          throw new Error("You can only submit one review per day. Please try again tomorrow.");
-        }
-      }
 
       // Validate comment length
       if (comment.trim().length < 3) {
