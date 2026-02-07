@@ -52,6 +52,7 @@ import { FeatureGate, PatientLimitWarning } from "@/components/doctor/FeatureGat
 import { PlanRestrictionsCard } from "@/components/doctor/PlanRestrictionsCard";
 import { OrganizationPanel } from "@/components/doctor/OrganizationPanel";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
+import { PatientHistoryDialog } from "@/components/doctor/PatientHistoryDialog";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -915,6 +916,14 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
           )}
         </div>
       </div>
+
+      {/* View Patient History */}
+      <PatientHistoryDialog
+        patientName={appointment.patient_full_name || "Patient"}
+        patientUserId={appointment.patient_user_id}
+        doctorUserId={appointment.doctor_user_id}
+        currentAppointmentId={appointment.id}
+      />
 
       {/* Completed Notice */}
       {isCompleted && (
