@@ -199,12 +199,16 @@ export default function DoctorDashboard() {
     
     // Apply search filter
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(apt => 
-        apt.patient_full_name?.toLowerCase().includes(term) ||
-        apt.patient_phone?.includes(term) ||
-        (apt as any).patient_profile?.patient_id?.toLowerCase().includes(term)
-      );
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(apt => {
+        const profile = (apt as any).patient_profile;
+        const patientId = profile?.patient_id || (Array.isArray(profile) ? profile[0]?.patient_id : null);
+        return (
+          apt.patient_full_name?.toLowerCase().includes(term) ||
+          apt.patient_phone?.includes(term) ||
+          patientId?.toLowerCase().includes(term)
+        );
+      });
     }
     
     return filtered;
