@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +32,7 @@ interface DoctorWithReviews {
 export function TopDoctorsSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch doctors with their approved reviews
   const { data: doctors, isLoading } = useQuery({
@@ -226,15 +227,19 @@ export function TopDoctorsSlider() {
 
               {/* Stats */}
               <div className="flex flex-wrap gap-4 md:gap-6 py-2 md:py-4 justify-center lg:justify-start">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />
+                <button
+                  onClick={() => navigate(`/reviews?doctor=${currentDoctor.user_id}`)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/50 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors cursor-pointer"
+                >
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                    <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
                   </div>
-                  <div>
-                    <p className="font-bold text-base md:text-lg">{currentDoctor.rating?.toFixed(1) || "N/A"}</p>
-                    <p className="text-[10px] md:text-xs text-muted-foreground">Rating</p>
+                  <div className="text-left">
+                    <p className="font-bold text-base md:text-lg leading-none">{currentDoctor.rating?.toFixed(1) || "N/A"}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-0.5">Rating</p>
                   </div>
-                </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
+                </button>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
                     <Users className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
@@ -258,27 +263,27 @@ export function TopDoctorsSlider() {
               {/* Recent Reviews - Hidden on small mobile */}
               {currentDoctor.reviews.length > 0 && (
                 <div className="space-y-2 md:space-y-3 hidden sm:block">
-                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-wide">Recent Review</h3>
-                  <div className="space-y-2">
-                    {currentDoctor.reviews.slice(0, 1).map((review) => (
-                      <Card key={review.id} className="p-2 md:p-3 bg-card/50 backdrop-blur-sm border-border/50">
-                        <div className="flex items-start gap-2 md:gap-3">
-                          <div className="flex gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-2.5 h-2.5 md:w-3 md:h-3 ${i < review.rating ? "text-amber-500 fill-amber-500" : "text-gray-200"}`}
-                              />
-                            ))}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{review.comment}</p>
-                            <p className="text-[10px] md:text-xs text-muted-foreground/70 mt-1">— {review.display_name}</p>
-                          </div>
+                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-widest">Recent Review</h3>
+                  {currentDoctor.reviews.slice(0, 1).map((review) => (
+                    <Card key={review.id} className="p-3 md:p-4 bg-card/60 backdrop-blur-sm border-border/40 rounded-2xl">
+                      <div className="flex items-start gap-3">
+                        <div className="flex gap-0.5 pt-0.5 shrink-0">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 md:w-3.5 md:h-3.5 ${i < review.rating ? "text-amber-500 fill-amber-500" : "text-muted-foreground/20"}`}
+                            />
+                          ))}
                         </div>
-                      </Card>
-                    ))}
-                  </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-3 leading-relaxed italic">
+                            "{review.comment || "Great experience!"}"
+                          </p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground/60 mt-1.5 font-medium">— {review.display_name}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               )}
 

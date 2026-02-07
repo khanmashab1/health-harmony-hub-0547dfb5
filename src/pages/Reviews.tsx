@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, ArrowLeft, Quote, AlertCircle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,11 @@ export default function Reviews() {
   const [searchParams] = useSearchParams();
   const doctorFilter = searchParams.get("doctor");
   const [starFilter, setStarFilter] = useState<number | null>(null);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   // Fetch doctor name if filtering by doctor
   const { data: doctorProfile } = useQuery({
