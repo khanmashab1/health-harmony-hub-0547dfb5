@@ -10,7 +10,9 @@ import {
   GraduationCap,
   Calendar,
   User,
-  Filter
+  Filter,
+  Quote,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +45,14 @@ interface DoctorWithProfile {
   profile: { name: string | null } | null;
 }
 
+interface LatestReview {
+  id: string;
+  display_name: string;
+  rating: number;
+  comment: string | null;
+  doctor_user_id: string | null;
+}
+
 export default function OurDoctors() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,6 +82,31 @@ export default function OurDoctors() {
         ...d,
         profile: profileMap.get(d.user_id) || null,
       })) as DoctorWithProfile[];
+    },
+  });
+
+  // Fetch the most recent approved review per doctor
+  const { data: latestReviews } = useQuery({
+    queryKey: ["latest-reviews-per-doctor"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("id, display_name, rating, comment, doctor_user_id")
+        .eq("status", "Approved")
+        .not("doctor_user_id", "is", null)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      // Keep only the most recent review per doctor
+      const reviewMap = new Map<string, LatestReview>();
+      data?.forEach((r) => {
+        if (r.doctor_user_id && !reviewMap.has(r.doctor_user_id)) {
+          reviewMap.set(r.doctor_user_id, r);
+        }
+      });
+      
+      return reviewMap;
     },
   });
 
@@ -195,6 +230,7 @@ export default function OurDoctors() {
                   key={doctor.user_id} 
                   doctor={doctor} 
                   imageUrl={getImageUrl(doctor.image_path)}
+                  latestReview={latestReviews?.get(doctor.user_id) || null}
                   onViewProfile={() => navigate(`/doctor/${doctor.user_id}`)}
                   onBookNow={() => navigate(`/booking?doctorId=${doctor.user_id}`)}
                 />
@@ -218,14 +254,18 @@ export default function OurDoctors() {
 function DoctorCard({ 
   doctor, 
   imageUrl, 
+  latestReview,
   onViewProfile, 
   onBookNow 
 }: { 
   doctor: DoctorWithProfile; 
   imageUrl: string | null;
+  latestReview: LatestReview | null;
   onViewProfile: () => void;
   onBookNow: () => void;
 }) {
+  const navigate = useNavigate();
+  
   return (
     <Card variant="interactive" className="overflow-hidden group">
       <CardContent className="p-0">
@@ -276,11 +316,39 @@ function DoctorCard({
             )}
           </div>
 
-          {/* Bio snippet */}
-          {doctor.bio && (
-            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-3 md:mb-4">
-              {doctor.bio}
-            </p>
+          {/* Latest Review */}
+          {latestReview && (
+            <div className="mb-3 md:mb-4 p-3 rounded-lg bg-muted/50 border border-border/30">
+              <div className="flex items-center gap-1 mb-1.5">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-3 h-3 ${
+                        star <= latestReview.rating
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                {latestReview.comment || "Great experience!"}
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground/70">— {latestReview.display_name}</span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/reviews?doctor=${doctor.user_id}`);
+                  }}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                >
+                  View all reviews <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Fee & Actions */}

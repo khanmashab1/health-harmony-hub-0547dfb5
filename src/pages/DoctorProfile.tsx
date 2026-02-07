@@ -225,11 +225,20 @@ export default function DoctorProfile() {
 
             {/* Reviews Section */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   Patient Reviews ({reviews?.length || 0})
                 </CardTitle>
+                {reviews && reviews.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/reviews?doctor=${doctorId}`)}
+                  >
+                    View All
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {loadingReviews ? (
@@ -238,7 +247,7 @@ export default function DoctorProfile() {
                   </div>
                 ) : reviews && reviews.length > 0 ? (
                   <div className="space-y-4">
-                    {reviews.map((review, index) => (
+                    {reviews.slice(0, 3).map((review, index) => (
                       <div key={review.id}>
                         <div className="flex items-start gap-3">
                           <Avatar className="w-10 h-10">
@@ -270,9 +279,18 @@ export default function DoctorProfile() {
                             </p>
                           </div>
                         </div>
-                        {index < reviews.length - 1 && <Separator className="mt-4" />}
+                        {index < Math.min(reviews.length, 3) - 1 && <Separator className="mt-4" />}
                       </div>
                     ))}
+                    {reviews.length > 3 && (
+                      <Button
+                        variant="ghost"
+                        className="w-full text-primary"
+                        onClick={() => navigate(`/reviews?doctor=${doctorId}`)}
+                      >
+                        View all {reviews.length} reviews →
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">
