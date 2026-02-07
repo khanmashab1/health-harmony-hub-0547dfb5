@@ -241,26 +241,25 @@ export default function Booking() {
     enabled: !!selectedDoctor && !!selectedDate,
   });
 
-  // Check if patient already has an appointment with this doctor on this date
+  // Check if patient already has an appointment on this date (one booking per day)
   const { data: existingAppointment } = useQuery({
-    queryKey: ["existing-appointment", user?.id, selectedDoctor?.user_id, selectedDate?.toISOString(), patientName],
+    queryKey: ["existing-appointment", user?.id, selectedDate?.toISOString(), patientName],
     queryFn: async () => {
-      if (!selectedDoctor || !selectedDate || !user) return null;
+      if (!selectedDate || !user || !patientName) return null;
       
-      // Check by patient_user_id AND patient_full_name to handle managed patients
       const { data, error } = await supabase
         .from("appointments")
-        .select("id, token_number")
-        .eq("doctor_user_id", selectedDoctor.user_id)
+        .select("id, token_number, doctor_user_id")
         .eq("appointment_date", format(selectedDate, "yyyy-MM-dd"))
         .eq("patient_full_name", patientName)
-        .in("status", ["Upcoming", "Pending"])
+        .not("status", "eq", "Cancelled")
+        .limit(1)
         .maybeSingle();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedDoctor && !!selectedDate && !!user && !!patientName,
+    enabled: !!selectedDate && !!user && !!patientName,
   });
 
   // Calculate estimated appointment time
@@ -486,8 +485,8 @@ export default function Booking() {
       case 1: return province && city;
       case 2: return specialty;
       case 3: return selectedDoctor;
-      case 4: return selectedDate && availableSlots && availableSlots > 0;
-      case 5: return paymentMethod && patientName && patientPhone && !existingAppointment;
+      case 4: return selectedDate && availableSlots && availableSlots > 0 && !existingAppointment;
+      case 5: return paymentMethod && patientName && patientPhone;
       default: return true;
     }
   };
@@ -819,13 +818,23 @@ export default function Booking() {
                             <span className="font-medium">Selected: </span>
                             {format(selectedDate, "EEEE, MMMM d, yyyy")}
                           </p>
-                          {availableSlots !== undefined && (
+                          {availableSlots !== undefined && !existingAppointment && (
                             <p className={`text-center mt-2 ${availableSlots > 0 ? "text-green-600" : "text-red-600"}`}>
                               {availableSlots > 0 
                                 ? `${availableSlots} slots available`
                                 : "No slots available for this date"
                               }
                             </p>
+                          )}
+                          {existingAppointment && (
+                            <div className="mt-3 p-3 rounded-lg bg-amber-100 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800">
+                              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+                                <Info className="w-4 h-4 shrink-0" />
+                                <span>
+                                  {patientName || "You"} already have a booking on {format(selectedDate, "MMM d, yyyy")}. Only one appointment per day is allowed. Please choose a different date.
+                                </span>
+                              </p>
+                            </div>
                           )}
                         </div>
                       )}
@@ -883,18 +892,6 @@ export default function Booking() {
                       </div>
                     )}
 
-                    {/* Existing appointment warning */}
-                    {existingAppointment && (
-                      <div className="p-4 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800">
-                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
-                          <Info className="w-4 h-4 shrink-0" />
-                          <span>
-                            {patientName || "This patient"} already has an appointment with this doctor on {format(selectedDate!, "MMM d, yyyy")} (Token #{existingAppointment.token_number}). 
-                            Please choose a different date or patient.
-                          </span>
-                        </p>
-                      </div>
-                    )}
 
                     <div>
                       <Label>Payment Method</Label>
