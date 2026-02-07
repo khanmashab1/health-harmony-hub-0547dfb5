@@ -18,7 +18,7 @@ import {
 
 export default function PrescriptionPrint() {
   const { appointmentId } = useParams();
-  const { siteName } = useSiteSettings();
+  const { siteName, siteUrl } = useSiteSettings();
   const { toast } = useToast();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
@@ -208,7 +208,8 @@ export default function PrescriptionPrint() {
 
   const medicines = formatMedicinesForPrescription(appointment.medicines || "");
   const clinicName = siteName;
-  const prescriptionUrl = `${window.location.origin}/verify/${appointmentId}`;
+  const baseUrl = siteUrl || window.location.origin;
+  const prescriptionUrl = `${baseUrl}/verify/${appointmentId}`;
 
   return (
     <div className="min-h-screen bg-background print:bg-white">
