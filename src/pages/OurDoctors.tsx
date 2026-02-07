@@ -44,13 +44,6 @@ interface DoctorWithProfile {
   profile: { name: string | null } | null;
 }
 
-interface DoctorReview {
-  id: string;
-  display_name: string;
-  rating: number;
-  comment: string | null;
-  doctor_user_id: string | null;
-}
 
 export default function OurDoctors() {
   const navigate = useNavigate();
@@ -84,34 +77,6 @@ export default function OurDoctors() {
     },
   });
 
-  // Fetch top 2 approved reviews per doctor
-  const { data: doctorReviewsMap } = useQuery({
-    queryKey: ["doctor-reviews-for-cards"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("id, display_name, rating, comment, doctor_user_id")
-        .eq("status", "Approved")
-        .not("doctor_user_id", "is", null)
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      
-      // Keep top 2 reviews per doctor
-      const reviewMap = new Map<string, DoctorReview[]>();
-      data?.forEach((r) => {
-        if (r.doctor_user_id) {
-          const existing = reviewMap.get(r.doctor_user_id) || [];
-          if (existing.length < 2) {
-            existing.push(r);
-            reviewMap.set(r.doctor_user_id, existing);
-          }
-        }
-      });
-      
-      return reviewMap;
-    },
-  });
 
   // Get unique specialties and cities for filters
   const specialties = [...new Set(doctors?.map((d) => d.specialty) || [])];
@@ -233,7 +198,6 @@ export default function OurDoctors() {
                   key={doctor.user_id} 
                   doctor={doctor} 
                   imageUrl={getImageUrl(doctor.image_path)}
-                  reviews={doctorReviewsMap?.get(doctor.user_id) || []}
                   onViewProfile={() => navigate(`/doctor/${doctor.user_id}`)}
                   onBookNow={() => navigate(`/booking?doctorId=${doctor.user_id}`)}
                 />
@@ -257,13 +221,11 @@ export default function OurDoctors() {
 function DoctorCard({ 
   doctor, 
   imageUrl, 
-  reviews,
   onViewProfile, 
   onBookNow 
 }: { 
   doctor: DoctorWithProfile; 
   imageUrl: string | null;
-  reviews: DoctorReview[];
   onViewProfile: () => void;
   onBookNow: () => void;
 }) {
@@ -333,38 +295,7 @@ function DoctorCard({
             )}
           </div>
 
-          {/* Patient Reviews - Show up to 2 */}
-          {reviews.length > 0 && (
-            <div className="mb-3 md:mb-4 space-y-2">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="p-3 rounded-xl bg-muted/40 dark:bg-muted/20 border border-border/20"
-                >
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-3.5 h-3.5 ${
-                            star <= review.rating
-                              ? "text-amber-500 fill-amber-500"
-                              : "text-gray-200 dark:text-gray-600"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                    {review.comment || "Great experience!"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/60 mt-1.5">
-                    — {review.display_name}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+
 
           {/* Fee & Actions */}
           <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-border/50">
