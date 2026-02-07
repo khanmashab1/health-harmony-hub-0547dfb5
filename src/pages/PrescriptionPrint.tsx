@@ -484,11 +484,11 @@ export default function PrescriptionPrint() {
 
               {/* Signature with Stamp overlay */}
               <div className="relative text-center">
-                {/* Stamp positioned overlapping signature */}
+                {/* Stamp positioned on signature line */}
                 <img 
                   src={stampUrl}
                   alt="Official Stamp" 
-                  className="absolute -top-10 -left-14 w-24 h-24 object-contain opacity-70 rotate-[-12deg] print:w-20 print:h-20 print:opacity-60 print:-top-8 print:-left-12 pointer-events-none"
+                  className="absolute -top-16 -left-8 w-32 h-32 object-contain opacity-70 rotate-[-12deg] print:w-28 print:h-28 print:opacity-60 print:-top-14 print:-left-6 pointer-events-none"
                 />
                 <div className="w-40 border-t-2 border-foreground pt-1.5 mb-0.5 print:w-32" />
                 <p className="font-semibold text-foreground text-sm print:text-xs">Dr. {appointment.doctorProfile?.name}</p>
