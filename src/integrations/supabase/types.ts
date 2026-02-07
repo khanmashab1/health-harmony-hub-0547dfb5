@@ -1205,9 +1205,22 @@ export type Database = {
         Returns: number
       }
       calculate_age: { Args: { birth_date: string }; Returns: number }
+      get_active_patient_count: { Args: never; Returns: number }
       get_available_slots: {
         Args: { p_date: string; p_doctor_id: string }
         Returns: number
+      }
+      get_top_patients_by_appointments: {
+        Args: never
+        Returns: {
+          age: number
+          appointment_count: number
+          avatar_path: string
+          gender: string
+          id: string
+          name: string
+          patient_id: string
+        }[]
       }
       get_user_role: {
         Args: { user_uuid: string }
