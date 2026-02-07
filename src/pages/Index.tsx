@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
 import { IntroVideo } from "@/components/home/IntroVideo";
+import { cn } from "@/lib/utils";
 import doctorConsultationImg from "@/assets/doctor-consultation.png";
 
 const specialties = [
@@ -82,19 +83,46 @@ export default function Index() {
     },
   });
 
-  // Fetch patients (profiles with role='patient')
-  const { data: patients, isLoading: loadingPatients, error: patientsError } = useQuery({
-    queryKey: ["home-patients"],
+  // Fetch top 3 patients by most appointments
+  const { data: topPatients, isLoading: loadingPatients, error: patientsError } = useQuery({
+    queryKey: ["home-top-patients"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get appointment counts per patient
+      const { data: appointments, error: apptError } = await supabase
+        .from("appointments")
+        .select("patient_user_id")
+        .not("patient_user_id", "is", null);
+      
+      if (apptError) throw apptError;
+
+      // Count appointments per patient
+      const countMap: Record<string, number> = {};
+      appointments?.forEach((a) => {
+        if (a.patient_user_id) {
+          countMap[a.patient_user_id] = (countMap[a.patient_user_id] || 0) + 1;
+        }
+      });
+
+      // Get top 3 patient IDs by count
+      const topIds = Object.entries(countMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([id]) => id);
+
+      if (topIds.length === 0) return [];
+
+      // Fetch their profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, name, age, gender, avatar_path, created_at, city")
-        .eq("role", "patient")
-        .eq("status", "Active")
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (error) throw error;
-      return data || [];
+        .select("id, name, age, gender, avatar_path, patient_id, date_of_birth")
+        .in("id", topIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine with count and sort
+      return (profiles || [])
+        .map((p) => ({ ...p, appointment_count: countMap[p.id] || 0 }))
+        .sort((a, b) => b.appointment_count - a.appointment_count);
     },
   });
 
@@ -171,8 +199,8 @@ export default function Index() {
                   <p className="text-xs md:text-sm text-muted-foreground">Expert Doctors</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Happy Patients</p>
+                   <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
+                   <p className="text-xs md:text-sm text-muted-foreground">Our Patients</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
@@ -425,7 +453,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Patients Section */}
+      {/* Top Patients Section */}
       <section className="py-20 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
@@ -458,46 +486,64 @@ export default function Index() {
               <AlertDescription>Failed to load patients. Please try again later.</AlertDescription>
             </Alert>
           ) : loadingPatients ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="p-4">
-                  <Skeleton className="w-16 h-16 rounded-full mx-auto mb-3" />
-                  <Skeleton className="h-4 w-24 mx-auto mb-2" />
-                  <Skeleton className="h-3 w-16 mx-auto" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6">
+                  <Skeleton className="w-20 h-20 rounded-full mx-auto mb-4" />
+                  <Skeleton className="h-4 w-28 mx-auto mb-2" />
+                  <Skeleton className="h-3 w-20 mx-auto mb-2" />
+                  <Skeleton className="h-3 w-24 mx-auto" />
                 </Card>
               ))}
             </div>
-          ) : patients && patients.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {patients.map((patient, index) => (
+          ) : topPatients && topPatients.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              {topPatients.map((patient, index) => (
                 <motion.div
                   key={patient.id}
                   initial={{ opacity: 0, y: 30, scale: 0.9 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ 
-                    delay: index * 0.08,
+                    delay: index * 0.1,
                     duration: 0.5,
                     ease: [0.25, 0.46, 0.45, 0.94]
                   }}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
-                  <Card className="p-4 text-center hover:shadow-lg transition-all group">
+                  <Card className="p-6 text-center hover:shadow-lg transition-all group relative overflow-hidden">
+                    {/* Rank badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className={cn(
+                        "inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold",
+                        index === 0 ? "bg-amber-500/20 text-amber-600 dark:text-amber-400" :
+                        index === 1 ? "bg-gray-300/30 text-gray-600 dark:text-gray-400" :
+                        "bg-orange-400/20 text-orange-600 dark:text-orange-400"
+                      )}>
+                        #{index + 1}
+                      </span>
+                    </div>
                     <motion.div
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Avatar className="w-16 h-16 mx-auto mb-3 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
+                      <Avatar className="w-20 h-20 mx-auto mb-4 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
                         <AvatarImage src={patient.avatar_path || undefined} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                          {patient.name?.charAt(0)?.toUpperCase() || <User className="w-6 h-6" />}
+                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-xl">
+                          {patient.name?.charAt(0)?.toUpperCase() || <User className="w-8 h-8" />}
                         </AvatarFallback>
                       </Avatar>
                     </motion.div>
-                    <p className="font-semibold text-sm truncate">{patient.name || "Patient"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || patient.city || "Member"}
+                    <p className="font-semibold text-base truncate">{patient.name || "Patient"}</p>
+                    {patient.patient_id && (
+                      <p className="text-xs text-primary font-medium mt-1">{patient.patient_id}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || "Member"}
                     </p>
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-sm font-medium text-primary">{patient.appointment_count} Appointments</p>
+                    </div>
                   </Card>
                 </motion.div>
               ))}

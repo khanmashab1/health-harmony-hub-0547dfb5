@@ -370,8 +370,10 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
                             mode="single"
                             selected={field.value}
                             onSelect={(date) => {
-                              field.onChange(date);
-                              setDobPopoverOpen(false);
+                              if (date) {
+                                field.onChange(date);
+                                setTimeout(() => setDobPopoverOpen(false), 0);
+                              }
                             }}
                             disabled={(date) =>
                               date > new Date() || date < new Date("1940-01-01")
