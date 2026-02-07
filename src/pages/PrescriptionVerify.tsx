@@ -314,7 +314,7 @@ export default function PrescriptionVerify() {
                   <img 
                     src={stampUrl}
                     alt="Official Stamp" 
-                    className="absolute -top-20 left-0 w-32 h-32 object-contain opacity-70 rotate-[-12deg] print:w-28 print:h-28 print:opacity-60 print:-top-18 print:left-0 pointer-events-none"
+                    className="absolute -top-24 -left-2 w-36 h-36 object-contain opacity-70 rotate-[-12deg] print:w-32 print:h-32 print:opacity-60 print:-top-20 print:-left-1 pointer-events-none"
                   />
                   <div className="border-t border-foreground/50 pt-1 px-4 inline-block">
                     <p className="text-xs font-medium text-foreground">Dr. {appointment.doctorProfile?.name}</p>
