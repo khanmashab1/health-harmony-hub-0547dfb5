@@ -360,6 +360,13 @@ export default function PatientDashboard() {
                   currentUserName={profile?.name}
                   selectedManagedPatientId={selectedManagedPatientId}
                   selectedManagedPatientName={selectedManagedPatientName}
+                  existingReviews={myReviews?.map(r => ({
+                    id: r.id,
+                    rating: r.rating,
+                    comment: r.comment,
+                    doctor_user_id: r.doctor_user_id,
+                    created_at: r.created_at,
+                  }))}
                 />
               </TabsContent>
 

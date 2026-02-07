@@ -47,6 +47,14 @@ interface ManagedPatient {
   relationship: string;
 }
 
+interface ExistingReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  doctor_user_id: string | null;
+  created_at: string;
+}
+
 interface AppointmentsSectionProps {
   appointments: Appointment[] | undefined;
   isLoading: boolean;
@@ -55,6 +63,7 @@ interface AppointmentsSectionProps {
   currentUserName?: string | null;
   selectedManagedPatientId?: string | null;
   selectedManagedPatientName?: string | null;
+  existingReviews?: ExistingReview[];
 }
 
 export function AppointmentsSection({ 
@@ -64,7 +73,8 @@ export function AppointmentsSection({
   currentUserId,
   currentUserName,
   selectedManagedPatientId,
-  selectedManagedPatientName
+  selectedManagedPatientName,
+  existingReviews
 }: AppointmentsSectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -255,6 +265,9 @@ export function AppointmentsSection({
     const aptDate = parseISO(apt.appointment_date);
     const isTodayAppointment = isToday(aptDate);
     
+    // Check if patient has already reviewed this doctor
+    const existingReviewForDoctor = existingReviews?.find(r => r.doctor_user_id === apt.doctor_user_id);
+    
     // Check if we're viewing all patients and should show patient name
     const showPatientName = !selectedManagedPatientId && patientFilter === "all" && hasPatients;
     const isForManagedPatient = apt.patient_full_name && apt.patient_full_name !== currentUserName;
@@ -354,18 +367,36 @@ export function AppointmentsSection({
                     </Button>
                   )}
                   {apt.status === "Completed" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onWriteReview(apt.doctor_user_id);
-                      }}
-                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
-                    >
-                      <Star className="w-4 h-4" />
-                      <span className="hidden sm:inline ml-1">Review</span>
-                    </Button>
+                    existingReviewForDoctor ? (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-1.5">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 ${
+                                i < existingReviewForDoctor.rating
+                                  ? "text-amber-500 fill-amber-500"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">Reviewed</span>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onWriteReview(apt.doctor_user_id);
+                        }}
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
+                      >
+                        <Star className="w-4 h-4" />
+                        <span className="hidden sm:inline ml-1">Review</span>
+                      </Button>
+                    )
                   )}
                   <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
                     <Button variant="ghost" size="sm" className="hover:bg-primary/10 h-8 px-2 sm:px-3">

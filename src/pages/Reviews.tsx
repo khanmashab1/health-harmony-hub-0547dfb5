@@ -1,50 +1,79 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Star, ArrowLeft, Quote, AlertCircle } from "lucide-react";
+import { Star, ArrowLeft, Quote, AlertCircle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
 
 export default function Reviews() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const doctorFilter = searchParams.get("doctor");
+  const [starFilter, setStarFilter] = useState<number | null>(null);
 
-  // Fetch stats
-  const { data: stats } = useQuery({
-    queryKey: ["reviews-stats"],
+  // Fetch doctor name if filtering by doctor
+  const { data: doctorProfile } = useQuery({
+    queryKey: ["doctor-profile-name", doctorFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("status", "Approved");
-      if (error) throw error;
-      
-      const totalReviews = data?.length || 0;
-      const avgRating = totalReviews 
-        ? (data!.reduce((a, b) => a + b.rating, 0) / totalReviews).toFixed(1)
-        : "0";
-      
-      return { totalReviews, avgRating };
+      if (!doctorFilter) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", doctorFilter)
+        .single();
+      return data;
     },
+    enabled: !!doctorFilter,
   });
 
-  // Fetch all approved reviews
+  // Fetch all approved reviews (optionally filtered by doctor)
   const { data: reviews, isLoading, error } = useQuery({
-    queryKey: ["all-approved-reviews"],
+    queryKey: ["all-approved-reviews", doctorFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("reviews")
         .select("*")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
+      
+      if (doctorFilter) {
+        query = query.eq("doctor_user_id", doctorFilter);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
   });
+
+  // Calculate rating distribution
+  const ratingDistribution = useMemo(() => {
+    if (!reviews || reviews.length === 0) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviews.forEach((r) => {
+      dist[r.rating] = (dist[r.rating] || 0) + 1;
+    });
+    return dist;
+  }, [reviews]);
+
+  const totalReviews = reviews?.length || 0;
+  const avgRating = totalReviews
+    ? (reviews!.reduce((a, b) => a + b.rating, 0) / totalReviews).toFixed(1)
+    : "0";
+
+  // Apply star filter
+  const filteredReviews = useMemo(() => {
+    if (!reviews) return [];
+    if (starFilter === null) return reviews;
+    return reviews.filter((r) => r.rating === starFilter);
+  }, [reviews, starFilter]);
 
   return (
     <Layout>
@@ -54,7 +83,7 @@ export default function Reviews() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-12"
+            className="mb-10"
           >
             <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -62,36 +91,104 @@ export default function Reviews() {
             </Button>
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Patient <span className="gradient-text">Reviews</span>
+                {doctorFilter && doctorProfile
+                  ? <>Dr. {doctorProfile.name}'s <span className="gradient-text">Reviews</span></>
+                  : <>Patient <span className="gradient-text">Reviews</span></>
+                }
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                Read what our patients have to say about their healthcare experience
+                {doctorFilter
+                  ? "See what patients have to say about this doctor"
+                  : "Read what our patients have to say about their healthcare experience"
+                }
               </p>
-              {stats && stats.totalReviews > 0 && (
-                <div className="flex items-center justify-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
+            </div>
+          </motion.div>
+
+          {/* Stats & Distribution */}
+          {totalReviews > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="max-w-3xl mx-auto mb-10"
+            >
+              <Card className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  {/* Average Rating */}
+                  <div className="text-center flex-shrink-0">
+                    <p className="text-5xl font-bold mb-1">{avgRating}</p>
+                    <div className="flex gap-0.5 justify-center mb-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-6 h-6 ${
-                            star <= Math.round(parseFloat(stats.avgRating))
+                          className={`w-5 h-5 ${
+                            star <= Math.round(parseFloat(avgRating))
                               ? "text-amber-500 fill-amber-500"
                               : "text-gray-200"
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-2xl font-bold">{stats.avgRating}</span>
+                    <p className="text-sm text-muted-foreground">
+                      {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+                    </p>
                   </div>
-                  <span className="text-muted-foreground">|</span>
-                  <span className="text-muted-foreground">
-                    {stats.totalReviews} {stats.totalReviews === 1 ? "review" : "reviews"}
-                  </span>
+
+                  {/* Rating Distribution */}
+                  <div className="flex-1 w-full space-y-2">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = ratingDistribution[star] || 0;
+                      const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                      const isActive = starFilter === star;
+
+                      return (
+                        <button
+                          key={star}
+                          onClick={() => setStarFilter(isActive ? null : star)}
+                          className={`flex items-center gap-3 w-full group rounded-lg px-2 py-1 transition-colors ${
+                            isActive
+                              ? "bg-primary/10"
+                              : "hover:bg-muted/50"
+                          }`}
+                        >
+                          <span className="flex items-center gap-1 w-14 text-sm font-medium">
+                            {star} <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                          </span>
+                          <div className="flex-1">
+                            <Progress 
+                              value={percentage} 
+                              className="h-2.5" 
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground w-10 text-right">
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
+
+                {/* Active filter indicator */}
+                {starFilter !== null && (
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Filter className="w-4 h-4" />
+                      Showing {starFilter}-star reviews ({filteredReviews.length})
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setStarFilter(null)}
+                    >
+                      Clear filter
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            </motion.div>
+          )}
 
           {/* Reviews Grid */}
           {error ? (
@@ -110,14 +207,14 @@ export default function Reviews() {
                 </Card>
               ))}
             </div>
-          ) : reviews && reviews.length > 0 ? (
+          ) : filteredReviews && filteredReviews.length > 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {reviews.map((review, index) => (
+              {filteredReviews.map((review, index) => (
                 <motion.div
                   key={review.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -156,13 +253,24 @@ export default function Reviews() {
               <div className="w-24 h-24 mx-auto rounded-full bg-muted flex items-center justify-center mb-6">
                 <Star className="w-12 h-12 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No Reviews Yet</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                {starFilter !== null ? "No Reviews with This Rating" : "No Reviews Yet"}
+              </h3>
               <p className="text-muted-foreground mb-6">
-                Be the first to share your healthcare experience!
+                {starFilter !== null 
+                  ? "Try selecting a different star rating"
+                  : "Be the first to share your healthcare experience!"
+                }
               </p>
-              <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
-                Create Account to Review
-              </Button>
+              {starFilter !== null ? (
+                <Button variant="outline" onClick={() => setStarFilter(null)}>
+                  Clear Filter
+                </Button>
+              ) : (
+                <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
+                  Create Account to Review
+                </Button>
+              )}
             </div>
           )}
         </div>
