@@ -310,12 +310,16 @@ function DoctorCard({
                 e.stopPropagation();
                 navigate(`/reviews?doctor=${doctor.user_id}`);
               }}
-              className="h-7 px-2 gap-1 text-xs font-semibold hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              className="h-auto px-3 py-2 gap-2 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-xl border border-amber-200/50 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-950/20"
             >
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-              <span>{doctor.rating || "4.0"}</span>
-              <span className="text-muted-foreground font-normal">Rating</span>
-              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+              <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+              </div>
+              <div className="text-left">
+                <p className="text-base md:text-lg font-bold text-foreground leading-none">{doctor.rating?.toFixed(1) || "N/A"}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-0.5">Rating</p>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
             </Button>
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" />

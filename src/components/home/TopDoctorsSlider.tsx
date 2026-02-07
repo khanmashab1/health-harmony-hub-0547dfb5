@@ -177,7 +177,7 @@ export function TopDoctorsSlider() {
                 >
                   <div className="flex items-center gap-1 md:gap-2">
                     <Star className="w-3 h-3 md:w-4 md:h-4 text-amber-500 fill-amber-500" />
-                    <span className="font-bold text-sm md:text-base">{currentDoctor.rating?.toFixed(1) || "4.5"}</span>
+                    <span className="font-bold text-sm md:text-base">{currentDoctor.rating?.toFixed(1) || "N/A"}</span>
                     <span className="text-muted-foreground text-[10px] md:text-xs">Rating</span>
                   </div>
                 </motion.div>
@@ -231,7 +231,7 @@ export function TopDoctorsSlider() {
                     <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />
                   </div>
                   <div>
-                    <p className="font-bold text-base md:text-lg">{currentDoctor.rating?.toFixed(1) || "4.5"}</p>
+                    <p className="font-bold text-base md:text-lg">{currentDoctor.rating?.toFixed(1) || "N/A"}</p>
                     <p className="text-[10px] md:text-xs text-muted-foreground">Rating</p>
                   </div>
                 </div>
@@ -258,9 +258,9 @@ export function TopDoctorsSlider() {
               {/* Recent Reviews - Hidden on small mobile */}
               {currentDoctor.reviews.length > 0 && (
                 <div className="space-y-2 md:space-y-3 hidden sm:block">
-                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-wide">Recent Reviews</h3>
+                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-wide">Recent Review</h3>
                   <div className="space-y-2">
-                    {currentDoctor.reviews.slice(0, 2).map((review) => (
+                    {currentDoctor.reviews.slice(0, 1).map((review) => (
                       <Card key={review.id} className="p-2 md:p-3 bg-card/50 backdrop-blur-sm border-border/50">
                         <div className="flex items-start gap-2 md:gap-3">
                           <div className="flex gap-0.5">
