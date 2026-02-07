@@ -79,10 +79,10 @@ export function PaymentPlansSection({ onSelectPlan, selectedPlanId }: PaymentPla
           transition={{ delay: index * 0.1 }}
         >
           <Card
-            className={`relative h-full flex flex-col transition-all duration-200 hover:shadow-lg ${
+            className={`relative h-full flex flex-col transition-all duration-300 cursor-pointer group ${
               plan.is_popular
-                ? "ring-2 ring-primary shadow-lg scale-[1.02]"
-                : "hover:-translate-y-1"
+                ? "ring-2 ring-primary shadow-lg scale-[1.02] hover:scale-[1.05] hover:shadow-2xl hover:ring-primary/80"
+                : "hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-primary/40"
             } ${selectedPlanId === plan.id ? "ring-2 ring-primary bg-primary/5" : ""}`}
           >
             {plan.is_popular && (
@@ -95,7 +95,7 @@ export function PaymentPlansSection({ onSelectPlan, selectedPlanId }: PaymentPla
             )}
 
             <CardHeader className="text-center pb-2 pt-6">
-              <CardTitle className="text-xl">{plan.name}</CardTitle>
+              <CardTitle className="text-xl group-hover:text-primary transition-colors duration-300">{plan.name}</CardTitle>
               {plan.description && (
                 <CardDescription>{plan.description}</CardDescription>
               )}
@@ -105,11 +105,11 @@ export function PaymentPlansSection({ onSelectPlan, selectedPlanId }: PaymentPla
               <div className="text-center mb-6">
                 <div className="flex items-baseline justify-center gap-1">
                   {plan.price === 0 ? (
-                    <span className="text-4xl font-bold text-primary">Free</span>
+                    <span className="text-4xl font-bold text-primary group-hover:scale-110 transition-transform duration-300 inline-block">Free</span>
                   ) : (
                     <>
                       <span className="text-lg text-muted-foreground">PKR</span>
-                      <span className="text-4xl font-bold text-primary">
+                      <span className="text-4xl font-bold text-primary group-hover:scale-110 transition-transform duration-300 inline-block">
                         {plan.price.toLocaleString()}
                       </span>
                     </>
@@ -125,8 +125,8 @@ export function PaymentPlansSection({ onSelectPlan, selectedPlanId }: PaymentPla
               <ul className="space-y-3 flex-1 mb-6">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+                    <div className="w-5 h-5 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-primary/20 dark:group-hover:bg-primary/30 transition-colors duration-300">
+                      <Check className="w-3 h-3 text-primary" />
                     </div>
                     <span className="text-sm">{feature}</span>
                   </li>

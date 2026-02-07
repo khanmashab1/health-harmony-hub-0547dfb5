@@ -127,12 +127,125 @@ const handler = async (req: Request): Promise<Response> => {
       medicinesHtml = `<tr><td colspan="5" style="padding:16px;text-align:center;">${appointment.medicines || 'No medicines prescribed'}</td></tr>`;
     }
 
-    const subject = `Your Prescription from Dr. ${doctorName} - ${siteName}`;
+    const subject = `Prescription from Dr. ${doctorName} - ${appointmentDate}`;
 
-    // Build minified HTML (no whitespace between tags)
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5;"><div style="max-width:600px;margin:0 auto;padding:20px;"><div style="background:linear-gradient(135deg,#0EA5E9,#06B6D4);color:white;padding:20px;border-radius:8px 8px 0 0;"><h1 style="margin:0;font-size:24px;">${siteName}</h1><p style="margin:5px 0 0;opacity:0.9;">Medical Prescription</p></div><div style="background:#ffffff;padding:20px;border:1px solid #e5e7eb;"><div style="margin-bottom:20px;"><h3 style="margin:0 0 5px;color:#374151;">Dr. ${doctorName}</h3><p style="margin:0;color:#6b7280;font-size:14px;">${doctor?.specialty || ''}</p><p style="margin:5px 0 0;font-size:14px;"><strong>Date:</strong> ${appointmentDate}</p><p style="margin:5px 0 0;font-size:14px;"><strong>Token:</strong> #${appointment.token_number}</p></div><div style="background:#f9fafb;padding:15px;border-radius:8px;margin-bottom:20px;"><h4 style="margin:0 0 10px;color:#374151;">Patient Information</h4><p style="margin:0;"><strong>${appointment.patient_full_name}</strong></p>${patientAge ? `<p style="margin:5px 0 0;font-size:14px;color:#6b7280;">Age: ${patientAge}</p>` : ''}${patientGender ? `<p style="margin:5px 0 0;font-size:14px;color:#6b7280;">Gender: ${patientGender}</p>` : ''}</div>${appointment.diagnosis ? `<div style="margin-bottom:20px;"><h4 style="margin:0 0 10px;color:#374151;">Diagnosis</h4><p style="margin:0;color:#4b5563;">${appointment.diagnosis}</p></div>` : ''}<div style="margin-bottom:20px;"><h4 style="margin:0 0 10px;color:#374151;">℞ Prescribed Medications</h4><table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;"><thead><tr style="background:#f3f4f6;"><th style="padding:10px;text-align:left;font-size:12px;">#</th><th style="padding:10px;text-align:left;font-size:12px;">Medicine</th><th style="padding:10px;text-align:left;font-size:12px;">Dosage</th><th style="padding:10px;text-align:left;font-size:12px;">Frequency</th><th style="padding:10px;text-align:left;font-size:12px;">Duration</th></tr></thead><tbody>${medicinesHtml}</tbody></table></div>${appointment.lab_tests ? `<div style="margin-bottom:20px;"><h4 style="margin:0 0 10px;color:#374151;">Recommended Lab Tests</h4><p style="margin:0;color:#4b5563;">${appointment.lab_tests}</p></div>` : ''}${appointment.doctor_comments && !appointment.doctor_comments.startsWith("Payment") ? `<div style="margin-bottom:20px;"><h4 style="margin:0 0 10px;color:#374151;">Doctor's Notes</h4><p style="margin:0;color:#4b5563;">${appointment.doctor_comments}</p></div>` : ''}<div style="background:#16a34a;color:white;padding:15px;border-radius:8px;text-align:center;margin-bottom:20px;"><p style="margin:0 0 10px;font-size:14px;">📥 <strong>Download Your Prescription</strong></p><a href="${downloadUrl}" style="display:inline-block;background:white;color:#16a34a;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;">View & Print PDF</a></div><div style="background:#f0f9ff;padding:15px;border-radius:8px;border:1px solid #bae6fd;"><p style="margin:0 0 10px;font-size:14px;"><strong>🔒 Verify Prescription Authenticity</strong></p><p style="margin:0;font-size:12px;color:#6b7280;">Scan the QR code on the printed prescription or visit:</p><a href="${prescriptionUrl}" style="font-size:12px;color:#0EA5E9;">${prescriptionUrl}</a></div></div><div style="background:#f3f4f6;padding:15px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;border-top:none;"><p style="margin:0;font-size:12px;color:#6b7280;">This prescription is valid for 30 days from the date of issue.</p><p style="margin:5px 0 0;font-size:12px;color:#6b7280;">For emergencies, please contact your healthcare provider immediately.</p></div></div></body></html>`;
+    // Build clean HTML email with proper structure to avoid spam filters
+    const html = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Medical Prescription</title>
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;background-color:#f5f5f5;color:#333333;line-height:1.6;">
+  <div style="max-width:600px;margin:0 auto;padding:20px;">
+    <!-- Header -->
+    <div style="background-color:#0EA5E9;color:#ffffff;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
+      <h1 style="margin:0;font-size:22px;font-weight:bold;">${siteName}</h1>
+      <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">Medical Prescription</p>
+    </div>
 
-    const plainText = `${siteName} - Medical Prescription\n\nDr. ${doctorName} - ${doctor?.specialty || ''}\nDate: ${appointmentDate}\nToken: #${appointment.token_number}\n\nPatient: ${appointment.patient_full_name}\n${patientAge ? `Age: ${patientAge}\n` : ''}${patientGender ? `Gender: ${patientGender}\n` : ''}\n${appointment.diagnosis ? `Diagnosis: ${appointment.diagnosis}\n\n` : ''}${appointment.medicines ? `Medicines: ${appointment.medicines}\n\n` : ''}${appointment.lab_tests ? `Lab Tests: ${appointment.lab_tests}\n\n` : ''}View & Print Prescription: ${downloadUrl}\nVerify Authenticity: ${prescriptionUrl}\n\nThis prescription is valid for 30 days from the date of issue.`;
+    <!-- Body -->
+    <div style="background-color:#ffffff;padding:24px;border:1px solid #e5e7eb;">
+      <!-- Doctor Info -->
+      <div style="margin-bottom:20px;">
+        <h3 style="margin:0 0 4px;color:#1f2937;font-size:18px;">Dr. ${doctorName}</h3>
+        <p style="margin:0;color:#6b7280;font-size:14px;">${doctor?.specialty || ''} ${doctor?.degree ? '| ' + doctor.degree : ''}</p>
+        ${doctor?.city ? `<p style="margin:4px 0 0;color:#6b7280;font-size:13px;">${doctor.city}${doctor?.province ? ', ' + doctor.province : ''}</p>` : ''}
+        <p style="margin:8px 0 0;font-size:14px;color:#374151;"><strong>Date:</strong> ${appointmentDate}</p>
+        <p style="margin:4px 0 0;font-size:14px;color:#374151;"><strong>Token:</strong> #${appointment.token_number}</p>
+      </div>
+
+      <!-- Patient Info -->
+      <div style="background-color:#f9fafb;padding:16px;border-radius:8px;margin-bottom:20px;">
+        <h4 style="margin:0 0 8px;color:#1f2937;font-size:15px;">Patient Information</h4>
+        <p style="margin:0;font-size:14px;color:#374151;"><strong>${appointment.patient_full_name}</strong></p>
+        ${patientAge ? `<p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Age: ${patientAge}</p>` : ''}
+        ${patientGender ? `<p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Gender: ${patientGender}</p>` : ''}
+      </div>
+
+      ${appointment.diagnosis ? `
+      <!-- Diagnosis -->
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 8px;color:#1f2937;font-size:15px;">Diagnosis</h4>
+        <p style="margin:0;color:#4b5563;font-size:14px;">${appointment.diagnosis}</p>
+      </div>` : ''}
+
+      <!-- Medicines -->
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 10px;color:#1f2937;font-size:15px;">Prescribed Medications</h4>
+        <table style="width:100%;border-collapse:collapse;background-color:#ffffff;border:1px solid #e5e7eb;">
+          <thead>
+            <tr style="background-color:#f3f4f6;">
+              <th style="padding:10px;text-align:left;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;">#</th>
+              <th style="padding:10px;text-align:left;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;">Medicine</th>
+              <th style="padding:10px;text-align:left;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;">Dosage</th>
+              <th style="padding:10px;text-align:left;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;">Frequency</th>
+              <th style="padding:10px;text-align:left;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;">Duration</th>
+            </tr>
+          </thead>
+          <tbody>${medicinesHtml}</tbody>
+        </table>
+      </div>
+
+      ${appointment.lab_tests ? `
+      <!-- Lab Tests -->
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 8px;color:#1f2937;font-size:15px;">Recommended Lab Tests</h4>
+        <p style="margin:0;color:#4b5563;font-size:14px;">${appointment.lab_tests}</p>
+      </div>` : ''}
+
+      ${appointment.doctor_comments && !appointment.doctor_comments.startsWith("Payment") ? `
+      <!-- Doctor Notes -->
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 8px;color:#1f2937;font-size:15px;">Doctor's Notes</h4>
+        <p style="margin:0;color:#4b5563;font-size:14px;">${appointment.doctor_comments}</p>
+      </div>` : ''}
+
+      <!-- Download CTA -->
+      <div style="background-color:#f0fdf4;padding:16px;border-radius:8px;text-align:center;margin-bottom:20px;border:1px solid #bbf7d0;">
+        <p style="margin:0 0 12px;font-size:14px;color:#166534;"><strong>Download Your Prescription</strong></p>
+        <a href="${downloadUrl}" style="display:inline-block;background-color:#16a34a;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px;">View and Print PDF</a>
+      </div>
+
+      <!-- Verification -->
+      <div style="background-color:#f0f9ff;padding:16px;border-radius:8px;border:1px solid #bae6fd;">
+        <p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Verify Prescription Authenticity</strong></p>
+        <p style="margin:0;font-size:12px;color:#6b7280;">Scan the QR code on the printed prescription or visit:</p>
+        <a href="${prescriptionUrl}" style="font-size:12px;color:#0EA5E9;word-break:break-all;">${prescriptionUrl}</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color:#f9fafb;padding:16px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;border-top:none;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#6b7280;">This prescription is valid for 30 days from the date of issue.</p>
+      <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">For emergencies, please contact your healthcare provider immediately.</p>
+      <p style="margin:10px 0 0;font-size:11px;color:#9ca3af;">You are receiving this email because you had a consultation with Dr. ${doctorName} on ${appointmentDate}.</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">${siteName} | Healthcare Management Platform</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const plainText = `${siteName} - Medical Prescription
+
+Doctor: Dr. ${doctorName} - ${doctor?.specialty || ''}
+Date: ${appointmentDate}
+Token: #${appointment.token_number}
+
+Patient: ${appointment.patient_full_name}
+${patientAge ? `Age: ${patientAge}\n` : ''}${patientGender ? `Gender: ${patientGender}\n` : ''}
+${appointment.diagnosis ? `Diagnosis: ${appointment.diagnosis}\n\n` : ''}${appointment.medicines ? `Medicines: ${appointment.medicines}\n\n` : ''}${appointment.lab_tests ? `Lab Tests: ${appointment.lab_tests}\n\n` : ''}View and Print Prescription: ${downloadUrl}
+Verify Authenticity: ${prescriptionUrl}
+
+This prescription is valid for 30 days from the date of issue.
+For emergencies, please contact your healthcare provider immediately.
+
+You are receiving this email because you had a consultation with Dr. ${doctorName} on ${appointmentDate}.
+${siteName} | Healthcare Management Platform`;
+
+    const senderName = `${siteName} Prescriptions`;
 
     const client = new SMTPClient({
       connection: {
@@ -147,11 +260,16 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     await client.send({
-      from: gmailUser,
+      from: `${senderName} <${gmailUser}>`,
       to: appointment.patient_email,
       subject: subject,
       content: plainText,
       html: html,
+      headers: {
+        "List-Unsubscribe": `<mailto:${gmailUser}?subject=unsubscribe>`,
+        "Precedence": "bulk",
+        "X-Mailer": siteName,
+      },
     });
 
     await client.close();
