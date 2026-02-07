@@ -37,6 +37,7 @@ export default function PatientDashboard() {
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
   const [reviewDoctorId, setReviewDoctorId] = useState<string | null>(null);
+  const [reviewAppointmentId, setReviewAppointmentId] = useState<string | null>(null);
   const [selectedManagedPatientId, setSelectedManagedPatientId] = useState<string | null>(null);
   const [selectedManagedPatientName, setSelectedManagedPatientName] = useState<string | null>(null);
 
@@ -351,8 +352,9 @@ export default function PatientDashboard() {
                 <AppointmentsSection
                   appointments={appointments}
                   isLoading={loadingAppointments}
-                  onWriteReview={(doctorId) => {
+                  onWriteReview={(doctorId, appointmentId) => {
                     setReviewDoctorId(doctorId);
+                    setReviewAppointmentId(appointmentId);
                     setEditingReview(null);
                     setWriteReviewOpen(true);
                   }}
@@ -365,6 +367,7 @@ export default function PatientDashboard() {
                     rating: r.rating,
                     comment: r.comment,
                     doctor_user_id: r.doctor_user_id,
+                    appointment_id: r.appointment_id,
                     created_at: r.created_at,
                   }))}
                 />
@@ -587,11 +590,13 @@ export default function PatientDashboard() {
                 if (!open) {
                   setEditingReview(null);
                   setReviewDoctorId(null);
+                  setReviewAppointmentId(null);
                 }
               }}
               userId={user.id}
               userName={profile.name || "Anonymous"}
               doctorId={reviewDoctorId}
+              appointmentId={reviewAppointmentId}
               editReview={editingReview}
             />
           )}

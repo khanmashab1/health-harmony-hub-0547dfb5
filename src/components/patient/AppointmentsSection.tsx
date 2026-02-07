@@ -52,13 +52,14 @@ interface ExistingReview {
   rating: number;
   comment: string | null;
   doctor_user_id: string | null;
+  appointment_id: string | null;
   created_at: string;
 }
 
 interface AppointmentsSectionProps {
   appointments: Appointment[] | undefined;
   isLoading: boolean;
-  onWriteReview: (doctorId: string) => void;
+  onWriteReview: (doctorId: string, appointmentId: string) => void;
   currentUserId?: string;
   currentUserName?: string | null;
   selectedManagedPatientId?: string | null;
@@ -265,8 +266,8 @@ export function AppointmentsSection({
     const aptDate = parseISO(apt.appointment_date);
     const isTodayAppointment = isToday(aptDate);
     
-    // Check if patient has already reviewed this doctor
-    const existingReviewForDoctor = existingReviews?.find(r => r.doctor_user_id === apt.doctor_user_id);
+    // Check if this specific appointment has been reviewed
+    const existingReviewForAppointment = existingReviews?.find(r => r.appointment_id === apt.id);
     
     // Check if we're viewing all patients and should show patient name
     const showPatientName = !selectedManagedPatientId && patientFilter === "all" && hasPatients;
@@ -367,14 +368,14 @@ export function AppointmentsSection({
                     </Button>
                   )}
                   {apt.status === "Completed" && (
-                    existingReviewForDoctor ? (
+                    existingReviewForAppointment ? (
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-1.5">
                         <div className="flex gap-0.5">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}
                               className={`w-3 h-3 ${
-                                i < existingReviewForDoctor.rating
+                                i < existingReviewForAppointment.rating
                                   ? "text-amber-500 fill-amber-500"
                                   : "text-gray-300"
                               }`}
@@ -389,7 +390,7 @@ export function AppointmentsSection({
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onWriteReview(apt.doctor_user_id);
+                          onWriteReview(apt.doctor_user_id, apt.id);
                         }}
                         className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
                       >

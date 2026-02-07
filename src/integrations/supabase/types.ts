@@ -1012,6 +1012,7 @@ export type Database = {
       }
       reviews: {
         Row: {
+          appointment_id: string | null
           comment: string | null
           created_at: string
           display_name: string
@@ -1023,6 +1024,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          appointment_id?: string | null
           comment?: string | null
           created_at?: string
           display_name: string
@@ -1034,6 +1036,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          appointment_id?: string | null
           comment?: string | null
           created_at?: string
           display_name?: string
@@ -1045,6 +1048,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_doctor_user_id_fkey"
             columns: ["doctor_user_id"]
