@@ -86,13 +86,13 @@ export default function DoctorDashboard() {
   // Plan-based feature access
   const { features, isFreePlan, canAccessFeature, getUpgradeMessage } = usePlanFeatures(user?.id);
 
-  // Fetch appointments
+  // Fetch appointments with patient profile info
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
     queryKey: ["doctor-appointments", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("*")
+        .select("*, patient_profile:profiles!appointments_patient_user_id_fkey(patient_id)")
         .eq("doctor_user_id", user!.id)
         .order("appointment_date", { ascending: true })
         .order("token_number", { ascending: true });
@@ -201,7 +201,8 @@ export default function DoctorDashboard() {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(apt => 
         apt.patient_full_name?.toLowerCase().includes(term) ||
-        apt.patient_phone?.includes(term)
+        apt.patient_phone?.includes(term) ||
+        (apt as any).patient_profile?.patient_id?.toLowerCase().includes(term)
       );
     }
     
@@ -484,7 +485,7 @@ export default function DoctorDashboard() {
                         <div className="relative w-full md:w-64">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input 
-                            placeholder="Search by name or phone..." 
+                            placeholder="Search by name, phone, or patient ID..." 
                             value={searchTerm} 
                             onChange={(e) => setSearchTerm(e.target.value)} 
                             className="pl-9 border-border/50" 
