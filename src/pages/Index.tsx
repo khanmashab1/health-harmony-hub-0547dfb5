@@ -65,9 +65,9 @@ export default function Index() {
   const { data: stats } = useQuery({
     queryKey: ["home-stats"],
     queryFn: async () => {
-      const [doctorsRes, patientsRes, reviewsRes] = await Promise.all([
+      const [doctorsRes, patientCountRes, reviewsRes] = await Promise.all([
         supabase.from("doctors").select("user_id", { count: "exact", head: true }),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "patient").eq("status", "Active"),
+        supabase.rpc("get_active_patient_count"),
         supabase.from("reviews").select("rating").eq("status", "Approved"),
       ]);
       const totalReviews = reviewsRes.data?.length || 0;
@@ -76,53 +76,20 @@ export default function Index() {
         : "4.8";
       return {
         doctors: doctorsRes.count || 0,
-        patients: patientsRes.count || 0,
+        patients: patientCountRes.data || 0,
         rating: avgRating,
         totalReviews,
       };
     },
   });
 
-  // Fetch top 3 patients by most appointments
+  // Fetch top 3 patients by most appointments using secure RPC
   const { data: topPatients, isLoading: loadingPatients, error: patientsError } = useQuery({
     queryKey: ["home-top-patients"],
     queryFn: async () => {
-      // Get appointment counts per patient
-      const { data: appointments, error: apptError } = await supabase
-        .from("appointments")
-        .select("patient_user_id")
-        .not("patient_user_id", "is", null);
-      
-      if (apptError) throw apptError;
-
-      // Count appointments per patient
-      const countMap: Record<string, number> = {};
-      appointments?.forEach((a) => {
-        if (a.patient_user_id) {
-          countMap[a.patient_user_id] = (countMap[a.patient_user_id] || 0) + 1;
-        }
-      });
-
-      // Get top 3 patient IDs by count
-      const topIds = Object.entries(countMap)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([id]) => id);
-
-      if (topIds.length === 0) return [];
-
-      // Fetch their profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, name, age, gender, avatar_path, patient_id, date_of_birth")
-        .in("id", topIds);
-
-      if (profilesError) throw profilesError;
-
-      // Combine with count and sort
-      return (profiles || [])
-        .map((p) => ({ ...p, appointment_count: countMap[p.id] || 0 }))
-        .sort((a, b) => b.appointment_count - a.appointment_count);
+      const { data, error } = await supabase.rpc("get_top_patients_by_appointments");
+      if (error) throw error;
+      return data || [];
     },
   });
 
