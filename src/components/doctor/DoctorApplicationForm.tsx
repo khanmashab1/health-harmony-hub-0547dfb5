@@ -74,6 +74,7 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [medicalLicenseFile, setMedicalLicenseFile] = useState<File | null>(null);
   const [degreeCertificateFile, setDegreeCertificateFile] = useState<File | null>(null);
+  const [dobPopoverOpen, setDobPopoverOpen] = useState(false);
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
@@ -339,47 +340,50 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
                  render={({ field }) => (
                    <FormItem>
                      <FormLabel>Date of Birth *</FormLabel>
-                     <Popover>
-                       <PopoverTrigger asChild>
-                         <FormControl>
-                           <Button
-                             variant="outline"
-                             className={cn(
-                               "w-full pl-3 text-left font-normal",
-                               !field.value && "text-muted-foreground"
-                             )}
-                           >
-                             {field.value ? (
-                               format(field.value, "dd MMMM yyyy")
-                             ) : (
-                               <span>Pick a date</span>
-                             )}
-                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                           </Button>
-                         </FormControl>
-                       </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0 z-50"
-                          align="start"
-                          side="bottom"
-                          sideOffset={8}
-                          avoidCollisions={false}
-                        >
-                         <Calendar
-                           mode="single"
-                           selected={field.value}
-                           onSelect={field.onChange}
-                           disabled={(date) =>
-                             date > new Date() || date < new Date("1940-01-01")
-                           }
-                           initialFocus
-                            captionLayout="dropdown"
-                           fromYear={1940}
-                           toYear={new Date().getFullYear() - 20}
-                            className="p-3 pointer-events-auto"
-                         />
-                       </PopoverContent>
-                     </Popover>
+                      <Popover open={dobPopoverOpen} onOpenChange={setDobPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd MMMM yyyy")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                         <PopoverContent
+                           className="w-auto p-0 z-50"
+                           align="start"
+                           side="bottom"
+                           sideOffset={8}
+                           avoidCollisions={false}
+                         >
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setDobPopoverOpen(false);
+                            }}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1940-01-01")
+                            }
+                            initialFocus
+                             captionLayout="dropdown"
+                            fromYear={1940}
+                            toYear={new Date().getFullYear() - 20}
+                             className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                      <FormMessage />
                    </FormItem>
                  )}
