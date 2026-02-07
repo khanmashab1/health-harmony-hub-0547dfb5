@@ -639,7 +639,7 @@ export default function Booking() {
                       filteredDoctors.map((doc) => (
                         <button
                           key={doc.user_id}
-                          onClick={() => setSelectedDoctor(doc)}
+                          onClick={() => { setSelectedDoctor(doc); setStep(4); }}
                           className={`w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all ${
                             selectedDoctor?.user_id === doc.user_id
                               ? "border-primary bg-primary/5"
