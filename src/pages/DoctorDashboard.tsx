@@ -66,6 +66,7 @@ export default function DoctorDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [chartView, setChartView] = useState<"weekly" | "monthly">("weekly");
   const [activeTab, setActiveTab] = useState("queue");
+  const [appointmentFilter, setAppointmentFilter] = useState<"all" | "upcoming" | "completed">("all");
 
   // Fetch doctor info with plan
   const { data: doctorInfo } = useQuery({
@@ -183,15 +184,29 @@ export default function DoctorDashboard() {
     return appointments?.filter(a => a.status === "Completed") || [];
   }, [appointments]);
 
-  // Filter appointments by search term
+  // Filter appointments by search term and status filter
   const filteredAppointments = useMemo(() => {
-    if (!searchTerm || !appointments) return appointments;
-    const term = searchTerm.toLowerCase();
-    return appointments.filter(apt => 
-      apt.patient_full_name?.toLowerCase().includes(term) ||
-      apt.patient_phone?.includes(term)
-    );
-  }, [appointments, searchTerm]);
+    if (!appointments) return appointments;
+    let filtered = appointments;
+    
+    // Apply status filter
+    if (appointmentFilter === "upcoming") {
+      filtered = filtered.filter(apt => ["Pending", "Upcoming"].includes(apt.status));
+    } else if (appointmentFilter === "completed") {
+      filtered = filtered.filter(apt => apt.status === "Completed");
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(apt => 
+        apt.patient_full_name?.toLowerCase().includes(term) ||
+        apt.patient_phone?.includes(term)
+      );
+    }
+    
+    return filtered;
+  }, [appointments, searchTerm, appointmentFilter]);
 
   // Chart data - weekly
   const weeklyChartData = useMemo(() => {
@@ -460,19 +475,46 @@ export default function DoctorDashboard() {
               <TabsContent value="all">
                 <Card variant="glass" className="border-white/50">
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-brand-500" />
-                        All Appointments
-                      </CardTitle>
-                      <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          placeholder="Search by name or phone..." 
-                          value={searchTerm} 
-                          onChange={(e) => setSearchTerm(e.target.value)} 
-                          className="pl-9 border-border/50" 
-                        />
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-brand-500" />
+                          {appointmentFilter === "all" ? "All Appointments" : appointmentFilter === "upcoming" ? "Upcoming Appointments" : "Completed Appointments"}
+                        </CardTitle>
+                        <div className="relative w-full md:w-64">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input 
+                            placeholder="Search by name or phone..." 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                            className="pl-9 border-border/50" 
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant={appointmentFilter === "all" ? "default" : "outline"}
+                          onClick={() => setAppointmentFilter("all")}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={appointmentFilter === "upcoming" ? "default" : "outline"}
+                          onClick={() => setAppointmentFilter("upcoming")}
+                        >
+                          <Clock className="w-3.5 h-3.5 mr-1" />
+                          Upcoming
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={appointmentFilter === "completed" ? "default" : "outline"}
+                          onClick={() => setAppointmentFilter("completed")}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                          Completed
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
