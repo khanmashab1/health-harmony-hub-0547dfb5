@@ -41,14 +41,33 @@ interface PatientInfo {
   blood_type?: string;
 }
 
-export function generateMedicalHistoryPDF(
+// Helper to load image as base64 for PDF
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMedicalHistoryPDF(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
   patientInfo: PatientInfo
-): jsPDF {
+): Promise<jsPDF> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
+
+  // Load stamp image
+  const stampBase64 = await loadImageAsBase64("/stamp-medicare.png");
 
   // Header
   doc.setFontSize(24);
@@ -250,10 +269,26 @@ export function generateMedicalHistoryPDF(
     });
   }
 
-  // Footer on last page
+  // Add stamp to every page
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+
+    // Add stamp image (bottom-right, semi-transparent effect via positioning)
+    if (stampBase64) {
+      const stampSize = 35;
+      doc.addImage(
+        stampBase64,
+        "PNG",
+        pageWidth - stampSize - 20,
+        doc.internal.pageSize.getHeight() - stampSize - 25,
+        stampSize,
+        stampSize,
+        undefined,
+        "FAST"
+      );
+    }
+
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
@@ -273,21 +308,21 @@ export function generateMedicalHistoryPDF(
   return doc;
 }
 
-export function downloadMedicalHistoryPDF(
+export async function downloadMedicalHistoryPDF(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
   patientInfo: PatientInfo
 ) {
-  const doc = generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
+  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
   const fileName = `medical-history-${patientInfo.name?.replace(/\s+/g, "-").toLowerCase() || "patient"}-${format(new Date(), "yyyy-MM-dd")}.pdf`;
   doc.save(fileName);
 }
 
-export function getMedicalHistoryPDFBlob(
+export async function getMedicalHistoryPDFBlob(
   appointments: Appointment[],
   medicalRecords: MedicalRecord[],
   patientInfo: PatientInfo
-): Blob {
-  const doc = generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
+): Promise<Blob> {
+  const doc = await generateMedicalHistoryPDF(appointments, medicalRecords, patientInfo);
   return doc.output("blob");
 }

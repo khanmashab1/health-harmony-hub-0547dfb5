@@ -296,7 +296,7 @@ export default function PrescriptionVerify() {
               </div>
             )}
 
-            {/* Footer */}
+            {/* Footer with Stamp & Signature */}
             <div className="mt-6 pt-3 border-t border-dashed border-border print:mt-4 print:pt-2">
               <div className="flex justify-between items-end">
                 <div className="text-[10px] text-muted-foreground space-y-0.5">
@@ -307,6 +307,16 @@ export default function PrescriptionVerify() {
                   <p>This prescription is valid for 30 days from date of issue</p>
                   <p>For refills, please consult your physician</p>
                 </div>
+
+                {/* Official Stamp */}
+                <div className="flex flex-col items-center">
+                  <img 
+                    src="/stamp-medicare.png" 
+                    alt="MediCare+ Official Stamp" 
+                    className="w-20 h-20 object-contain opacity-80 print:w-16 print:h-16 print:opacity-70"
+                  />
+                </div>
+
                 <div className="text-right">
                   <div className="border-t border-foreground/50 pt-1 px-4 inline-block">
                     <p className="text-xs font-medium text-foreground">Dr. {appointment.doctorProfile?.name}</p>
@@ -314,13 +324,6 @@ export default function PrescriptionVerify() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Verification stamp */}
-          <div className="absolute bottom-20 right-8 opacity-10 pointer-events-none print:opacity-5 no-print">
-            <div className="w-24 h-24 rounded-full border-4 border-green-600 flex items-center justify-center rotate-[-15deg]">
-              <span className="text-green-600 font-bold text-xs text-center">VERIFIED<br />AUTHENTIC</span>
             </div>
           </div>
         </div>

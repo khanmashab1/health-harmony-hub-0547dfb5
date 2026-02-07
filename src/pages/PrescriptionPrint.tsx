@@ -467,7 +467,7 @@ export default function PrescriptionPrint() {
               </div>
             )}
 
-            {/* QR Code & Signature Section - Compact */}
+            {/* QR Code, Stamp & Signature Section - Compact */}
             <div className="flex justify-between items-end mt-6 pt-4 print:mt-4 print:pt-3">
               {/* QR Code */}
               <div className="flex flex-col items-center">
@@ -480,6 +480,15 @@ export default function PrescriptionPrint() {
                 <p className="text-[9px] text-muted-foreground mt-1 text-center">
                   Scan to verify
                 </p>
+              </div>
+
+              {/* Official Stamp */}
+              <div className="flex flex-col items-center">
+                <img 
+                  src="/stamp-medicare.png" 
+                  alt="MediCare+ Official Stamp" 
+                  className="w-20 h-20 object-contain opacity-80 print:w-16 print:h-16 print:opacity-70"
+                />
               </div>
 
               {/* Signature */}

@@ -219,7 +219,7 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
       const calculatedAge = profile?.date_of_birth 
         ? differenceInYears(new Date(), new Date(profile.date_of_birth)) 
         : undefined;
-      downloadMedicalHistoryPDF(
+      await downloadMedicalHistoryPDF(
         appointments,
         medicalRecords || [],
         {
@@ -252,7 +252,7 @@ export function MedicalHistoryTimeline({ selectedPatientName, selectedPatientId 
       const calculatedAge = profile?.date_of_birth 
         ? differenceInYears(new Date(), new Date(profile.date_of_birth)) 
         : undefined;
-      const blob = getMedicalHistoryPDFBlob(
+      const blob = await getMedicalHistoryPDFBlob(
         appointments,
         medicalRecords || [],
         {
