@@ -55,9 +55,9 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full gap-2">
+        <Button variant="outline" size="sm" className="gap-1.5 flex-1 sm:flex-none min-w-[70px]">
           <History className="w-4 h-4" />
-          View Patient History
+          <span className="hidden sm:inline">History</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[85vh]">

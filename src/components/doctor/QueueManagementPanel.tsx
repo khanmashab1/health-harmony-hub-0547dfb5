@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
   Users, Play, CheckCircle2, SkipForward, XCircle, 
-  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban, Pause, FlaskConical, Search
+  Radio, ChevronRight, Clock, Phone, User, Mail, Loader2, FileText, Ban, Pause, FlaskConical, Search, History
 } from "lucide-react";
+import { PatientHistoryDialog } from "./PatientHistoryDialog";
 import { PausedPatientsSection } from "./PausedPatientsSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -409,6 +410,12 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <PatientHistoryDialog
+                    patientName={currentlyServing.patient_full_name || "Patient"}
+                    patientUserId={currentlyServing.patient_user_id}
+                    doctorUserId={doctorId}
+                    currentAppointmentId={currentlyServing.id}
+                  />
                   <Button
                     variant="outline"
                     size="sm"
