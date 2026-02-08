@@ -27,7 +27,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -895,32 +894,32 @@ export default function Booking() {
 
                     <div>
                       <Label>Payment Method</Label>
-                      <RadioGroup
-                        value={paymentMethod}
-                        onValueChange={(v) => setPaymentMethod(v as "Cash" | "Online")}
-                        className="grid grid-cols-2 gap-4 mt-2"
-                      >
-                        <div>
-                          <RadioGroupItem value="Cash" id="cash" className="peer sr-only" />
-                          <Label
-                            htmlFor="cash"
-                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                          >
-                            <Banknote className="mb-3 h-8 w-8" />
-                            <span className="font-medium">Pay at Clinic</span>
-                          </Label>
-                        </div>
-                        <div>
-                          <RadioGroupItem value="Online" id="online" className="peer sr-only" />
-                          <Label
-                            htmlFor="online"
-                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                          >
-                            <Smartphone className="mb-3 h-8 w-8" />
-                            <span className="font-medium">Online Payment</span>
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod("Cash")}
+                          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all cursor-pointer ${
+                            paymentMethod === "Cash" 
+                              ? "border-primary bg-primary/5" 
+                              : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
+                          }`}
+                        >
+                          <Banknote className="mb-3 h-8 w-8" />
+                          <span className="font-medium">Pay at Clinic</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod("Online")}
+                          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all cursor-pointer ${
+                            paymentMethod === "Online" 
+                              ? "border-primary bg-primary/5" 
+                              : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
+                          }`}
+                        >
+                          <Smartphone className="mb-3 h-8 w-8" />
+                          <span className="font-medium">Online Payment</span>
+                        </button>
+                      </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
