@@ -247,7 +247,7 @@ export default function PrescriptionPrint() {
 
       {/* Prescription Page */}
       <div className="max-w-4xl mx-auto py-16 px-4 print:py-0 print:px-0">
-        <div className="bg-card shadow-2xl print:shadow-none prescription-page relative overflow-hidden rounded-xl border border-border">
+        <div className="bg-card shadow-2xl print:shadow-none prescription-page relative rounded-xl border border-border">
           {/* Decorative Border */}
           <div className="absolute inset-0 border-[2px] border-primary/20 m-1.5 pointer-events-none print:border-primary/30 rounded-lg" />
           

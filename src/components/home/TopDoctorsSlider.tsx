@@ -52,7 +52,7 @@ export function TopDoctorsSlider() {
           fee,
           image_path
         `)
-        .order("rating", { ascending: false })
+        .order("rating", { ascending: false, nullsFirst: false })
         .limit(3);
 
       if (doctorsError) throw doctorsError;

@@ -33,13 +33,7 @@ export function PrescriptionHistory({ userId, selectedPatientName, selectedPatie
     queryFn: async () => {
       let query = supabase
         .from("appointments")
-        .select(`
-          *,
-          doctor:doctor_user_id (
-            id,
-            name
-          )
-        `)
+        .select("*")
         .eq("status", "Completed")
         .not("diagnosis", "is", null)
         .order("appointment_date", { ascending: false });
