@@ -57,7 +57,7 @@ export default function OurDoctors() {
       const { data: doctorData, error } = await supabase
         .from("doctors")
         .select("*")
-        .order("rating", { ascending: false });
+        .order("rating", { ascending: false, nullsFirst: false });
 
       if (error) throw error;
 
