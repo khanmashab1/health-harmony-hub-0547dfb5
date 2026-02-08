@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import medicareLogo from "@/assets/medicare-logo.png";
+
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -62,28 +62,27 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-0 group py-2">
-            <img 
-              src={logoUrl || medicareLogo} 
-              alt={`${siteName} Logo`} 
-              className="h-14 sm:h-16 md:h-[72px] w-auto object-contain group-hover:scale-105 transition-transform"
-            />
-            {/* Only show text when using the fallback bundled logo (no DB logo set) */}
-            {!logoUrl && (
-              <div className="flex flex-col -ml-1 leading-none">
-                <span className="text-lg sm:text-xl tracking-tight whitespace-nowrap italic" style={{ fontFamily: "'Alegreya', serif" }}>
-                  <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
-                  {siteName?.includes('+') && (
-                    <span className="text-teal-500 dark:text-teal-400 font-extrabold ml-0.5">
-                      {siteName.match(/\++/)?.[0] || ''}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[9px] sm:text-[10px] tracking-widest uppercase text-muted-foreground font-medium mt-0.5">
-                  effortless care, delivered
-                </span>
-              </div>
+          <Link to="/" className="flex items-center gap-1.5 group py-2">
+            {logoUrl && (
+              <img 
+                src={logoUrl} 
+                alt={`${siteName} Logo`} 
+                className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform"
+              />
             )}
+            <div className="flex flex-col leading-none">
+              <span className="text-lg sm:text-xl tracking-tight whitespace-nowrap italic" style={{ fontFamily: "'Alegreya', serif" }}>
+                <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
+                {siteName?.includes('+') && (
+                  <span className="text-teal-500 dark:text-teal-400 font-extrabold ml-0.5">
+                    {siteName.match(/\++/)?.[0] || ''}
+                  </span>
+                )}
+              </span>
+              <span className="text-[9px] sm:text-[10px] tracking-widest uppercase text-muted-foreground font-medium mt-0.5">
+                effortless care, delivered
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav - Center */}
