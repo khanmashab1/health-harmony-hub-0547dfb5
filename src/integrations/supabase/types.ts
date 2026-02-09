@@ -458,6 +458,7 @@ export type Database = {
           consultation_duration: number | null
           created_at: string
           degree: string | null
+          delay_minutes: number | null
           easypaisa_number: string | null
           experience_years: number | null
           fee: number
@@ -482,6 +483,7 @@ export type Database = {
           consultation_duration?: number | null
           created_at?: string
           degree?: string | null
+          delay_minutes?: number | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
@@ -506,6 +508,7 @@ export type Database = {
           consultation_duration?: number | null
           created_at?: string
           degree?: string | null
+          delay_minutes?: number | null
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number

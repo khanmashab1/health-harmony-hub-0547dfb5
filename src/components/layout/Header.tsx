@@ -16,13 +16,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useLanguage } from "@/hooks/useLanguage";
 
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { logoUrl, siteName } = useSiteSettings();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -92,7 +95,7 @@ export function Header() {
                 className={`nav-pill ${isActiveLink('/our-doctors') ? 'active' : ''}`}
               >
                 <Users className="w-4 h-4" />
-                Our Doctors
+                {t("nav.ourDoctors")}
               </button>
             </Link>
             <Link to="/booking">
@@ -100,7 +103,7 @@ export function Header() {
                 className={`nav-pill ${isActiveLink('/booking') ? 'active' : ''}`}
               >
                 <Calendar className="w-4 h-4" />
-                Book Appointment
+                {t("nav.bookAppointment")}
               </button>
             </Link>
             <Link to="/symptoms">
@@ -108,34 +111,35 @@ export function Header() {
                 className={`nav-pill ${isActiveLink('/symptoms') ? 'active' : ''}`}
               >
                 <Activity className="w-4 h-4" />
-                Symptoms Checker
+                {t("nav.symptomsChecker")}
               </button>
             </Link>
           </nav>
 
           {/* Desktop Actions - Right */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageToggle />
             <ThemeToggle />
             {user ? (
               <>
                 <Link to={getDashboardLink()}>
                   <Button variant="ghost" className="gap-2">
                     <DashboardIcon className="w-4 h-4" />
-                    Dashboard
+                    {t("nav.dashboard")}
                   </Button>
                 </Link>
                 <Button variant="outline-muted" onClick={handleSignOut} className="gap-2">
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                  {t("nav.signOut")}
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/auth">
-                  <Button variant="outline">Sign In</Button>
+                  <Button variant="outline">{t("nav.signIn")}</Button>
                 </Link>
                 <Link to="/auth?mode=signup">
-                  <Button variant="hero">Get Started</Button>
+                  <Button variant="hero">{t("nav.getStarted")}</Button>
                 </Link>
               </>
             )}
@@ -161,7 +165,7 @@ export function Header() {
               className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/our-doctors') ? 'active' : ''}`}
             >
               <Users className="w-3.5 h-3.5" />
-              Our Doctors
+              {t("nav.ourDoctors")}
             </button>
           </Link>
           <Link to="/booking">
@@ -169,7 +173,7 @@ export function Header() {
               className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/booking') ? 'active' : ''}`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              Book Appointment
+              {t("nav.bookAppointment")}
             </button>
           </Link>
           <Link to="/symptoms">
@@ -177,9 +181,10 @@ export function Header() {
               className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/symptoms') ? 'active' : ''}`}
             >
               <Activity className="w-3.5 h-3.5" />
-              Symptoms Checker
+              {t("nav.symptomsChecker")}
             </button>
           </Link>
+          <LanguageToggle />
         </div>
       </div>
 

@@ -53,6 +53,7 @@ import { PlanRestrictionsCard } from "@/components/doctor/PlanRestrictionsCard";
 import { OrganizationPanel } from "@/components/doctor/OrganizationPanel";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 import { PatientHistoryDialog } from "@/components/doctor/PatientHistoryDialog";
+import { DoctorDelayToggle } from "@/components/doctor/DoctorDelayToggle";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -340,6 +341,21 @@ export default function DoctorDashboard() {
                 </Card>
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* Doctor Running Late Toggle */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="mb-4"
+          >
+            {user && (
+              <DoctorDelayToggle 
+                doctorId={user.id} 
+                currentDelay={doctorInfo?.delay_minutes || 0}
+              />
+            )}
           </motion.div>
 
           {/* Plan Restrictions Overview */}
