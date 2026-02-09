@@ -29,6 +29,10 @@ import NotFound from "./pages/NotFound";
 import BecomeDoctor from "./pages/BecomeDoctor";
 import OrganizationDashboard from "./pages/OrganizationDashboard";
 import OurDoctors from "./pages/OurDoctors";
+import OnlineDoctorAppointmentSystem from "./pages/seo/OnlineDoctorAppointmentSystem";
+import ClinicManagementSoftware from "./pages/seo/ClinicManagementSoftware";
+import HospitalManagementSoftware from "./pages/seo/HospitalManagementSoftware";
+import AISymptomChecker from "./pages/seo/AISymptomChecker";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +79,10 @@ const App = () => (
                 <Route path="/become-doctor" element={<BecomeDoctor />} />
                 <Route path="/our-doctors" element={<OurDoctors />} />
                 <Route path="/organization" element={<OrganizationDashboard />} />
+                <Route path="/online-doctor-appointment-system" element={<OnlineDoctorAppointmentSystem />} />
+                <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
+                <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
+                <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
                 <Route path="/token/:appointmentId" element={<TokenPrint />} />
                 <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
                 <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
