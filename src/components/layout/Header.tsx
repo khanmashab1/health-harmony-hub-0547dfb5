@@ -145,17 +145,20 @@ export function Header() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-xl hover:bg-muted transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+          {/* Mobile: Language Toggle + Menu Button */}
+          <div className="md:hidden flex items-center gap-1">
+            <LanguageToggle />
+            <button
+              className="p-2 rounded-xl hover:bg-muted transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -166,72 +169,112 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border/40 bg-background"
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="md:hidden border-t border-border/40 bg-background overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {/* Navigation Links */}
-              <Link to="/our-doctors" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Users className="w-4 h-4" />
-                  {t("nav.ourDoctors")}
-                </Button>
-              </Link>
-              <Link to="/booking" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {t("nav.bookAppointment")}
-                </Button>
-              </Link>
-              <Link to="/symptoms" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Activity className="w-4 h-4" />
-                  {t("nav.symptomsChecker")}
-                </Button>
-              </Link>
+              {[
+                { to: "/our-doctors", icon: Users, label: t("nav.ourDoctors") },
+                { to: "/booking", icon: Calendar, label: t("nav.bookAppointment") },
+                { to: "/symptoms", icon: Activity, label: t("nav.symptomsChecker") },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.to}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 * i, duration: 0.25, ease: "easeOut" }}
+                >
+                  <Link to={item.to} onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start gap-2">
+                      <item.icon className="w-4 h-4" />
+                      {item.label}
+                    </Button>
+                  </Link>
+                </motion.div>
+              ))}
 
-              <div className="border-t border-border/40 my-2" />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15, duration: 0.2 }}
+                className="border-t border-border/40 my-2"
+              />
 
-              {/* Toggles */}
-              <div className="flex items-center gap-2 px-2">
-                <LanguageToggle />
+              {/* Theme Toggle */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.25, ease: "easeOut" }}
+                className="flex items-center gap-2 px-2"
+              >
                 <ThemeToggle />
-              </div>
+              </motion.div>
 
-              <div className="border-t border-border/40 my-2" />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.2 }}
+                className="border-t border-border/40 my-2"
+              />
 
               {/* Auth Actions */}
               {user ? (
                 <>
-                  <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="secondary" className="w-full justify-start gap-2">
-                      <DashboardIcon className="w-4 h-4" />
-                      {t("nav.dashboard")}
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full justify-start gap-2"
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.25, ease: "easeOut" }}
                   >
-                    <LogOut className="w-4 h-4" />
-                    {t("nav.signOut")}
-                  </Button>
+                    <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="secondary" className="w-full justify-start gap-2">
+                        <DashboardIcon className="w-4 h-4" />
+                        {t("nav.dashboard")}
+                      </Button>
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full justify-start gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {t("nav.signOut")}
+                    </Button>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="outline" className="w-full">
-                      {t("nav.signIn")}
-                    </Button>
-                  </Link>
-                  <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="hero" className="w-full">
-                      {t("nav.getStarted")}
-                    </Button>
-                  </Link>
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.25, ease: "easeOut" }}
+                  >
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        {t("nav.signIn")}
+                      </Button>
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
+                  >
+                    <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="hero" className="w-full">
+                        {t("nav.getStarted")}
+                      </Button>
+                    </Link>
+                  </motion.div>
                 </>
               )}
             </nav>
