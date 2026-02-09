@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Eye, EyeOff, Stethoscope } from "lucide-react";
+import { UserPlus, Stethoscope, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,12 +50,10 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
     phone: "",
     specialty: "",
     degree: "",
@@ -73,7 +71,6 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
         body: {
           organizationId,
           email: formData.email,
-          password: formData.password,
           name: formData.name,
           phone: formData.phone || undefined,
           specialty: formData.specialty,
@@ -99,13 +96,12 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
       queryClient.invalidateQueries({ queryKey: ["org-members"] });
       toast({
         title: "Doctor Created Successfully!",
-        description: `${formData.name} can now log in with the provided credentials.`,
+        description: `A password setup link has been sent to ${formData.email}.`,
       });
       setOpen(false);
       setFormData({
         name: "",
         email: "",
-        password: "",
         phone: "",
         specialty: "",
         degree: "",
@@ -126,19 +122,10 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.password || !formData.specialty) {
+    if (!formData.name || !formData.email || !formData.specialty) {
       toast({
         title: "Missing Required Fields",
         description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters.",
         variant: "destructive",
       });
       return;
@@ -164,7 +151,7 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
             Create New Doctor Account
           </DialogTitle>
           <DialogDescription>
-            Create a new doctor account for your organization. They will receive Professional-level access.
+            Create a new doctor account for your organization. They will receive an email to set their password securely.
           </DialogDescription>
         </DialogHeader>
 
@@ -198,39 +185,14 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Min 6 characters"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    minLength={6}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  placeholder="+92 300 1234567"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                placeholder="+92 300 1234567"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
             </div>
           </div>
 
@@ -308,11 +270,13 @@ export function CreateDoctorDialog({ organizationId, trigger }: CreateDoctorDial
 
           {/* Info Box */}
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-            <p className="text-sm">
-              <strong>Note:</strong> The doctor will receive Professional-level dashboard access. 
-              They can log in immediately using the email and password provided above. 
-              Their data will be visible in your organization's unified analytics.
-            </p>
+            <div className="flex gap-3">
+              <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-sm">
+                <strong>Secure Setup:</strong> The doctor will receive an email with a secure link to set their password. 
+                No passwords are sent via email for security. They can then log in to access their Professional dashboard.
+              </p>
+            </div>
           </div>
 
           <div className="flex gap-3 justify-end">
