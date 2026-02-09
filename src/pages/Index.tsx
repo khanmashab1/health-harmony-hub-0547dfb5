@@ -68,7 +68,7 @@ export default function Index() {
     queryKey: ["home-stats"],
     queryFn: async () => {
       const [doctorsRes, patientCountRes, reviewsRes] = await Promise.all([
-        supabase.from("doctors").select("user_id", { count: "exact", head: true }),
+        supabase.from("doctors_public").select("user_id", { count: "exact", head: true }),
         supabase.rpc("get_active_patient_count"),
         supabase.from("reviews").select("rating").eq("status", "Approved"),
       ]);
