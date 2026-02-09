@@ -1307,6 +1307,20 @@ export type Database = {
         Args: { p_date: string; p_doctor_id: string }
         Returns: number
       }
+      get_doctor_payment_for_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: {
+          bank_account_number: string
+          bank_account_title: string
+          bank_name: string
+          consultation_duration: number
+          delay_minutes: number
+          easypaisa_number: string
+          fee: number
+          jazzcash_number: string
+          specialty: string
+        }[]
+      }
       get_top_patients_by_appointments: {
         Args: never
         Returns: {
