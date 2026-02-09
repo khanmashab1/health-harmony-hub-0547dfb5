@@ -54,6 +54,7 @@ import { OrganizationPanel } from "@/components/doctor/OrganizationPanel";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 import { PatientHistoryDialog } from "@/components/doctor/PatientHistoryDialog";
 import { DoctorDelayToggle } from "@/components/doctor/DoctorDelayToggle";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -61,6 +62,7 @@ export default function DoctorDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [blockDate, setBlockDate] = useState<Date | undefined>();
@@ -315,10 +317,10 @@ export default function DoctorDashboard() {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           >
             {[
-              { label: "Today's Patients", value: todayAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600", bg: "bg-blue-50" },
-              { label: "Upcoming", value: upcomingAppointments.length, icon: Clock, color: "from-purple-500 to-purple-600", bg: "bg-purple-50" },
-              { label: "Completed", value: completedAppointments.length, icon: CheckCircle2, color: "from-green-500 to-green-600", bg: "bg-green-50" },
-              { label: "Blocked Slots", value: blockedSlots?.length || 0, icon: CalendarX, color: "from-red-500 to-red-600", bg: "bg-red-50" },
+              { label: t("doctor.todayQueue"), value: todayAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600", bg: "bg-blue-50" },
+              { label: t("common.upcoming"), value: upcomingAppointments.length, icon: Clock, color: "from-purple-500 to-purple-600", bg: "bg-purple-50" },
+              { label: t("common.completed"), value: completedAppointments.length, icon: CheckCircle2, color: "from-green-500 to-green-600", bg: "bg-green-50" },
+              { label: t("doctor.schedule"), value: blockedSlots?.length || 0, icon: CalendarX, color: "from-red-500 to-red-600", bg: "bg-red-50" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -382,15 +384,15 @@ export default function DoctorDashboard() {
               <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
                 <TabsTrigger value="queue" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Radio className="w-4 h-4 mr-1 sm:mr-2" />
-                  Queue
+                  {t("pa.queue")}
                 </TabsTrigger>
                 <TabsTrigger value="today" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
-                  Today
+                  {t("common.today")}
                 </TabsTrigger>
                 <TabsTrigger value="all" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <FileText className="w-4 h-4 mr-1 sm:mr-2" />
-                  All
+                  {t("common.all")}
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   {!canAccessFeature("analyticsAccess") ? (
@@ -398,8 +400,8 @@ export default function DoctorDashboard() {
                   ) : (
                     <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
                   )}
-                  <span className="hidden sm:inline">Analytics</span>
-                  <span className="sm:hidden">Stats</span>
+                  <span className="hidden sm:inline">{t("doctor.analytics")}</span>
+                  <span className="sm:hidden">{t("doctor.analytics")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="availability" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <CalendarX className="w-4 h-4 mr-1 sm:mr-2" />

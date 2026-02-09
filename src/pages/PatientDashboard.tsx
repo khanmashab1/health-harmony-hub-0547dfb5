@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
 import { KeyRound } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function PatientDashboard() {
   const { user, profile, loading, refreshProfile } = useRequireAuth(["patient"]);
@@ -33,6 +34,7 @@ export default function PatientDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [writeReviewOpen, setWriteReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<{ id: string; rating: number; comment: string | null } | null>(null);
@@ -248,9 +250,9 @@ export default function PatientDashboard() {
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
-                    Welcome, {selectedManagedPatientName || profile?.name || "Patient"}
+                    {t("patient.welcome")}, {selectedManagedPatientName || profile?.name || t("common.patient")}
                   </h1>
-                  <p className="text-sm text-muted-foreground font-medium">Manage your health journey</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("patient.manageHealth")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -269,8 +271,8 @@ export default function PatientDashboard() {
                 <Link to="/booking">
                   <Button variant="hero" size="sm" className="sm:size-default">
                     <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Book Appointment</span>
-                    <span className="sm:hidden">Book</span>
+                    <span className="hidden sm:inline">{t("patient.bookAppointment")}</span>
+                    <span className="sm:hidden">{t("nav.bookAppointment")}</span>
                   </Button>
                 </Link>
               </div>
@@ -285,10 +287,10 @@ export default function PatientDashboard() {
             className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8"
           >
             {[
-              { label: "Upcoming", value: upcomingAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600" },
-              { label: "Completed", value: completedAppointments.length, icon: Activity, color: "from-green-500 to-green-600" },
-              { label: "Total Visits", value: filteredAppointments.length, icon: FileText, color: "from-purple-500 to-purple-600" },
-              { label: "Reviews", value: selectedManagedPatientId ? 0 : (myReviews?.length || 0), icon: Star, color: "from-yellow-500 to-orange-500" },
+              { label: t("patient.upcomingAppointments"), value: upcomingAppointments.length, icon: Calendar, color: "from-blue-500 to-blue-600" },
+              { label: t("patient.completedAppointments"), value: completedAppointments.length, icon: Activity, color: "from-green-500 to-green-600" },
+              { label: t("patient.totalVisits"), value: filteredAppointments.length, icon: FileText, color: "from-purple-500 to-purple-600" },
+              { label: t("patient.myReviews"), value: selectedManagedPatientId ? 0 : (myReviews?.length || 0), icon: Star, color: "from-yellow-500 to-orange-500" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -323,28 +325,28 @@ export default function PatientDashboard() {
               <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
                 <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Appointments</span>
-                  <span className="sm:hidden">Appts</span>
+                  <span className="hidden sm:inline">{t("patient.appointments")}</span>
+                  <span className="sm:hidden">{t("patient.appointments")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="history" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <History className="w-4 h-4 mr-1 sm:mr-2" />
-                  History
+                  {t("patient.history")}
                 </TabsTrigger>
                 <TabsTrigger value="profile" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <User className="w-4 h-4 mr-1 sm:mr-2" />
-                  Profile
+                  {t("patient.profile")}
                 </TabsTrigger>
                 <TabsTrigger value="health" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Activity className="w-4 h-4 mr-1 sm:mr-2" />
-                  Health
+                  {t("patient.health")}
                 </TabsTrigger>
                 <TabsTrigger value="records" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <FileText className="w-4 h-4 mr-1 sm:mr-2" />
-                  Records
+                  {t("patient.records")}
                 </TabsTrigger>
                 <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Star className="w-4 h-4 mr-1 sm:mr-2" />
-                  Reviews
+                  {t("patient.reviews")}
                 </TabsTrigger>
               </TabsList>
 
@@ -385,7 +387,7 @@ export default function PatientDashboard() {
                   <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10 flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                       <User className="w-5 h-5 text-primary" />
-                      Profile Information
+                      {t("patient.profileInfo")}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <ChangePasswordDialog />

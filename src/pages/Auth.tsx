@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -63,6 +64,7 @@ export default function Auth() {
   const { signIn, signUp, user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Check for password recovery token in URL hash
   useEffect(() => {
@@ -251,18 +253,18 @@ export default function Auth() {
           </Link>
           
           <h1 className="text-4xl font-bold mb-4 leading-tight">
-            Your Health Journey Starts Here
+            {t("auth.healthJourney")}
           </h1>
           <p className="text-white/80 text-lg leading-relaxed">
-            Access top doctors, manage appointments, and track your health - all in one secure platform.
+            {t("auth.healthDescription")}
           </p>
 
           <div className="mt-12 space-y-4">
             {[
-              "Book appointments with verified doctors",
-              "Track your health metrics over time",
-              "Access prescriptions and medical records",
-              "Get instant symptom analysis",
+              t("auth.feature1"),
+              t("auth.feature2"),
+              t("auth.feature3"),
+              t("auth.feature4"),
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -294,7 +296,7 @@ export default function Auth() {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            {t("auth.backToHome")}
           </Link>
 
           <Card variant="elevated" className="border-0 shadow-xl">
@@ -306,21 +308,21 @@ export default function Auth() {
               </div>
               <CardTitle className="text-2xl font-bold">
                 {mode === "signup" 
-                  ? "Create an Account" 
+                  ? t("auth.createAccount")
                   : mode === "reset" 
-                  ? "Reset Password"
+                  ? t("auth.resetPassword")
                   : mode === "new-password"
-                  ? "Set New Password"
-                  : "Welcome Back"}
+                  ? t("auth.setNewPassword")
+                  : t("auth.welcomeBack")}
               </CardTitle>
               <CardDescription className="text-base">
                 {mode === "signup"
-                  ? "Join MediCare+ to start booking appointments"
+                  ? t("auth.signUpDescription")
                   : mode === "reset"
-                  ? "Enter your email to receive a password reset link"
+                  ? t("auth.resetPassword")
                   : mode === "new-password"
-                  ? "Enter your new password below"
-                  : "Sign in to access your health dashboard"}
+                  ? t("auth.setNewPassword")
+                  : t("auth.signInDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -329,7 +331,7 @@ export default function Auth() {
                 <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-700 dark:text-green-400">
-                    Account created successfully! Please check your email to verify your account before logging in.
+                    {t("auth.accountCreated")} {t("auth.verifyEmail")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -342,7 +344,7 @@ export default function Auth() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>{t("auth.fullName")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -358,7 +360,7 @@ export default function Auth() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>{t("auth.email")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -374,7 +376,7 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>{t("auth.password")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -402,7 +404,7 @@ export default function Auth() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
+                          <FormLabel>{t("auth.confirmPassword")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -429,10 +431,10 @@ export default function Auth() {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Creating Account...
+                          {t("auth.creatingAccount")}
                         </>
                       ) : (
-                        "Create Account"
+                        t("auth.createAccount")
                       )}
                     </Button>
                   </form>
@@ -445,7 +447,7 @@ export default function Auth() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>{t("auth.email")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-0" />
@@ -466,11 +468,11 @@ export default function Auth() {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Sending Reset Link...
+                          {t("auth.sendResetLink")}...
                         </>
                       ) : (
                         <>
-                          Send Reset Link
+                          {t("auth.sendResetLink")}
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </>
                       )}
@@ -485,7 +487,7 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>New Password</FormLabel>
+                          <FormLabel>{t("auth.newPassword")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -513,7 +515,7 @@ export default function Auth() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormLabel>{t("auth.confirmPassword")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -540,10 +542,10 @@ export default function Auth() {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Resetting Password...
+                          {t("auth.resetPassword")}...
                         </>
                       ) : (
-                        "Reset Password"
+                        t("auth.resetPassword")
                       )}
                     </Button>
                   </form>
@@ -556,7 +558,7 @@ export default function Auth() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>{t("auth.email")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -572,14 +574,14 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>Password</FormLabel>
+                           <div className="flex items-center justify-between">
+                            <FormLabel>{t("auth.password")}</FormLabel>
                             <button
                               type="button"
                               onClick={() => setMode("reset")}
                               className="text-xs text-primary hover:underline font-medium"
                             >
-                              Forgot password?
+                              {t("auth.forgotPassword")}
                             </button>
                           </div>
                           <FormControl>
@@ -608,10 +610,10 @@ export default function Auth() {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Signing In...
+                          {t("auth.signingIn")}
                         </>
                       ) : (
-                        "Sign In"
+                        t("auth.signIn")
                       )}
                     </Button>
                   </form>
@@ -621,32 +623,32 @@ export default function Auth() {
               <div className="mt-6 text-center text-sm">
                 {mode === "signup" ? (
                   <p className="text-muted-foreground">
-                    Already have an account?{" "}
+                    {t("auth.haveAccount")}{" "}
                     <button
                       onClick={() => setMode("login")}
                       className="text-primary hover:underline font-medium"
                     >
-                      Sign in
+                      {t("auth.signIn")}
                     </button>
                   </p>
                 ) : mode === "reset" ? (
                   <p className="text-muted-foreground">
-                    Remember your password?{" "}
+                    {t("auth.haveAccount")}{" "}
                     <button
                       onClick={() => setMode("login")}
                       className="text-primary hover:underline font-medium"
                     >
-                      Back to sign in
+                      {t("auth.signIn")}
                     </button>
                   </p>
                 ) : (
                   <p className="text-muted-foreground">
-                    Don't have an account?{" "}
+                    {t("auth.noAccount")}{" "}
                     <button
                       onClick={() => setMode("signup")}
                       className="text-primary hover:underline font-medium"
                     >
-                      Sign up
+                      {t("auth.signUp")}
                     </button>
                   </p>
                 )}

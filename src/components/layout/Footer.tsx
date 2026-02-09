@@ -128,11 +128,11 @@ export function Footer() {
             <h4 className="font-semibold text-lg mb-4">{t("footer.services")}</h4>
             <ul className="space-y-3">
               {[
-                "General Consultation",
-                "Specialist Appointments",
-                "Lab Tests",
-                "Health Checkups",
-                "Online Prescriptions",
+                t("footer.generalConsultation"),
+                t("footer.specialistAppointments"),
+                t("footer.labTests"),
+                t("footer.healthCheckups"),
+                t("footer.onlinePrescriptions"),
               ].map((service) => (
                 <li key={service}>
                   <span className="text-header-foreground/70 text-sm">{service}</span>
