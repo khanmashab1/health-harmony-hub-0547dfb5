@@ -83,7 +83,8 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("reviews").insert({
+        // Upsert: one review per patient per doctor
+        const { error } = await supabase.from("reviews").upsert({
           patient_user_id: userId,
           doctor_user_id: doctorId || null,
           appointment_id: appointmentId || null,
@@ -92,7 +93,7 @@ export function WriteReviewDialog({ open, onOpenChange, userId, userName, doctor
           comment: comment.trim(),
           status: "Approved",
           source: "internal",
-        });
+        }, { onConflict: "patient_user_id,doctor_user_id" });
 
         if (error) throw error;
       }
