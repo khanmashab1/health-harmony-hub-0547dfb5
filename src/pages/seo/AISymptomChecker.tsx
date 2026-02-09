@@ -22,6 +22,12 @@ export default function AISymptomChecker() {
             { name: "Home", url: "/" },
             { name: "AI Symptom Checker", url: "/ai-symptom-checker" },
           ]),
+          seoSchemas.faq([
+            { question: "Is the AI symptom checker free?", answer: "Yes, MediCare+'s AI Symptom Checker is completely free to use. No registration required, though signing in allows you to save your symptom history." },
+            { question: "Can the AI symptom checker replace a doctor?", answer: "No, the AI symptom checker provides preliminary insights only and does not replace professional medical diagnosis. Always consult a qualified healthcare professional for diagnosis and treatment." },
+            { question: "How accurate is the AI symptom checker?", answer: "The system uses AI combined with a curated medical knowledge base for preliminary assessment. It considers your age, gender, symptom duration, and medical history. However, it is designed for guidance only." },
+            { question: "Can I book a doctor after checking my symptoms?", answer: "Yes, after the AI analysis, you can directly browse available doctors in the recommended specialty and book an appointment — all within the same platform." },
+          ]),
         ]}
       />
 

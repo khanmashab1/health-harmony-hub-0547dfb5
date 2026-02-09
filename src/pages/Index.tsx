@@ -220,8 +220,11 @@ export default function Index() {
                 >
                   <img 
                     src={doctorConsultationImg} 
-                    alt="Doctor consulting with patient" 
+                    alt="Doctor consulting with patient at MediCare+ clinic management platform" 
                     className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl border-4 border-border/20"
+                    loading="eager"
+                    width="512"
+                    height="512"
                   />
                 </motion.div>
               </div>

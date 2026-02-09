@@ -22,6 +22,13 @@ export default function OnlineDoctorAppointmentSystem() {
             { name: "Home", url: "/" },
             { name: "Online Doctor Appointment System", url: "/online-doctor-appointment-system" },
           ]),
+          seoSchemas.faq([
+            { question: "How do I book a doctor appointment online on MediCare+?", answer: "Simply create a free account, search for a doctor by specialty or city, select a date, and confirm your booking. You'll receive a token number with an estimated consultation time." },
+            { question: "Is online doctor booking free for patients?", answer: "Yes, booking appointments on MediCare+ is completely free for patients. Doctors may charge a consultation fee which is displayed on their profile." },
+            { question: "Can I see doctor availability in real-time?", answer: "Yes, MediCare+ shows real-time doctor schedules including available slots, break times, and daily patient limits before you book." },
+            { question: "What payment methods are supported?", answer: "MediCare+ supports cash payment at the clinic, bank transfers, JazzCash, and EasyPaisa for online payments." },
+            { question: "Do I get a digital prescription after my appointment?", answer: "Yes, after your consultation, the doctor issues a digital prescription with a QR code that can be verified at any pharmacy." },
+          ]),
         ]}
       />
 

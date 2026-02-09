@@ -34,7 +34,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-header text-header-foreground">
+    <footer className="bg-header text-header-foreground" role="contentinfo">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
@@ -123,21 +123,35 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Services / SEO Pages */}
           <div>
             <h4 className="font-semibold text-lg mb-4">{t("footer.services")}</h4>
             <ul className="space-y-3">
-              {[
-                t("footer.generalConsultation"),
-                t("footer.specialistAppointments"),
-                t("footer.labTests"),
-                t("footer.healthCheckups"),
-                t("footer.onlinePrescriptions"),
-              ].map((service) => (
-                <li key={service}>
-                  <span className="text-header-foreground/70 text-sm">{service}</span>
-                </li>
-              ))}
+              <li>
+                <Link to="/online-doctor-appointment-system" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Online Doctor Appointments
+                </Link>
+              </li>
+              <li>
+                <Link to="/clinic-management-software" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Clinic Management Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/hospital-management-software" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Hospital Management System
+                </Link>
+              </li>
+              <li>
+                <Link to="/ai-symptom-checker" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  AI Symptom Checker
+                </Link>
+              </li>
+              <li>
+                <Link to="/reviews" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  Patient Reviews
+                </Link>
+              </li>
             </ul>
           </div>
 

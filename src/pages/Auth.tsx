@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -231,6 +232,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <SEOHead
+        title={mode === "signup" ? "Create Account" : mode === "reset" ? "Reset Password" : "Sign In"}
+        description="Sign in or create an account on MediCare+ to book doctor appointments, access your medical records, and manage your health."
+        noindex={true}
+      />
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand items-center justify-center p-12 relative overflow-hidden">
         {/* Decorative elements - pointer-events-none to not block input */}

@@ -112,10 +112,21 @@ export default function OurDoctors() {
         description="Browse our directory of verified doctors. Filter by specialty, city, and ratings. Book appointments online with cardiologists, neurologists, pediatricians, and more."
         keywords="find doctors online, book doctor appointment, best doctors Pakistan, cardiologist near me, pediatrician appointment, specialist doctor booking, doctor directory"
         canonicalUrl="/our-doctors"
-        jsonLd={seoSchemas.breadcrumb([
-          { name: "Home", url: "/" },
-          { name: "Our Doctors", url: "/our-doctors" },
-        ])}
+        jsonLd={[
+          seoSchemas.breadcrumb([
+            { name: "Home", url: "/" },
+            { name: "Our Doctors", url: "/our-doctors" },
+          ]),
+          ...(filteredDoctors && filteredDoctors.length > 0
+            ? [seoSchemas.itemList(
+                filteredDoctors.slice(0, 10).map((d, i) => ({
+                  name: `Dr. ${d.profile?.name || "Doctor"} - ${d.specialty}`,
+                  url: `/doctor/${d.user_id}`,
+                  position: i + 1,
+                }))
+              )]
+            : []),
+        ]}
       />
       <div className="min-h-screen">
         {/* Hero Section */}

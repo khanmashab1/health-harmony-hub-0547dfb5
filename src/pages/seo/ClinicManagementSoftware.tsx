@@ -22,6 +22,12 @@ export default function ClinicManagementSoftware() {
             { name: "Home", url: "/" },
             { name: "Clinic Management Software", url: "/clinic-management-software" },
           ]),
+          seoSchemas.faq([
+            { question: "What is clinic management software?", answer: "Clinic management software is a digital system that helps healthcare providers manage appointments, patient records, prescriptions, billing, and clinic operations from a single dashboard." },
+            { question: "Is MediCare+ suitable for small clinics in Pakistan?", answer: "Yes, MediCare+ is designed for clinics of all sizes in Pakistan — from individual practitioners to multi-doctor facilities. It runs in any browser with no installation required." },
+            { question: "Can physician assistants use MediCare+?", answer: "Yes, PAs get a dedicated dashboard to register walk-in patients, enter vitals, manage the doctor's queue, and prepare patients for consultations." },
+            { question: "Does MediCare+ support Urdu language?", answer: "Yes, MediCare+ supports both English and Urdu interfaces, making it accessible for healthcare providers and patients across Pakistan." },
+          ]),
         ]}
       />
 

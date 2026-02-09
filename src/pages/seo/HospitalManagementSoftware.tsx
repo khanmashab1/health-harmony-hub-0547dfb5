@@ -22,6 +22,11 @@ export default function HospitalManagementSoftware() {
             { name: "Home", url: "/" },
             { name: "Hospital Management Software", url: "/hospital-management-software" },
           ]),
+          seoSchemas.faq([
+            { question: "Can MediCare+ manage multiple doctors in one hospital?", answer: "Yes, the Organization Dashboard allows hospital administrators to onboard multiple doctors, assign PAs, manage department-wise schedules, and monitor performance centrally." },
+            { question: "Does MediCare+ support multi-department hospitals?", answer: "Yes, doctors can be organized by specialty departments — cardiology, neurology, pediatrics, dentistry — each with independent schedules and patient queues." },
+            { question: "How does role-based access work in MediCare+?", answer: "MediCare+ has four distinct roles — Admin, Doctor, PA, and Patient — each with specific permissions and dedicated dashboard views tailored to their workflow." },
+          ]),
         ]}
       />
 
