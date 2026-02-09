@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format, isToday, isFuture, isPast, parseISO } from "date-fns";
 import { 
   Calendar, ChevronRight, Star, Radio, Clock, 
-  CheckCircle2, XCircle, CalendarClock, Search, Users, X, AlertTriangle
+  CheckCircle2, XCircle, CalendarClock, Search, Users, X, AlertTriangle, RotateCcw
 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,8 @@ export function AppointmentsSection({
 }: AppointmentsSectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("today");
   const [patientFilter, setPatientFilter] = useState<string>("all");
@@ -368,40 +371,56 @@ export function AppointmentsSection({
                     </Button>
                   )}
                   {apt.status === "Completed" && (
-                    existingReviewForAppointment ? (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-1.5">
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-3 h-3 ${
-                                i < existingReviewForAppointment.rating
-                                  ? "text-amber-500 fill-amber-500"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
+                    <>
+                      {existingReviewForAppointment ? (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-1.5">
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3 h-3 ${
+                                  i < existingReviewForAppointment.rating
+                                    ? "text-amber-500 fill-amber-500"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-amber-700 dark:text-amber-400 font-medium">{t("appointments.reviewed")}</span>
                         </div>
-                        <span className="text-amber-700 dark:text-amber-400 font-medium">Reviewed</span>
-                      </div>
-                    ) : (
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onWriteReview(apt.doctor_user_id, apt.id);
+                          }}
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
+                        >
+                          <Star className="w-4 h-4" />
+                          <span className="hidden sm:inline ml-1">{t("appointments.review")}</span>
+                        </Button>
+                      )}
+                      {/* Rebook button */}
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onWriteReview(apt.doctor_user_id, apt.id);
+                          navigate(`/booking?doctorId=${apt.doctor_user_id}`);
                         }}
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 h-8 px-2 sm:px-3"
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10 h-8 px-2 sm:px-3"
+                        title={t("appointments.rebookDoctor")}
                       >
-                        <Star className="w-4 h-4" />
-                        <span className="hidden sm:inline ml-1">Review</span>
+                        <RotateCcw className="w-4 h-4" />
+                        <span className="hidden sm:inline ml-1">{t("appointments.rebook")}</span>
                       </Button>
-                    )
+                    </>
                   )}
                   <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
                     <Button variant="ghost" size="sm" className="hover:bg-primary/10 h-8 px-2 sm:px-3">
-                      <span className="text-xs sm:text-sm mr-1">{apt.status === "Completed" ? "View" : "Details"}</span>
+                      <span className="text-xs sm:text-sm mr-1">{apt.status === "Completed" ? t("appointments.view") : t("appointments.details")}</span>
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </Link>

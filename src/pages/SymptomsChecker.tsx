@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +28,14 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SYMPTOM_TAGS = [
+const SYMPTOM_TAG_KEYS = [
+  "headache", "fever", "cough", "fatigue", "nausea", 
+  "dizziness", "chestPain", "shortnessOfBreath", "backPain",
+  "stomachPain", "jointPain", "skinRash", "soreThroat",
+  "muscleAches", "lossOfAppetite", "insomnia", "anxiety"
+];
+
+const SYMPTOM_TAGS_EN = [
   "Headache", "Fever", "Cough", "Fatigue", "Nausea", 
   "Dizziness", "Chest Pain", "Shortness of Breath", "Back Pain",
   "Stomach Pain", "Joint Pain", "Skin Rash", "Sore Throat",
@@ -48,6 +56,7 @@ interface Analysis {
 
 export default function SymptomsChecker() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -69,7 +78,7 @@ export default function SymptomsChecker() {
 
   const handleAnalyze = async () => {
     if (!symptoms.trim() && selectedTags.length === 0) {
-      toast.error("Please describe your symptoms or select at least one symptom tag");
+      toast.error(t("symptoms.whatSymptoms"));
       return;
     }
 
@@ -83,7 +92,11 @@ export default function SymptomsChecker() {
           duration,
           severity,
           medicalHistory,
-          selectedTags
+          selectedTags: selectedTags.map((tag) => {
+            // Always send English tags to the API
+            const idx = SYMPTOM_TAG_KEYS.indexOf(tag);
+            return idx >= 0 ? SYMPTOM_TAGS_EN[idx] : tag;
+          })
         }
       });
 
@@ -167,10 +180,9 @@ export default function SymptomsChecker() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Brain className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2">AI Symptom Checker</h1>
+            <h1 className="text-3xl font-bold mb-2">{t("symptoms.title")}</h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Describe your symptoms and get AI-powered health insights. 
-              Remember, this is not a replacement for professional medical advice.
+              {t("symptoms.description")}
             </p>
           </motion.div>
 
@@ -185,9 +197,7 @@ export default function SymptomsChecker() {
               <CardContent className="flex items-start gap-3 py-4">
                 <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-700 dark:text-amber-400">
-                  <strong>Medical Disclaimer:</strong> This tool provides general health information only. 
-                  It is not a substitute for professional medical advice, diagnosis, or treatment. 
-                  Always consult a healthcare provider for medical concerns.
+                  <strong>{t("symptoms.disclaimer")}</strong> {t("symptoms.disclaimerText")}
                 </p>
               </CardContent>
             </Card>
@@ -222,17 +232,17 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Stethoscope className="w-5 h-5 text-primary" />
-                      Describe Your Symptoms
+                      {t("symptoms.describeSymptoms")}
                     </CardTitle>
                     <CardDescription>
-                      Tell us what you're experiencing. Be as specific as possible.
+                      {t("symptoms.tellUs")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
-                      <Label>What symptoms are you experiencing?</Label>
+                      <Label>{t("symptoms.whatSymptoms")}</Label>
                       <Textarea
-                        placeholder="E.g., I've had a persistent headache for 3 days, along with mild fever and fatigue..."
+                        placeholder={t("symptoms.symptomsPlaceholder")}
                         value={symptoms}
                         onChange={(e) => setSymptoms(e.target.value)}
                         className="min-h-[120px] resize-none"
@@ -240,16 +250,16 @@ export default function SymptomsChecker() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Quick select common symptoms</Label>
+                      <Label>{t("symptoms.quickSelect")}</Label>
                       <div className="flex flex-wrap gap-2">
-                        {SYMPTOM_TAGS.map((tag) => (
+                        {SYMPTOM_TAG_KEYS.map((key, idx) => (
                           <Badge
-                            key={tag}
-                            variant={selectedTags.includes(tag) ? "default" : "outline"}
+                            key={key}
+                            variant={selectedTags.includes(key) ? "default" : "outline"}
                             className="cursor-pointer transition-all hover:scale-105"
-                            onClick={() => toggleTag(tag)}
+                            onClick={() => toggleTag(key)}
                           >
-                            {tag}
+                            {t(`symptomTag.${key}`)}
                           </Badge>
                         ))}
                       </div>
@@ -260,7 +270,7 @@ export default function SymptomsChecker() {
                       className="w-full"
                       disabled={!symptoms.trim() && selectedTags.length === 0}
                     >
-                      Continue <ArrowRight className="w-4 h-4 ml-2" />
+                      {t("symptoms.continue")} <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </CardContent>
                 </Card>
@@ -279,35 +289,35 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Activity className="w-5 h-5 text-primary" />
-                      Additional Information
+                      {t("symptoms.additionalInfo")}
                     </CardTitle>
                     <CardDescription>
-                      Help us provide a more accurate analysis (optional but recommended).
+                      {t("symptoms.helpAnalysis")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="age">Age</Label>
+                        <Label htmlFor="age">{t("symptoms.yourAge")}</Label>
                         <Input
                           id="age"
                           type="number"
-                          placeholder="Enter your age"
+                          placeholder={t("symptoms.enterAge")}
                           value={age}
                           onChange={(e) => setAge(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="gender">Gender</Label>
+                        <Label htmlFor="gender">{t("common.gender")}</Label>
                         <Select value={gender} onValueChange={setGender}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
+                            <SelectValue placeholder={t("symptoms.selectGender")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                            <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                            <SelectItem value="male">{t("common.male")}</SelectItem>
+                            <SelectItem value="female">{t("common.female")}</SelectItem>
+                            <SelectItem value="other">{t("common.other")}</SelectItem>
+                            <SelectItem value="prefer-not-to-say">{t("symptoms.preferNotToSay")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -315,42 +325,42 @@ export default function SymptomsChecker() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="duration">How long have you had these symptoms?</Label>
+                        <Label htmlFor="duration">{t("symptoms.howLong")}</Label>
                         <Select value={duration} onValueChange={setDuration}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select duration" />
+                            <SelectValue placeholder={t("symptoms.selectDuration")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="less-than-day">Less than a day</SelectItem>
-                            <SelectItem value="1-3-days">1-3 days</SelectItem>
-                            <SelectItem value="4-7-days">4-7 days</SelectItem>
-                            <SelectItem value="1-2-weeks">1-2 weeks</SelectItem>
-                            <SelectItem value="more-than-2-weeks">More than 2 weeks</SelectItem>
-                            <SelectItem value="chronic">Ongoing/Chronic</SelectItem>
+                            <SelectItem value="less-than-day">{t("symptoms.lessThanDay")}</SelectItem>
+                            <SelectItem value="1-3-days">{t("symptoms.1to3Days")}</SelectItem>
+                            <SelectItem value="4-7-days">{t("symptoms.4to7Days")}</SelectItem>
+                            <SelectItem value="1-2-weeks">{t("symptoms.1to2Weeks")}</SelectItem>
+                            <SelectItem value="more-than-2-weeks">{t("symptoms.moreThan2Weeks")}</SelectItem>
+                            <SelectItem value="chronic">{t("symptoms.chronic")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="severity">Severity level</Label>
+                        <Label htmlFor="severity">{t("symptoms.severityLevel")}</Label>
                         <Select value={severity} onValueChange={setSeverity}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select severity" />
+                            <SelectValue placeholder={t("symptoms.selectSeverity")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="mild">Mild - Noticeable but not disruptive</SelectItem>
-                            <SelectItem value="moderate">Moderate - Affecting daily activities</SelectItem>
-                            <SelectItem value="severe">Severe - Significantly impacting life</SelectItem>
-                            <SelectItem value="very-severe">Very Severe - Unbearable</SelectItem>
+                            <SelectItem value="mild">{t("symptoms.mild")}</SelectItem>
+                            <SelectItem value="moderate">{t("symptoms.moderate")}</SelectItem>
+                            <SelectItem value="severe">{t("symptoms.severe")}</SelectItem>
+                            <SelectItem value="very-severe">{t("symptoms.verySevere")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="history">Relevant medical history (optional)</Label>
+                      <Label htmlFor="history">{t("symptoms.medicalHistory")}</Label>
                       <Textarea
                         id="history"
-                        placeholder="E.g., diabetes, hypertension, allergies, current medications..."
+                        placeholder={t("symptoms.medicalHistoryPlaceholder")}
                         value={medicalHistory}
                         onChange={(e) => setMedicalHistory(e.target.value)}
                         className="min-h-[80px] resize-none"
@@ -359,18 +369,18 @@ export default function SymptomsChecker() {
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                        Back
+                        {t("common.back")}
                       </Button>
                       <Button onClick={handleAnalyze} disabled={isAnalyzing} className="flex-1">
                         {isAnalyzing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Analyzing...
+                            {t("symptoms.analyzing")}
                           </>
                         ) : (
                           <>
                             <Brain className="w-4 h-4 mr-2" />
-                            Analyze Symptoms
+                            {t("symptoms.analyzeSymptoms")}
                           </>
                         )}
                       </Button>
@@ -401,13 +411,13 @@ export default function SymptomsChecker() {
                         <CheckCircle2 className="w-6 h-6" />
                       )}
                       <div>
-                        <p className="font-semibold capitalize">Urgency Level: {analysis.urgency_level}</p>
+                        <p className="font-semibold capitalize">{t("symptoms.urgencyLevel")}: {analysis.urgency_level}</p>
                         <p className="text-sm opacity-80">
                           {analysis.urgency_level === 'emergency' 
-                            ? 'Seek immediate medical attention!' 
+                            ? t("symptoms.emergency")
                             : analysis.urgency_level === 'high'
-                            ? 'Consider seeing a doctor soon'
-                            : 'Monitor symptoms and consult if they persist'}
+                            ? t("symptoms.high")
+                            : t("symptoms.low")}
                         </p>
                       </div>
                     </div>
@@ -419,10 +429,10 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Thermometer className="w-5 h-5 text-primary" />
-                      Possible Conditions
+                      {t("symptoms.possibleConditions")}
                     </CardTitle>
                     <CardDescription>
-                      Based on your symptoms, these conditions may be relevant
+                      {t("symptoms.basedOnSymptoms")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -431,7 +441,7 @@ export default function SymptomsChecker() {
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold">{condition.name}</h4>
                           <Badge className={getLikelihoodColor(condition.likelihood)}>
-                            {condition.likelihood} likelihood
+                            {condition.likelihood} {t("symptoms.likelihood")}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{condition.description}</p>
@@ -445,7 +455,7 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Pill className="w-5 h-5 text-primary" />
-                      Recommendations
+                      {t("symptoms.recommendations")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -465,7 +475,7 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-orange-600">
                       <Clock className="w-5 h-5" />
-                      When to Seek Medical Help
+                      {t("symptoms.whenToSeekMedicalHelp")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -478,7 +488,7 @@ export default function SymptomsChecker() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Lightbulb className="w-5 h-5 text-primary" />
-                      Wellness Tips
+                      {t("symptoms.wellnessTips")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -496,10 +506,10 @@ export default function SymptomsChecker() {
                 {/* Action Buttons */}
                 <div className="flex gap-4">
                   <Button variant="outline" onClick={resetChecker} className="flex-1">
-                    Check New Symptoms
+                    {t("symptoms.checkNewSymptoms")}
                   </Button>
                   <Button onClick={() => window.location.href = '/booking'} className="flex-1">
-                    Book Appointment
+                    {t("symptoms.bookAppointment")}
                   </Button>
                 </div>
               </motion.div>
