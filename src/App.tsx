@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PasswordChangeDialog } from "@/components/auth/PasswordChangeDialog";
 import Index from "./pages/Index";
@@ -50,8 +51,9 @@ function PasswordChangeWrapper({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <TooltipProvider>
-        <BrowserRouter>
+      <LanguageProvider>
+        <TooltipProvider>
+          <BrowserRouter>
           <AuthProvider>
             <Toaster />
             <Sonner />
@@ -81,9 +83,10 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PasswordChangeWrapper>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

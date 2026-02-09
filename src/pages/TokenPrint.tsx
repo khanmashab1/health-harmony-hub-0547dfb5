@@ -31,7 +31,7 @@ export default function TokenPrint() {
       // Get doctor info including payment details and consultation duration
       const { data: doctor } = await supabase
         .from("doctors")
-        .select("specialty, fee, easypaisa_number, jazzcash_number, bank_name, bank_account_number, bank_account_title, consultation_duration")
+        .select("specialty, fee, easypaisa_number, jazzcash_number, bank_name, bank_account_number, bank_account_title, consultation_duration, delay_minutes")
         .eq("user_id", data.doctor_user_id)
         .single();
 
@@ -62,12 +62,14 @@ export default function TokenPrint() {
         patientProfile = profile;
       }
 
-      // Calculate estimated time
+      // Calculate estimated time including delay
       let estimatedTime: string | null = null;
+      const delayMinutes = doctor?.delay_minutes || 0;
+      
       if (schedule?.start_time && doctor?.consultation_duration) {
         const [startHour, startMin] = schedule.start_time.split(":").map(Number);
         const tokensBefore = data.token_number - 1;
-        const totalMinutesToAdd = tokensBefore * doctor.consultation_duration;
+        const totalMinutesToAdd = (tokensBefore * doctor.consultation_duration) + delayMinutes;
         
         const estimatedDate = new Date();
         estimatedDate.setHours(startHour, startMin + totalMinutesToAdd, 0, 0);
@@ -85,6 +87,7 @@ export default function TokenPrint() {
         doctorProfile,
         patientProfile,
         estimatedTime,
+        delayMinutes,
       };
     },
   });
@@ -214,7 +217,13 @@ export default function TokenPrint() {
                   <div>
                     <p className="text-sm text-muted-foreground">Estimated Time</p>
                     <p className="font-bold text-blue-700 dark:text-blue-400">{appointment.estimatedTime}</p>
-                    <p className="text-[10px] text-muted-foreground">Approx. based on token position</p>
+                    {appointment.delayMinutes > 0 ? (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                        ⚠️ Includes +{appointment.delayMinutes} min delay (doctor running late)
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground">Approx. based on token position</p>
+                    )}
                   </div>
                 </div>
               )}

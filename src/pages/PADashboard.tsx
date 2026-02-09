@@ -58,6 +58,7 @@ import { VitalsEntryDialog } from "@/components/pa/VitalsEntryDialog";
 import { WalkInPatientDialog } from "@/components/pa/WalkInPatientDialog";
 import { exportPaymentHistoryCSV, exportPaymentHistoryPDF } from "@/lib/exportUtils";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
+import { DoctorDelayToggle } from "@/components/doctor/DoctorDelayToggle";
 
 export default function PADashboard() {
   const { user, profile, loading } = useRequireAuth(["pa"]);
@@ -112,7 +113,7 @@ export default function PADashboard() {
         
         const { data: doctors } = await supabase
           .from("doctors")
-          .select("user_id, specialty")
+          .select("user_id, specialty, delay_minutes")
           .in("user_id", doctorIds);
 
         return data.map(a => ({
@@ -585,6 +586,28 @@ export default function PADashboard() {
               </motion.div>
             ))}
           </motion.div>
+
+          {/* Doctor Delay Toggles for each assigned doctor */}
+          {assignments && assignments.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="space-y-3 mb-6"
+            >
+              {assignments.map((assignment: any) => (
+                <div key={assignment.doctor_user_id} className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground ml-1">
+                    Dr. {assignment.doctorProfile?.name} - {assignment.doctorInfo?.specialty}
+                  </p>
+                  <DoctorDelayToggle 
+                    doctorId={assignment.doctor_user_id} 
+                    currentDelay={assignment.doctorInfo?.delay_minutes || 0}
+                  />
+                </div>
+              ))}
+            </motion.div>
+          )}
 
           {/* Tabs */}
           <motion.div
