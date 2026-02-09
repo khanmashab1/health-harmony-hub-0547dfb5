@@ -150,4 +150,28 @@ export const seoSchemas = {
       item: `https://medicareplus.app${item.url}`,
     })),
   }),
+
+  faq: (questions: { question: string; answer: string }[]) => ({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: q.answer,
+      },
+    })),
+  }),
+
+  itemList: (items: { name: string; url: string; position: number }[]) => ({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items.map((item) => ({
+      "@type": "ListItem",
+      position: item.position,
+      url: `https://medicareplus.app${item.url}`,
+      name: item.name,
+    })),
+  }),
 };

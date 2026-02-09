@@ -89,7 +89,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Nav - Center */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
             <Link to="/our-doctors">
               <button
                 className={`nav-pill ${isActiveLink('/our-doctors') ? 'active' : ''}`}
