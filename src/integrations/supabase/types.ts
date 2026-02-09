@@ -1210,7 +1210,91 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      doctors_public: {
+        Row: {
+          bio: string | null
+          city: string | null
+          consultation_duration: number | null
+          created_at: string | null
+          degree: string | null
+          delay_minutes: number | null
+          experience_years: number | null
+          fee: number | null
+          image_path: string | null
+          max_patients_per_day: number | null
+          organization_id: string | null
+          province: string | null
+          qualifications: string | null
+          rating: number | null
+          selected_plan_id: string | null
+          specialty: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          city?: string | null
+          consultation_duration?: number | null
+          created_at?: string | null
+          degree?: string | null
+          delay_minutes?: number | null
+          experience_years?: number | null
+          fee?: number | null
+          image_path?: string | null
+          max_patients_per_day?: number | null
+          organization_id?: string | null
+          province?: string | null
+          qualifications?: string | null
+          rating?: number | null
+          selected_plan_id?: string | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          city?: string | null
+          consultation_duration?: number | null
+          created_at?: string | null
+          degree?: string | null
+          delay_minutes?: number | null
+          experience_years?: number | null
+          fee?: number | null
+          image_path?: string | null
+          max_patients_per_day?: number | null
+          organization_id?: string | null
+          province?: string | null
+          qualifications?: string | null
+          rating?: number | null
+          selected_plan_id?: string | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_selected_plan_id_fkey"
+            columns: ["selected_plan_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       allocate_token: {
