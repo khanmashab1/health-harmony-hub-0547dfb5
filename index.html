@@ -27,10 +27,69 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Static JSON-LD for crawlers that don't execute JavaScript -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalOrganization",
+      "name": "MediCare+",
+      "url": "https://medicareplus.app",
+      "logo": "https://medicareplus.app/logo-medicare.png",
+      "description": "Online doctor appointment system and clinic management platform with AI symptom checker. Book appointments with top-rated doctors in Pakistan.",
+      "medicalSpecialty": ["GeneralPractice", "Cardiology", "Neurology", "Pediatrics", "Ophthalmology", "Orthopedics", "Dentistry"],
+      "areaServed": {
+        "@type": "Country",
+        "name": "Pakistan"
+      },
+      "availableService": [
+        {
+          "@type": "MedicalService",
+          "name": "Online Doctor Appointment Booking",
+          "description": "Book appointments with verified doctors online. Instant confirmation, digital prescriptions, and health tracking."
+        },
+        {
+          "@type": "MedicalService",
+          "name": "AI Symptom Checker",
+          "description": "AI-powered symptom analysis tool for preliminary health insights and doctor recommendations."
+        }
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "availableLanguage": ["English", "Urdu"]
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MediCare+",
+      "url": "https://medicareplus.app",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://medicareplus.app/our-doctors?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
+    <!-- Fallback content for search engines that don't execute JavaScript -->
+    <noscript>
+      <h1>MediCare+ — Online Doctor Appointment System & Clinic Management</h1>
+      <p>Book doctor appointments online with top-rated physicians in Pakistan. Access AI-powered symptom checker, digital prescriptions, and health tracking.</p>
+      <ul>
+        <li><a href="/our-doctors">Find & Book Top Doctors Online</a></li>
+        <li><a href="/booking">Book an Appointment</a></li>
+        <li><a href="/symptoms">AI Symptom Checker — Free Health Assessment</a></li>
+        <li><a href="/reviews">Patient Reviews & Ratings</a></li>
+        <li><a href="/become-doctor">Join as a Doctor</a></li>
+      </ul>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
