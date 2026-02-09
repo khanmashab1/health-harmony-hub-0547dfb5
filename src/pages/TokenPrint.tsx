@@ -30,12 +30,12 @@ export default function TokenPrint() {
       
       if (error) throw error;
 
-      // Get doctor info including payment details and consultation duration
-      const { data: doctor } = await supabase
-        .from("doctors")
-        .select("specialty, fee, easypaisa_number, jazzcash_number, bank_name, bank_account_number, bank_account_title, consultation_duration, delay_minutes")
-        .eq("user_id", data.doctor_user_id)
-        .single();
+      // Get doctor info including payment details using secure RPC function
+      // This function validates that the caller has access to this appointment
+      const { data: doctorResult, error: doctorError } = await supabase
+        .rpc("get_doctor_payment_for_appointment", { p_appointment_id: appointmentId });
+      
+      const doctor = doctorResult && doctorResult.length > 0 ? doctorResult[0] : null;
 
       // Get doctor schedule for appointment date
       const appointmentDay = new Date(data.appointment_date).getDay();
