@@ -105,57 +105,12 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       try {
-        const html = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-              .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-              .footer { background: #1f2937; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }
-              .highlight { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f59e0b; }
-              .token { font-size: 32px; font-weight: bold; color: #d97706; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>⏰ Appointment Reminder</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${patientName},</p>
-                <p>This is a friendly reminder that you have an appointment <strong>tomorrow</strong>.</p>
-                
-                <div class="highlight">
-                  <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
-                  <p><strong>Date:</strong> ${appointmentDate}</p>
-                  <p><strong>Token Number:</strong> <span class="token">#${appointment.token_number}</span></p>
-                  ${appointment.department ? `<p><strong>Department:</strong> ${appointment.department}</p>` : ""}
-                </div>
-                
-                <p><strong>Please remember to:</strong></p>
-                <ul>
-                  <li>Arrive 15 minutes before your scheduled time</li>
-                  <li>Bring your ID and any relevant medical records</li>
-                  <li>Keep your token number handy</li>
-                  ${appointment.payment_method === "Online" && appointment.payment_status === "Pending" 
-                    ? "<li><strong>Complete your pending payment</strong></li>" 
-                    : ""}
-                </ul>
-                
-                <p>We look forward to seeing you!</p>
-                
-                <p>Best regards,<br>Medical Booking Team</p>
-              </div>
-              <div class="footer">
-                <p>This is an automated reminder. Please do not reply directly to this email.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
+        const pendingPaymentItem = appointment.payment_method === "Online" && appointment.payment_status === "Pending"
+          ? "<li><strong>Complete your pending payment</strong></li>"
+          : "";
+        const departmentLine = appointment.department ? `<p><strong>Department:</strong> ${appointment.department}</p>` : "";
+
+        const html = `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white;padding:20px;text-align:center;border-radius:8px 8px 0 0}.content{background:#f9fafb;padding:20px;border:1px solid #e5e7eb}.footer{background:#1f2937;color:#9ca3af;padding:15px;text-align:center;font-size:12px;border-radius:0 0 8px 8px}.highlight{background:#fef3c7;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #f59e0b}.token{font-size:32px;font-weight:bold;color:#d97706}</style></head><body><div class="container"><div class="header"><h1>&#9200; Appointment Reminder</h1></div><div class="content"><p>Dear ${patientName},</p><p>This is a friendly reminder that you have an appointment <strong>tomorrow</strong>.</p><div class="highlight"><p><strong>Doctor:</strong> Dr. ${doctorName}</p><p><strong>Date:</strong> ${appointmentDate}</p><p><strong>Token Number:</strong> <span class="token">#${appointment.token_number}</span></p>${departmentLine}</div><p><strong>Please remember to:</strong></p><ul><li>Arrive 15 minutes before your scheduled time</li><li>Bring your ID and any relevant medical records</li><li>Keep your token number handy</li>${pendingPaymentItem}</ul><p>We look forward to seeing you!</p><p>Best regards,<br>Medical Booking Team</p></div><div class="footer"><p>This is an automated reminder. Please do not reply directly to this email.</p></div></div></body></html>`;
 
         await client.send({
           from: gmailUser,
