@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MediCare+ | Online Doctor Appointment System & Clinic Management</title>
-    <meta name="description" content="MediCare+ is a smart healthcare platform. Book doctor appointments online, manage clinic operations, track patient health, and access AI-powered symptom analysis." />
-    <meta name="keywords" content="online doctor appointment, book doctor appointment online, clinic management software, hospital management system, AI symptom checker, healthcare platform Pakistan, medical appointment booking" />
+    <title>MediCare+ | Clinic Management Software & Online Doctor Appointment System — Pakistan</title>
+    <meta name="description" content="MediCare+ is a clinic management software and online doctor appointment platform built for healthcare providers in Pakistan. Book appointments, manage patients, issue digital prescriptions, and access AI-powered symptom analysis." />
+    <meta name="keywords" content="clinic management software, online doctor appointment system, hospital management software Pakistan, AI symptom checker, healthcare software, MediCare Plus, medicare plus app" />
     <meta name="author" content="MediCare+" />
     <meta name="theme-color" content="#0066cc" />
 
-    <meta property="og:title" content="MediCare+ | Online Doctor Appointment System" />
-    <meta property="og:description" content="Book appointments with top-rated doctors. AI symptom analysis, digital prescriptions, and health tracking — all in one platform." />
+    <meta property="og:title" content="MediCare+ | Clinic Management Software & Doctor Appointment System" />
+    <meta property="og:description" content="All-in-one healthcare software for clinics and hospitals in Pakistan. Online appointment booking, patient management, digital prescriptions, and AI symptom analysis." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://medicareplus.app" />
     <meta property="og:image" content="https://medicareplus.app/logo-medicare.png" />
@@ -18,8 +18,8 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@MediCarePlus" />
-    <meta name="twitter:title" content="MediCare+ | Online Doctor Appointment System" />
-    <meta name="twitter:description" content="Book doctor appointments online. AI symptom checker, health tracking, and clinic management." />
+    <meta name="twitter:title" content="MediCare+ | Clinic Management Software & Doctor Appointment System" />
+    <meta name="twitter:description" content="Healthcare software for clinics in Pakistan. Online doctor booking, AI symptom checker, and clinic management." />
     <meta name="twitter:image" content="https://medicareplus.app/logo-medicare.png" />
 
     <link rel="canonical" href="https://medicareplus.app" />
@@ -28,15 +28,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Static JSON-LD for crawlers that don't execute JavaScript -->
+    <!-- MedicalOrganization Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "MedicalOrganization",
       "name": "MediCare+",
+      "alternateName": ["Medicare Plus Software", "MediCare Plus App", "Medicare+ Clinic System", "MediCarePlus"],
       "url": "https://medicareplus.app",
       "logo": "https://medicareplus.app/logo-medicare.png",
-      "description": "Online doctor appointment system and clinic management platform with AI symptom checker. Book appointments with top-rated doctors in Pakistan.",
+      "description": "Clinic management software and online doctor appointment platform for healthcare providers in Pakistan. Features include appointment scheduling, patient management, digital prescriptions, and AI-powered symptom analysis.",
       "medicalSpecialty": ["GeneralPractice", "Cardiology", "Neurology", "Pediatrics", "Ophthalmology", "Orthopedics", "Dentistry"],
       "areaServed": {
         "@type": "Country",
@@ -46,12 +47,17 @@
         {
           "@type": "MedicalService",
           "name": "Online Doctor Appointment Booking",
-          "description": "Book appointments with verified doctors online. Instant confirmation, digital prescriptions, and health tracking."
+          "description": "Book appointments with verified doctors online. Instant token allocation, digital prescriptions, and health tracking."
         },
         {
           "@type": "MedicalService",
           "name": "AI Symptom Checker",
           "description": "AI-powered symptom analysis tool for preliminary health insights and doctor recommendations."
+        },
+        {
+          "@type": "MedicalService",
+          "name": "Clinic Management System",
+          "description": "Complete clinic workflow management including patient queues, doctor dashboards, and billing."
         }
       ],
       "contactPoint": {
@@ -61,11 +67,49 @@
       }
     }
     </script>
+
+    <!-- SoftwareApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "MediCare+",
+      "alternateName": ["Medicare Plus Software", "MediCare Plus App", "Medicare+ Clinic System"],
+      "url": "https://medicareplus.app",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web",
+      "description": "All-in-one clinic management software and online doctor appointment system designed for hospitals and clinics in Pakistan.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PKR",
+        "description": "Free for patients. Subscription plans available for doctors and clinics."
+      },
+      "featureList": [
+        "Online Doctor Appointment Booking",
+        "Clinic Management Dashboard",
+        "AI-Powered Symptom Checker",
+        "Digital Prescriptions with QR Verification",
+        "Patient Health Records & Tracking",
+        "Multi-Role Access (Doctor, PA, Admin, Patient)",
+        "Automated Email Notifications",
+        "Doctor Performance Analytics"
+      ],
+      "screenshot": "https://medicareplus.app/logo-medicare.png",
+      "author": {
+        "@type": "Organization",
+        "name": "MediCare+"
+      }
+    }
+    </script>
+
+    <!-- WebSite Schema with Search -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "MediCare+",
+      "alternateName": ["Medicare Plus", "MediCarePlus"],
       "url": "https://medicareplus.app",
       "potentialAction": {
         "@type": "SearchAction",
@@ -80,12 +124,16 @@
     <div id="root"></div>
     <!-- Fallback content for search engines that don't execute JavaScript -->
     <noscript>
-      <h1>MediCare+ — Online Doctor Appointment System & Clinic Management</h1>
-      <p>Book doctor appointments online with top-rated physicians in Pakistan. Access AI-powered symptom checker, digital prescriptions, and health tracking.</p>
+      <h1>MediCare+ — Clinic Management Software & Online Doctor Appointment System</h1>
+      <p>MediCare+ is a healthcare software platform built for clinics, hospitals, and patients in Pakistan. Book doctor appointments online, manage clinic operations with a powerful dashboard, issue digital prescriptions, and access an AI-powered symptom checker — all in one system.</p>
+      <h2>Key Features</h2>
       <ul>
+        <li><a href="/online-doctor-appointment-system">Online Doctor Appointment System</a> — Book verified doctors instantly</li>
+        <li><a href="/clinic-management-software">Clinic Management Software</a> — Dashboards for doctors, PAs, and admins</li>
+        <li><a href="/hospital-management-software">Hospital Management Software</a> — Multi-doctor, multi-department operations</li>
+        <li><a href="/ai-symptom-checker">AI Symptom Checker</a> — Free AI-powered health assessment</li>
         <li><a href="/our-doctors">Find & Book Top Doctors Online</a></li>
         <li><a href="/booking">Book an Appointment</a></li>
-        <li><a href="/symptoms">AI Symptom Checker — Free Health Assessment</a></li>
         <li><a href="/reviews">Patient Reviews & Ratings</a></li>
         <li><a href="/become-doctor">Join as a Doctor</a></li>
       </ul>

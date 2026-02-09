@@ -66,6 +66,7 @@ export const seoSchemas = {
     "@context": "https://schema.org",
     "@type": "MedicalOrganization",
     name: "MediCare+",
+    alternateName: ["Medicare Plus Software", "MediCare Plus App", "Medicare+ Clinic System", "MediCarePlus"],
     url: "https://medicareplus.app",
     logo: "https://medicareplus.app/logo-medicare.png",
     description: "Smart healthcare appointment management system with AI-powered symptom analysis. Book doctor appointments online, manage clinic operations, and access AI health tools.",
