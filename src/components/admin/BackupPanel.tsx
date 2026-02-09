@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Download, Database, FileJson, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Download, Database, FileJson, Loader2, CheckCircle, AlertCircle, FileCode, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,8 +30,10 @@ export function BackupPanel() {
   const { toast } = useToast();
   const [selectedTables, setSelectedTables] = useState<string[]>(TABLES.map(t => t.name));
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingSchema, setIsExportingSchema] = useState(false);
   const [progress, setProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState<"idle" | "success" | "error">("idle");
+  const [schemaExportStatus, setSchemaExportStatus] = useState<"idle" | "success" | "error">("idle");
 
   const toggleTable = (tableName: string) => {
     setSelectedTables(prev => 
@@ -42,6 +45,54 @@ export function BackupPanel() {
 
   const selectAll = () => setSelectedTables(TABLES.map(t => t.name));
   const deselectAll = () => setSelectedTables([]);
+
+  const exportSchema = async () => {
+    setIsExportingSchema(true);
+    setSchemaExportStatus("idle");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      const { data, error } = await supabase.functions.invoke("export-schema", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      // Download as SQL file
+      const blob = new Blob([data.schema], { type: "text/sql" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `medicare-schema-${new Date().toISOString().split("T")[0]}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setSchemaExportStatus("success");
+      toast({
+        title: "Schema exported",
+        description: "Complete database schema with RLS policies downloaded successfully.",
+      });
+    } catch (error: unknown) {
+      console.error("Schema export error:", error);
+      setSchemaExportStatus("error");
+      toast({
+        variant: "destructive",
+        title: "Schema export failed",
+        description: error instanceof Error ? error.message : "Failed to export schema.",
+      });
+    } finally {
+      setIsExportingSchema(false);
+    }
+  };
 
   const exportData = async () => {
     if (selectedTables.length === 0) {
@@ -230,6 +281,89 @@ export function BackupPanel() {
               </>
             )}
           </Button>
+        </div>
+
+        <Separator className="my-6" />
+
+        {/* SQL Schema Export Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+              <FileCode className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Complete SQL Schema Export</h3>
+              <p className="text-sm text-muted-foreground">
+                Download full database schema with tables, functions, RLS policies, triggers, and more
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-lg bg-muted/50 border">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant="secondary" className="gap-1">
+                <Database className="w-3 h-3" />
+                Tables & Columns
+              </Badge>
+              <Badge variant="secondary" className="gap-1">
+                <Shield className="w-3 h-3" />
+                RLS Policies
+              </Badge>
+              <Badge variant="secondary">Functions</Badge>
+              <Badge variant="secondary">Triggers</Badge>
+              <Badge variant="secondary">Views</Badge>
+              <Badge variant="secondary">Indexes</Badge>
+              <Badge variant="secondary">Foreign Keys</Badge>
+              <Badge variant="secondary">Storage Buckets</Badge>
+              <Badge variant="secondary">Enums</Badge>
+            </div>
+
+            {schemaExportStatus !== "idle" && !isExportingSchema && (
+              <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${
+                schemaExportStatus === "success" 
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" 
+                  : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              }`}>
+                {schemaExportStatus === "success" ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>SQL schema downloaded successfully!</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Schema export failed. Please try again.</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="gap-1">
+                  <FileCode className="w-3 h-3" />
+                  SQL Format
+                </Badge>
+              </div>
+              <Button
+                onClick={exportSchema}
+                disabled={isExportingSchema}
+                className="bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700"
+              >
+                {isExportingSchema ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Exporting Schema...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download SQL Schema
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
