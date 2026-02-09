@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Link } from "react-router-dom";
 import { 
   Stethoscope, 
@@ -112,6 +113,25 @@ export default function Index() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Online Doctor Appointment System & Clinic Management"
+        description="MediCare+ — Book doctor appointments online, access AI symptom checker, manage clinic operations, and track patient health. Trusted healthcare platform in Pakistan."
+        keywords="online doctor appointment, book doctor appointment online, clinic management software, hospital management system, AI symptom checker, healthcare platform Pakistan, medical appointment booking, doctor near me"
+        canonicalUrl="/"
+        jsonLd={[
+          seoSchemas.organization(),
+          seoSchemas.medicalService({
+            name: "Online Doctor Appointment Booking",
+            description: "Book appointments with top-rated doctors online. Instant confirmation, digital prescriptions, and health tracking.",
+            url: "/booking",
+          }),
+          seoSchemas.medicalService({
+            name: "AI Symptom Checker",
+            description: "AI-powered symptom analysis tool. Describe your symptoms and get preliminary health insights and doctor recommendations.",
+            url: "/symptoms",
+          }),
+        ]}
+      />
       {/* Hero Section - Theme aware */}
       <section className="relative min-h-0 md:min-h-[calc(100vh-144px)] flex items-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted dark:from-[#0a1628] dark:via-[#0d1d35] dark:to-[#0a1628]">
         {/* Subtle background elements */}

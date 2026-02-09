@@ -12,3 +12,15 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /doctor
+Disallow: /pa
+Disallow: /profile
+Disallow: /token/
+Disallow: /prescription/
+Disallow: /verify/
+Disallow: /lab-tests/
+Disallow: /print/
+Disallow: /organization
+
+Sitemap: https://medicareplus.app/sitemap.xml

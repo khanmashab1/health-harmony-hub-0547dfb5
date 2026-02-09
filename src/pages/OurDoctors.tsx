@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -106,6 +107,16 @@ export default function OurDoctors() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Find & Book Top Doctors Online"
+        description="Browse our directory of verified doctors. Filter by specialty, city, and ratings. Book appointments online with cardiologists, neurologists, pediatricians, and more."
+        keywords="find doctors online, book doctor appointment, best doctors Pakistan, cardiologist near me, pediatrician appointment, specialist doctor booking, doctor directory"
+        canonicalUrl="/our-doctors"
+        jsonLd={seoSchemas.breadcrumb([
+          { name: "Home", url: "/" },
+          { name: "Our Doctors", url: "/our-doctors" },
+        ])}
+      />
       <div className="min-h-screen">
         {/* Hero Section */}
         <section className="relative py-10 md:py-24 overflow-hidden">

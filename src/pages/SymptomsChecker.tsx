@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,17 @@ export default function SymptomsChecker() {
 
   return (
     <Layout>
+      <SEOHead
+        title="AI Symptom Checker - Free Health Assessment"
+        description="Use MediCare+ AI-powered symptom checker to get preliminary health insights. Describe your symptoms and receive AI analysis with doctor recommendations."
+        keywords="AI symptom checker, online health assessment, symptom analysis, medical symptom checker, health AI tool, check symptoms online free"
+        canonicalUrl="/symptoms"
+        jsonLd={seoSchemas.medicalService({
+          name: "AI-Powered Symptom Checker",
+          description: "Describe your symptoms and get AI-powered health analysis with personalized doctor recommendations.",
+          url: "/symptoms",
+        })}
+      />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8">
         <div className="container max-w-4xl mx-auto px-4">
           {/* Header */}
