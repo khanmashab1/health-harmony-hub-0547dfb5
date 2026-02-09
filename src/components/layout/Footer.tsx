@@ -11,11 +11,13 @@ import {
 } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useFooterSettings } from "@/hooks/useFooterSettings";
+import { useLanguage } from "@/hooks/useLanguage";
 import medicareLogo from "@/assets/medicare-logo.png";
 
 export function Footer() {
   const navigate = useNavigate();
   const { logoUrl, siteName } = useSiteSettings();
+  const { t } = useLanguage();
   const { 
     address, 
     phone, 
@@ -50,8 +52,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-header-foreground/70 text-sm leading-relaxed">
-              Your trusted healthcare partner. Book appointments with top doctors,
-              track your health metrics, and get expert medical advice.
+              {t("footer.description")}
             </p>
             <div className="flex gap-2">
               {socialLinks.length > 0 ? (
@@ -86,21 +87,21 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
+            <h4 className="font-semibold text-lg mb-4">{t("footer.quickLinks")}</h4>
             <ul className="space-y-3">
               <li>
                 <Link to="/booking" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Book Appointment
+                  {t("nav.bookAppointment")}
                 </Link>
               </li>
               <li>
-                <Link to="/booking" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Find Doctors
+                <Link to="/our-doctors" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  {t("nav.ourDoctors")}
                 </Link>
               </li>
               <li>
                 <Link to="/symptoms" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Symptoms Checker
+                  {t("nav.symptomsChecker")}
                 </Link>
               </li>
               <li>
@@ -111,12 +112,12 @@ export function Footer() {
                   }}
                   className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm text-left"
                 >
-                  Become a Doctor
+                  {t("nav.becomeDoctor")}
                 </button>
               </li>
               <li>
                 <Link to="/profile" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  My Profile
+                  {t("patient.profile")}
                 </Link>
               </li>
             </ul>
@@ -124,7 +125,7 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Our Services</h4>
+            <h4 className="font-semibold text-lg mb-4">{t("footer.services")}</h4>
             <ul className="space-y-3">
               {[
                 "General Consultation",
@@ -142,7 +143,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Contact Us</h4>
+            <h4 className="font-semibold text-lg mb-4">{t("footer.contactUs")}</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 mt-1 text-primary shrink-0" />
@@ -172,10 +173,10 @@ export function Footer() {
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-header-foreground/50 hover:text-header-foreground text-sm transition-colors">
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </a>
             <a href="#" className="text-header-foreground/50 hover:text-header-foreground text-sm transition-colors">
-              Terms of Service
+              {t("footer.termsOfService")}
             </a>
           </div>
         </div>
