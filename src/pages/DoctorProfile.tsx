@@ -1,4 +1,5 @@
 import React from "react";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -121,6 +122,24 @@ export default function DoctorProfile() {
 
   return (
     <Layout>
+      <SEOHead
+        title={`Dr. ${doctor.profile?.name || "Doctor"} - ${doctor.specialty || "Specialist"}`}
+        description={doctor.bio || `Book an appointment with Dr. ${doctor.profile?.name || "our specialist"}, ${doctor.specialty} at MediCare+. ${doctor.experience_years || 0}+ years experience. Fee: Rs ${doctor.fee}.`}
+        keywords={`Dr ${doctor.profile?.name}, ${doctor.specialty}, ${doctor.city || ""} doctor, book appointment ${doctor.specialty}, best ${doctor.specialty} Pakistan`}
+        canonicalUrl={`/doctor/${doctorId}`}
+        ogImage={imageUrl || undefined}
+        jsonLd={seoSchemas.physician({
+          name: doctor.profile?.name || "Doctor",
+          specialty: doctor.specialty || "General",
+          rating: doctor.rating,
+          reviewCount: reviews?.length || 0,
+          fee: doctor.fee,
+          city: doctor.city,
+          bio: doctor.bio,
+          imageUrl,
+          profileUrl: `/doctor/${doctorId}`,
+        })}
+      />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Back Button */}
         <Button

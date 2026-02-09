@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { Star, ArrowLeft, Quote, AlertCircle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -82,6 +83,12 @@ export default function Reviews() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Patient Reviews & Doctor Ratings"
+        description="Read verified patient reviews and ratings for doctors on MediCare+. Transparent feedback from real patients to help you choose the best doctor."
+        keywords="doctor reviews, patient feedback, doctor ratings, best rated doctors, healthcare reviews Pakistan"
+        canonicalUrl="/reviews"
+      />
       <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-background to-orange-50/20">
         <div className="container mx-auto px-4 py-12">
           {/* Header */}

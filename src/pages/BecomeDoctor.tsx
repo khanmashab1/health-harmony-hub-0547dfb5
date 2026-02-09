@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { Stethoscope, CheckCircle, FileText, Award, Clock, Users, ArrowRight, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,12 @@ export default function BecomeDoctor() {
  
   return (
     <Layout>
+      <SEOHead
+        title="Join as a Doctor - Grow Your Practice Online"
+        description="Register as a doctor on MediCare+. Manage appointments, digital prescriptions, patient queues, and grow your practice with our clinic management platform."
+        keywords="register as doctor online, join clinic management software, doctor practice management, online clinic platform, healthcare SaaS for doctors"
+        canonicalUrl="/become-doctor"
+      />
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-12 md:py-20">

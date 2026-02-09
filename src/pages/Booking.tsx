@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, isBefore, startOfToday } from "date-fns";
@@ -494,6 +495,13 @@ export default function Booking() {
 
   return (
     <Layout showFooter={false}>
+      <SEOHead
+        title="Book Doctor Appointment Online"
+        description="Book your doctor appointment online in minutes. Choose from verified specialists, pick a convenient date, and get instant confirmation. No waiting in queues."
+        keywords="book doctor appointment online, online appointment booking, doctor appointment near me, schedule doctor visit, instant appointment confirmation"
+        canonicalUrl="/booking"
+        noindex={true}
+      />
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Progress Stepper */}
