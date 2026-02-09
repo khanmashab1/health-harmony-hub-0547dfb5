@@ -9,7 +9,6 @@ const corsHeaders = {
 interface CreateDoctorRequest {
   organizationId: string;
   email: string;
-  password: string;
   name: string;
   phone?: string;
   specialty: string;
@@ -55,7 +54,6 @@ serve(async (req) => {
     const { 
       organizationId, 
       email, 
-      password, 
       name, 
       phone, 
       specialty, 
@@ -120,10 +118,9 @@ serve(async (req) => {
       );
     }
 
-    // Create the user account with doctor role
+    // Create the user account with doctor role (without password - they'll set it via reset link)
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password,
       email_confirm: true, // Auto-confirm email for org-created doctors
       user_metadata: {
         name,
@@ -198,7 +195,24 @@ serve(async (req) => {
 
     await supabaseAdmin.from("doctor_schedules").insert(defaultSchedules);
 
-    // Send welcome email with login credentials
+    // Generate password reset link (secure method - no plaintext passwords in email)
+    let resetLink = "";
+    try {
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: email,
+      });
+      
+      if (linkError) {
+        console.error("Failed to generate reset link:", linkError);
+      } else if (linkData?.properties?.action_link) {
+        resetLink = linkData.properties.action_link;
+      }
+    } catch (linkErr) {
+      console.error("Error generating reset link:", linkErr);
+    }
+
+    // Send welcome email with password reset link (NOT plaintext password)
     try {
       const emailResponse = await fetch(
         `${supabaseUrl}/functions/v1/send-email`,
@@ -210,7 +224,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             to: email,
-            subject: "Welcome to Medicare - Your Doctor Account is Ready",
+            subject: "Welcome to Medicare - Set Your Password",
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -225,25 +239,36 @@ serve(async (req) => {
                   </p>
                   
                   <div style="background: white; border: 2px solid #14b8a6; border-radius: 8px; padding: 20px; margin: 25px 0;">
-                    <h3 style="color: #0f766e; margin-top: 0; margin-bottom: 15px;">Your Login Credentials</h3>
+                    <h3 style="color: #0f766e; margin-top: 0; margin-bottom: 15px;">Your Account</h3>
                     <p style="margin: 8px 0; font-size: 15px;">
                       <strong>Email:</strong> <span style="color: #0d9488;">${email}</span>
                     </p>
-                    <p style="margin: 8px 0; font-size: 15px;">
-                      <strong>Password:</strong> <span style="color: #0d9488;">${password}</span>
+                    <p style="margin: 8px 0; font-size: 15px; color: #64748b;">
+                      Click the button below to set your password securely.
                     </p>
                   </div>
                   
-                  <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
-                    <strong>⚠️ Important:</strong> Please change your password after your first login for security purposes.
+                  ${resetLink ? `
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" 
+                       style="background: linear-gradient(135deg, #14b8a6, #0d9488); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                      Set Your Password
+                    </a>
+                  </div>
+                  <p style="font-size: 14px; color: #64748b; margin-bottom: 20px; text-align: center;">
+                    This link expires in 24 hours. If expired, use "Forgot Password" on the login page.
                   </p>
-                  
+                  ` : `
                   <div style="text-align: center; margin: 30px 0;">
                     <a href="https://medicare-nine-wine.vercel.app/auth" 
                        style="background: linear-gradient(135deg, #14b8a6, #0d9488); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
-                      Login to Your Dashboard
+                      Go to Login Page
                     </a>
                   </div>
+                  <p style="font-size: 14px; color: #64748b; margin-bottom: 20px; text-align: center;">
+                    Use "Forgot Password" to set your password securely.
+                  </p>
+                  `}
                   
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;">
                   
