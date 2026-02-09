@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface DoctorWithProfile {
   user_id: string;
@@ -47,6 +48,7 @@ interface DoctorWithProfile {
 
 export default function OurDoctors() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
@@ -111,21 +113,20 @@ export default function OurDoctors() {
           <div className="container mx-auto px-4 relative z-10 text-center">
             <Badge variant="secondary" className="mb-3 md:mb-4 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm">
               <Stethoscope className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 md:mr-1.5" />
-              Trusted Healthcare Professionals
+              {t("ourDoctors.subtitle")}
             </Badge>
             <h1 className="text-2xl md:text-5xl font-bold mb-3 md:mb-4">
-              Our <span className="text-primary">Doctors</span>
+              {t("ourDoctors.title").split(" ")[0]} <span className="text-primary">{t("ourDoctors.title").split(" ").slice(1).join(" ")}</span>
             </h1>
             <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto mb-6 md:mb-8 px-2">
-              Meet our team of experienced and qualified doctors committed to providing
-              the best healthcare services across Pakistan
+              {t("ourDoctors.description")}
             </p>
 
             {/* Search Bar */}
             <div className="max-w-xl mx-auto relative px-2">
               <Search className="absolute left-6 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
               <Input
-                placeholder="Search by name or specialty..."
+                placeholder={t("ourDoctors.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 md:pl-12 h-10 md:h-12 text-sm md:text-base rounded-full border-border/60 bg-background/80 backdrop-blur-sm"
@@ -140,14 +141,14 @@ export default function OurDoctors() {
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Filter className="w-4 h-4" />
-              <span>Filter by:</span>
+              <span>{t("ourDoctors.filterBy")}</span>
             </div>
             <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="All Specialties" />
+                <SelectValue placeholder={t("ourDoctors.allSpecialties")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Specialties</SelectItem>
+                <SelectItem value="all">{t("ourDoctors.allSpecialties")}</SelectItem>
                 {specialties.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
@@ -155,10 +156,10 @@ export default function OurDoctors() {
             </Select>
             <Select value={selectedCity} onValueChange={setSelectedCity}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="All Cities" />
+                <SelectValue placeholder={t("ourDoctors.allCities")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
+                <SelectItem value="all">{t("ourDoctors.allCities")}</SelectItem>
                 {cities.map((c) => (
                   <SelectItem key={c} value={c!}>{c}</SelectItem>
                 ))}
@@ -174,14 +175,14 @@ export default function OurDoctors() {
                   setSearchQuery("");
                 }}
               >
-                Clear Filters
+                {t("common.clearFilters")}
               </Button>
             )}
           </div>
 
           {/* Results Count */}
           <p className="text-sm text-muted-foreground mb-6">
-            Showing {filteredDoctors?.length || 0} doctor{filteredDoctors?.length !== 1 ? "s" : ""}
+            {t("ourDoctors.showingDoctors")} {filteredDoctors?.length || 0} {t("ourDoctors.doctors")}
           </p>
 
           {/* Doctor Grid */}
@@ -206,9 +207,9 @@ export default function OurDoctors() {
           ) : (
             <div className="text-center py-16">
               <User className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Doctors Found</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("ourDoctors.noDoctorsFound")}</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search or filters to find what you are looking for.
+                {t("ourDoctors.tryAdjusting")}
               </p>
             </div>
           )}

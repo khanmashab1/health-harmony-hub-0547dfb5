@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReceiptUpload } from "@/components/booking/ReceiptUpload";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function TokenPrint() {
   const { appointmentId } = useParams();
   const [showReceiptUpload, setShowReceiptUpload] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: appointment, isLoading } = useQuery({
     queryKey: ["appointment", appointmentId],

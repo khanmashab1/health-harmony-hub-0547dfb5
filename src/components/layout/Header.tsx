@@ -203,7 +203,7 @@ export function Header() {
                   <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
                     <Button variant="secondary" className="w-full justify-start gap-2">
                       <DashboardIcon className="w-4 h-4" />
-                      Dashboard
+                      {t("nav.dashboard")}
                     </Button>
                   </Link>
                   <Button
@@ -215,19 +215,19 @@ export function Header() {
                     className="w-full justify-start gap-2"
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign Out
+                    {t("nav.signOut")}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full">
-                      Sign In
+                      {t("nav.signIn")}
                     </Button>
                   </Link>
                   <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="hero" className="w-full">
-                      Get Started
+                      {t("nav.getStarted")}
                     </Button>
                   </Link>
                 </>
