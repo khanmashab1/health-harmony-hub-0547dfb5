@@ -100,14 +100,14 @@ export default function Booking() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Pre-fetch doctor if doctorId is provided in URL
+  // Pre-fetch doctor if doctorId is provided in URL - use doctors_public view
   const { data: preSelectedDoctor, isLoading: loadingPreSelectedDoctor } = useQuery({
     queryKey: ["preselected-doctor", doctorIdParam],
     queryFn: async () => {
       if (!doctorIdParam) return null;
       
       const { data: doctorData, error } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select("*")
         .eq("user_id", doctorIdParam)
         .single();
@@ -145,11 +145,11 @@ export default function Booking() {
     enabled: !!user,
   });
 
-  // Fetch doctors based on filters - MUST be called unconditionally (before any returns)
+  // Fetch doctors based on filters - use doctors_public view to avoid exposing sensitive payment info
   const { data: doctors, isLoading: loadingDoctors } = useQuery({
     queryKey: ["doctors", province, city, specialty],
     queryFn: async () => {
-      let query = supabase.from("doctors").select("*");
+      let query = supabase.from("doctors_public").select("*");
       
       if (province) query = query.eq("province", province);
       if (city) query = query.eq("city", city);

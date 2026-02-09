@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Palette, Save, Eye, RefreshCw } from "lucide-react";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -260,7 +261,7 @@ export default function AdminEmailTemplates() {
                               </DialogHeader>
                               <div 
                                 className="border rounded-lg overflow-hidden"
-                                dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewHtml) }}
                               />
                             </DialogContent>
                           </Dialog>
