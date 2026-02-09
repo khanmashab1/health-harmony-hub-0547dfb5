@@ -38,9 +38,9 @@ export function TopDoctorsSlider() {
   const { data: doctors, isLoading } = useQuery({
     queryKey: ["top-doctors-with-reviews"],
     queryFn: async () => {
-      // Get all doctors
+      // Use doctors_public view to avoid exposing sensitive payment info
       const { data: doctorsData, error: doctorsError } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select(`
           user_id,
           specialty,

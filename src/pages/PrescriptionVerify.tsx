@@ -42,9 +42,9 @@ export default function PrescriptionVerify() {
       
       if (error) throw error;
 
-      // Fetch doctor info - doctors table is publicly readable
+      // Fetch doctor info - use doctors_public view to avoid exposing sensitive payment info
       const { data: doctor } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select("specialty, degree, qualifications, city, province, fee")
         .eq("user_id", data.doctor_user_id)
         .single();

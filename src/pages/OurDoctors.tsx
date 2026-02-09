@@ -56,8 +56,9 @@ export default function OurDoctors() {
   const { data: doctors, isLoading } = useQuery({
     queryKey: ["all-doctors"],
     queryFn: async () => {
+      // Use doctors_public view to avoid exposing sensitive payment info
       const { data: doctorData, error } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select("*")
         .order("rating", { ascending: false, nullsFirst: false });
 

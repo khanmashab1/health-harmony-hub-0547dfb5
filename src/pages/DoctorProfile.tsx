@@ -40,14 +40,14 @@ export default function DoctorProfile() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [doctorId]);
 
-  // Fetch doctor details
+  // Fetch doctor details using doctors_public view to avoid exposing sensitive payment info
   const { data: doctor, isLoading: loadingDoctor } = useQuery({
     queryKey: ["doctor-profile", doctorId],
     queryFn: async () => {
       if (!doctorId) throw new Error("Doctor ID required");
       
       const { data, error } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select("*")
         .eq("user_id", doctorId)
         .single();

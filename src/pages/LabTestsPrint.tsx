@@ -22,8 +22,9 @@ export default function LabTestsPrint() {
       
       if (error) throw error;
 
+      // Use doctors_public view to avoid exposing sensitive payment info
       const { data: doctor } = await supabase
-        .from("doctors")
+        .from("doctors_public")
         .select("specialty, degree, city, province")
         .eq("user_id", data.doctor_user_id)
         .single();
