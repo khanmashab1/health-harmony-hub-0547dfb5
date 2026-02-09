@@ -109,8 +109,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Only doctors, PAs, and admins can send notifications
-    const allowedRoles = ["doctor", "pa", "admin"];
+    // Doctors, PAs, admins can send notifications; patients validated after appointment fetch
+    const allowedRoles = ["doctor", "pa", "admin", "patient"];
     if (!allowedRoles.includes(userProfile.role)) {
       console.error(`User role ${userProfile.role} not authorized to send notifications`);
       return new Response(
@@ -151,21 +151,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Appointment not found");
     }
 
-    // Additional authorization check: user must be related to the appointment
-    if (userProfile.role === "doctor" && appointment.doctor_user_id !== userId) {
-      // Check if user is a PA for this doctor
-      const { data: paAssignment } = await supabase
-        .from("pa_assignments")
-        .select("id")
-        .eq("pa_user_id", userId)
-        .eq("doctor_user_id", appointment.doctor_user_id)
-        .single();
-      
-      if (!paAssignment) {
+    // Authorization check based on role
+    if (userProfile.role === "patient") {
+      // Patients can only send notifications for their own appointments
+      if (appointment.patient_user_id !== userId) {
         return new Response(
-          JSON.stringify({ error: "Forbidden - Not authorized for this appointment" }),
+          JSON.stringify({ error: "Forbidden - Not your appointment" }),
           { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
+      }
+    } else if (userProfile.role === "doctor") {
+      // Doctor must own the appointment or be a PA for that doctor
+      if (appointment.doctor_user_id !== userId) {
+        const { data: paAssignment } = await supabase
+          .from("pa_assignments")
+          .select("id")
+          .eq("pa_user_id", userId)
+          .eq("doctor_user_id", appointment.doctor_user_id)
+          .single();
+        
+        if (!paAssignment) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden - Not authorized for this appointment" }),
+            { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
       }
     } else if (userProfile.role === "pa") {
       const { data: paAssignment } = await supabase
@@ -182,6 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
     }
+    // Admins can send any notification
 
     const patientEmail = appointment.patient_email;
     if (!patientEmail) {
