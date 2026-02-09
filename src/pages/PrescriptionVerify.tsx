@@ -33,30 +33,28 @@ export default function PrescriptionVerify() {
   const { data: appointment, isLoading, error } = useQuery({
     queryKey: ["prescription-verify", appointmentId],
     queryFn: async () => {
-      // Fetch appointment data - this is now publicly accessible
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("id", appointmentId)
-        .single();
+      // Use secure RPC function instead of direct table access
+      const { data, error } = await (supabase
+        .rpc as any)("get_prescription_verification", { p_appointment_id: appointmentId });
       
       if (error) throw error;
+      if (!data) throw new Error("Prescription not found");
 
-      // Fetch doctor info - use doctors_public view to avoid exposing sensitive payment info
-      const { data: doctor } = await supabase
-        .from("doctors_public")
-        .select("specialty, degree, qualifications, city, province, fee")
-        .eq("user_id", data.doctor_user_id)
-        .single();
-
-      // Fetch doctor profile - doctor profiles are publicly readable
-      const { data: doctorProfile } = await supabase
-        .from("profiles")
-        .select("name, phone")
-        .eq("id", data.doctor_user_id)
-        .single();
-
-      return { ...data, doctor, doctorProfile };
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      
+      return {
+        ...parsed,
+        doctor: {
+          specialty: parsed.doctor_specialty,
+          degree: parsed.doctor_degree,
+          qualifications: parsed.doctor_qualifications,
+          city: parsed.doctor_city,
+          province: parsed.doctor_province,
+        },
+        doctorProfile: {
+          name: parsed.doctor_name,
+        },
+      };
     },
   });
 
