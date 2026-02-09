@@ -104,7 +104,7 @@ export default function Index() {
         .select("*")
         .eq("status", "Approved")
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(2);
       if (error) throw error;
       return data || [];
     },
@@ -587,8 +587,8 @@ export default function Index() {
               <AlertDescription>Failed to load reviews. Please try again later.</AlertDescription>
             </Alert>
           ) : loadingReviews ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {[1, 2].map((i) => (
                 <Card key={i} className="p-6">
                   <Skeleton className="w-8 h-8 mb-4" />
                   <Skeleton className="h-4 w-full mb-2" />
@@ -599,7 +599,7 @@ export default function Index() {
             </div>
           ) : reviews && reviews.length > 0 ? (
             <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                 {reviews.map((review, index) => (
                   <motion.div
                     key={review.id}
