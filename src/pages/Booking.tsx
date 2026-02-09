@@ -304,7 +304,7 @@ export default function Booking() {
 
       if (tokenError) throw tokenError;
 
-      // Create appointment
+      // Create appointment - all bookings start as Pending until PA confirms
       const { data, error } = await supabase.from("appointments").insert({
         patient_user_id: user.id,
         doctor_user_id: selectedDoctor.user_id,
@@ -312,7 +312,7 @@ export default function Booking() {
         token_number: tokenNumber,
         department: selectedDoctor.specialty,
         reason,
-        status: paymentMethod === "Online" ? "Pending" : "Upcoming",
+        status: "Pending", // All bookings need PA confirmation
         payment_method: paymentMethod,
         payment_status: paymentMethod === "Online" ? "Pending" : "NA",
         patient_full_name: patientName,
@@ -338,8 +338,8 @@ export default function Booking() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Appointment Booked!",
-        description: `Your token number is ${data.tokenNumber}. A confirmation email has been sent.`,
+        title: "Booking Submitted!",
+        description: `Your token number is ${data.tokenNumber}. Please wait for PA confirmation before your appointment appears in the queue.`,
       });
       navigate(`/token/${data.appointment.id}`);
     },
@@ -1017,14 +1017,12 @@ export default function Booking() {
                         </p>
                       </div>
                     )}
-                    {paymentMethod === "Online" && (
-                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
-                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                          <strong>Note:</strong> After booking, you'll need to upload payment receipt. 
-                          Your appointment will be confirmed once payment is verified.
-                        </p>
-                      </div>
-                    )}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Note:</strong> Your booking will be marked as "Pending" until the clinic's staff (PA) confirms it.
+                        {paymentMethod === "Online" && " You'll also need to upload your payment receipt."}
+                      </p>
+                    </div>
                   </div>
                 )}
               </Card>
