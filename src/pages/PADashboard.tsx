@@ -87,6 +87,7 @@ export default function PADashboard() {
   // Pending payments filter state
   const [pendingSearchTerm, setPendingSearchTerm] = useState("");
   const [pendingPaymentFilter, setPendingPaymentFilter] = useState<string>("all");
+  const [pendingDateFilter, setPendingDateFilter] = useState<string>("all");
   
   // Vitals dialog state
   const [vitalsDialogOpen, setVitalsDialogOpen] = useState(false);
@@ -127,16 +128,16 @@ export default function PADashboard() {
 
   const assignedDoctorIds = assignments?.map(a => a.doctor_user_id) || [];
 
-  // Fetch pending payments (includes both Online and Cash pending)
+  // Fetch pending approvals (appointments with status "Pending" - both Cash and Online)
   const { data: pendingPayments, isLoading: loadingPayments } = useQuery({
-    queryKey: ["pa-pending-payments", assignedDoctorIds],
+    queryKey: ["pa-pending-approvals", assignedDoctorIds],
     queryFn: async () => {
       if (assignedDoctorIds.length === 0) return [];
       const { data, error } = await supabase
         .from("appointments")
         .select("*")
         .in("doctor_user_id", assignedDoctorIds)
-        .eq("payment_status", "Pending")
+        .eq("status", "Pending") // All pending approvals regardless of payment method
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -215,12 +216,12 @@ export default function PADashboard() {
     enabled: assignedDoctorIds.length > 0,
   });
 
-  // Real-time subscription for new payments
+  // Real-time subscription for new bookings
   useEffect(() => {
     if (assignedDoctorIds.length === 0) return;
 
     const channel = supabase
-      .channel('pa-payments-realtime')
+      .channel('pa-bookings-realtime')
       .on(
         'postgres_changes',
         {
@@ -232,16 +233,15 @@ export default function PADashboard() {
           const newRecord = payload.new as any;
           // Check if this appointment is for one of our assigned doctors
           if (newRecord && assignedDoctorIds.includes(newRecord.doctor_user_id)) {
-            // Show toast for new pending payments
-            if (payload.eventType === 'INSERT' || 
-                (payload.eventType === 'UPDATE' && newRecord.payment_status === 'Pending' && newRecord.payment_method === 'Online')) {
+            // Show toast for new pending approvals
+            if (payload.eventType === 'INSERT' && newRecord.status === 'Pending') {
               toast({
-                title: "New Payment Pending",
-                description: `${newRecord.patient_full_name} uploaded a receipt`,
+                title: "New Booking Pending",
+                description: `${newRecord.patient_full_name} - ${newRecord.payment_method} payment`,
               });
             }
             // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+            queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
             queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
             queryClient.invalidateQueries({ queryKey: ["pa-payment-history"] });
           }
@@ -391,9 +391,9 @@ export default function PADashboard() {
       await sendPaymentEmail(appointment, "confirmed", note);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
-      toast({ title: "Payment confirmed", description: "Email notification sent to patient" });
+      toast({ title: "Appointment approved", description: "Email notification sent to patient" });
       setConfirmDialogOpen(false);
       setSelectedPayment(null);
       setPaymentNote("");
@@ -419,8 +419,8 @@ export default function PADashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
-      toast({ title: "Payment rejected", description: "Appointment cancelled and patient notified" });
+      queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
+      toast({ title: "Booking rejected", description: "Appointment cancelled and patient notified" });
       setRejectDialogOpen(false);
       setSelectedPayment(null);
       setPaymentNote("");
@@ -440,7 +440,7 @@ export default function PADashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
       toast({ title: "Appointment cancelled" });
     },
   });
@@ -683,16 +683,39 @@ export default function PADashboard() {
                               <SelectItem value="cash">Cash</SelectItem>
                             </SelectContent>
                           </Select>
+                          <Select value={pendingDateFilter} onValueChange={setPendingDateFilter}>
+                            <SelectTrigger className="w-[140px] border-border/50">
+                              <SelectValue placeholder="Date" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Dates</SelectItem>
+                              <SelectItem value="today">Today</SelectItem>
+                              <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                              <SelectItem value="week">This Week</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {loadingPayments ? (
                           <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
                         ) : (() => {
-                          // Filter pending payments
+                          const today = startOfDay(new Date());
+                          const tomorrow = startOfDay(new Date(today.getTime() + 24 * 60 * 60 * 1000));
+                          const weekEnd = startOfDay(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000));
+                          
+                          // Filter pending appointments
                           const filtered = (pendingPayments || []).filter((payment) => {
                             // Payment type filter
                             if (pendingPaymentFilter === "online" && payment.payment_method !== "Online") return false;
                             if (pendingPaymentFilter === "cash" && payment.payment_method !== "Cash") return false;
+                            
+                            // Date filter
+                            if (pendingDateFilter !== "all") {
+                              const appointmentDate = startOfDay(new Date(payment.appointment_date));
+                              if (pendingDateFilter === "today" && appointmentDate.getTime() !== today.getTime()) return false;
+                              if (pendingDateFilter === "tomorrow" && appointmentDate.getTime() !== tomorrow.getTime()) return false;
+                              if (pendingDateFilter === "week" && (appointmentDate < today || appointmentDate >= weekEnd)) return false;
+                            }
                             
                             // Search filter (by name, token, or ID)
                             if (pendingSearchTerm) {
@@ -713,11 +736,11 @@ export default function PADashboard() {
                                   <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                                 </div>
                                 <p className="text-muted-foreground font-medium">
-                                  {pendingSearchTerm || pendingPaymentFilter !== "all" 
-                                    ? "No payments match your filters" 
-                                    : "No pending payments"}
+                                  {pendingSearchTerm || pendingPaymentFilter !== "all" || pendingDateFilter !== "all"
+                                    ? "No appointments match your filters" 
+                                    : "No pending approvals"}
                                 </p>
-                                {(pendingSearchTerm || pendingPaymentFilter !== "all") && (
+                                {(pendingSearchTerm || pendingPaymentFilter !== "all" || pendingDateFilter !== "all") && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
@@ -725,6 +748,7 @@ export default function PADashboard() {
                                     onClick={() => {
                                       setPendingSearchTerm("");
                                       setPendingPaymentFilter("all");
+                                      setPendingDateFilter("all");
                                     }}
                                   >
                                     Clear Filters

@@ -86,7 +86,7 @@ export function WalkInPatientDialog({ assignedDoctors }: WalkInPatientDialogProp
     },
     onSuccess: ({ tokenNumber, appointmentId }) => {
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["pa-pending-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
       toast({ 
         title: "Walk-in patient registered", 
         description: `Token #${tokenNumber} assigned - Payment auto-confirmed` 
