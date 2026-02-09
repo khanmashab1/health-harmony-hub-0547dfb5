@@ -157,35 +157,6 @@ export function Header() {
             )}
           </button>
         </div>
-
-        {/* Mobile Navigation Pills */}
-        <div className="md:hidden pb-3 flex gap-2 overflow-x-auto">
-          <Link to="/our-doctors">
-            <button
-              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/our-doctors') ? 'active' : ''}`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              {t("nav.ourDoctors")}
-            </button>
-          </Link>
-          <Link to="/booking">
-            <button
-              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/booking') ? 'active' : ''}`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              {t("nav.bookAppointment")}
-            </button>
-          </Link>
-          <Link to="/symptoms">
-            <button
-              className={`nav-pill whitespace-nowrap text-xs ${isActiveLink('/symptoms') ? 'active' : ''}`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {t("nav.symptomsChecker")}
-            </button>
-          </Link>
-          <LanguageToggle />
-        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -198,6 +169,37 @@ export function Header() {
             className="md:hidden border-t border-border/40 bg-background"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              {/* Navigation Links */}
+              <Link to="/our-doctors" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Users className="w-4 h-4" />
+                  {t("nav.ourDoctors")}
+                </Button>
+              </Link>
+              <Link to="/booking" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {t("nav.bookAppointment")}
+                </Button>
+              </Link>
+              <Link to="/symptoms" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Activity className="w-4 h-4" />
+                  {t("nav.symptomsChecker")}
+                </Button>
+              </Link>
+
+              <div className="border-t border-border/40 my-2" />
+
+              {/* Toggles */}
+              <div className="flex items-center gap-2 px-2">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
+
+              <div className="border-t border-border/40 my-2" />
+
+              {/* Auth Actions */}
               {user ? (
                 <>
                   <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
