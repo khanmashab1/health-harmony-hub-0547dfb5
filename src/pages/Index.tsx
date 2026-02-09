@@ -33,33 +33,35 @@ import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
 import { IntroVideo } from "@/components/home/IntroVideo";
 import { cn } from "@/lib/utils";
 import doctorConsultationImg from "@/assets/doctor-consultation.png";
-
-const specialties = [
-  { name: "General Physician", icon: Stethoscope, color: "from-primary to-primary/70" },
-  { name: "Cardiologist", icon: Heart, color: "from-red-500 to-red-400" },
-  { name: "Neurologist", icon: Brain, color: "from-purple-500 to-purple-400" },
-  { name: "Pediatrician", icon: Baby, color: "from-pink-500 to-pink-400" },
-  { name: "Ophthalmologist", icon: Eye, color: "from-blue-500 to-blue-400" },
-  { name: "Orthopedic", icon: Bone, color: "from-amber-500 to-amber-400" },
-  { name: "Dentist", icon: Smile, color: "from-green-500 to-green-400" },
-  { name: "More Specialties", icon: Activity, color: "from-gray-500 to-gray-400" },
-];
-
-const howItWorks = [
-  { step: 1, title: "Choose Specialty", description: "Select from our wide range of medical specialties" },
-  { step: 2, title: "Find a Doctor", description: "Browse qualified doctors in your area with ratings" },
-  { step: 3, title: "Pick a Date", description: "Select your preferred appointment date and time" },
-  { step: 4, title: "Confirm Booking", description: "Get your token number and appointment confirmation" },
-];
-
-const features = [
-  { icon: Shield, title: "Verified Doctors", description: "All doctors are verified and certified" },
-  { icon: Clock, title: "24/7 Support", description: "Round-the-clock medical assistance" },
-  { icon: Users, title: "10K+ Patients", description: "Trusted by thousands of patients" },
-];
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Index() {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
+
+  const specialties = [
+    { name: t("specialty.generalPhysician"), icon: Stethoscope, color: "from-primary to-primary/70", query: "General Physician" },
+    { name: t("specialty.cardiologist"), icon: Heart, color: "from-red-500 to-red-400", query: "Cardiologist" },
+    { name: t("specialty.neurologist"), icon: Brain, color: "from-purple-500 to-purple-400", query: "Neurologist" },
+    { name: t("specialty.pediatrician"), icon: Baby, color: "from-pink-500 to-pink-400", query: "Pediatrician" },
+    { name: t("specialty.ophthalmologist"), icon: Eye, color: "from-blue-500 to-blue-400", query: "Ophthalmologist" },
+    { name: t("specialty.orthopedic"), icon: Bone, color: "from-amber-500 to-amber-400", query: "Orthopedic" },
+    { name: t("specialty.dentist"), icon: Smile, color: "from-green-500 to-green-400", query: "Dentist" },
+    { name: t("home.moreSpecialties"), icon: Activity, color: "from-gray-500 to-gray-400", query: "" },
+  ];
+
+  const howItWorks = [
+    { step: 1, title: t("home.step1Title"), description: t("home.step1Desc") },
+    { step: 2, title: t("home.step2Title"), description: t("home.step2Desc") },
+    { step: 3, title: t("home.step3Title"), description: t("home.step3Desc") },
+    { step: 4, title: t("home.step4Title"), description: t("home.step4Desc") },
+  ];
+
+  const features = [
+    { icon: Shield, title: t("home.verifiedDoctors"), description: t("home.allDoctorsVerified") },
+    { icon: Clock, title: t("home.support247"), description: t("home.roundTheClock") },
+    { icon: Users, title: t("home.patientsCount"), description: t("home.trustedByThousands") },
+  ];
 
   // Fetch stats including review stats and patient count
   const { data: stats } = useQuery({
@@ -136,11 +138,11 @@ export default function Index() {
               className="space-y-4 md:space-y-6 text-center lg:text-left"
             >
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-foreground">
-                Your Health, Our <span className="text-primary">Priority</span>
+                {t("home.heroTitle")} <span className="text-primary">{t("home.heroPriority")}</span>
               </h1>
 
               <p className="text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                Book appointments with top doctors, track your health metrics, and get expert medical advice.
+                {t("home.heroDescription")}
               </p>
 
               {/* CTA Buttons */}
@@ -148,13 +150,13 @@ export default function Index() {
                 <Link to="/booking">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2">
                     <Calendar className="w-4 h-4 md:w-5 md:h-5" />
-                    Book Appointment
+                    {t("home.bookAppointment")}
                   </Button>
                 </Link>
                 <Link to="/symptoms">
                   <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 border-primary/50 text-primary hover:bg-primary/10">
                     <Activity className="w-4 h-4 md:w-5 md:h-5" />
-                    Check Symptoms
+                    {t("home.checkSymptoms")}
                   </Button>
                 </Link>
               </div>
@@ -163,18 +165,18 @@ export default function Index() {
               <div className="flex flex-wrap gap-4 md:gap-8 pt-4 md:pt-6 justify-center lg:justify-start">
                 <div className="text-center">
                   <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.doctors || 0}+</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Expert Doctors</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{t("home.expertDoctors")}</p>
                 </div>
                 <div className="text-center">
                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
-                   <p className="text-xs md:text-sm text-muted-foreground">Our Patients</p>
+                   <p className="text-xs md:text-sm text-muted-foreground">{t("home.ourPatients")}</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
                     <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.rating || "4.8"}</p>
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Average Rating</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{t("home.averageRating")}</p>
                 </div>
               </div>
             </motion.div>
@@ -232,28 +234,27 @@ export default function Index() {
                 <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
                   <Stethoscope className="w-5 h-5 text-primary-foreground" />
                   <span className="text-sm font-medium text-primary-foreground/80 uppercase tracking-wider">
-                    Join Our Team
+                    {t("home.joinTeam")}
                   </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
-                  Become a Doctor
+                  {t("home.becomeDoctor")}
                 </h2>
                 <p className="text-primary-foreground/80 text-sm md:text-base leading-relaxed">
-                  Join our growing network of healthcare professionals. Manage your practice, 
-                  reach more patients, and make a difference in people's lives.
+                  {t("home.becomeDoctorDesc")}
                 </p>
                 <div className="flex flex-wrap gap-4 mt-4 justify-center md:justify-start">
                   <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Easy Setup</span>
+                    <span>{t("home.easySetup")}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Queue Management</span>
+                    <span>{t("home.queueManagement")}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-primary-foreground/90 text-xs md:text-sm">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Digital Prescriptions</span>
+                    <span>{t("home.digitalPrescriptions")}</span>
                   </div>
                 </div>
               </div>
@@ -264,7 +265,7 @@ export default function Index() {
                     size="lg" 
                     className="bg-white text-primary hover:bg-white/90 font-semibold gap-2 shadow-xl px-6 md:px-8"
                   >
-                    Apply Now
+                    {t("home.applyNow")}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
@@ -291,14 +292,13 @@ export default function Index() {
               transition={{ delay: 0.2 }}
               className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
             >
-              Our Specialties
+              {t("home.ourSpecialties")}
             </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Find Doctors by <span className="gradient-text">Specialty</span>
+              {t("home.findBySpecialty")}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Choose from a wide range of medical specialties and book appointments 
-              with experienced healthcare professionals.
+              {t("home.specialtyDescription")}
             </p>
           </motion.div>
 
@@ -316,7 +316,7 @@ export default function Index() {
                 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
-                <Link to={`/booking?specialty=${encodeURIComponent(specialty.name)}`}>
+                <Link to={specialty.query ? `/booking?specialty=${encodeURIComponent(specialty.query)}` : '/booking'}>
                   <Card variant="interactive" className="text-center p-6 h-full bg-card group">
                     <motion.div 
                       className={`w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br ${specialty.color} flex items-center justify-center mb-4 shadow-lg`}
@@ -351,13 +351,13 @@ export default function Index() {
               transition={{ delay: 0.2 }}
               className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
             >
-              Simple Process
+              {t("home.simpleProcess")}
             </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              How It <span className="gradient-text">Works</span>
+              {t("home.howItWorks")}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Book your appointment in just a few simple steps
+              {t("home.bookInSteps")}
             </p>
           </motion.div>
 

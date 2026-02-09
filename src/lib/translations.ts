@@ -387,6 +387,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.contactUs": "Contact Us",
     "footer.copyright": "All rights reserved.",
     "footer.description": "Your trusted healthcare partner providing quality medical services across Pakistan.",
+    "footer.generalConsultation": "General Consultation",
+    "footer.specialistAppointments": "Specialist Appointments",
+    "footer.labTests": "Lab Tests",
+    "footer.healthCheckups": "Health Checkups",
+    "footer.onlinePrescriptions": "Online Prescriptions",
 
     // Reviews Page
     "reviews.title": "Patient Reviews",
@@ -816,6 +821,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.contactUs": "ہم سے رابطہ کریں",
     "footer.copyright": "جملہ حقوق محفوظ ہیں۔",
     "footer.description": "پاکستان بھر میں معیاری طبی خدمات فراہم کرنے والا آپ کا قابل اعتماد صحت کا ساتھی۔",
+    "footer.generalConsultation": "عمومی مشاورت",
+    "footer.specialistAppointments": "ماہر اپائنٹمنٹس",
+    "footer.labTests": "لیبارٹری ٹیسٹ",
+    "footer.healthCheckups": "صحت کی جانچ",
+    "footer.onlinePrescriptions": "آن لائن نسخے",
 
     // Reviews Page
     "reviews.title": "مریضوں کے جائزے",
