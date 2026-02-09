@@ -65,9 +65,10 @@ const steps = [
   { id: 1, title: "Location", icon: MapPin },
   { id: 2, title: "Specialty", icon: Stethoscope },
   { id: 3, title: "Doctor", icon: User },
-  { id: 4, title: "Date", icon: CalendarIcon },
-  { id: 5, title: "Payment", icon: CreditCard },
-  { id: 6, title: "Confirm", icon: CheckCircle2 },
+  { id: 4, title: "Patient", icon: Users },
+  { id: 5, title: "Date", icon: CalendarIcon },
+  { id: 6, title: "Payment", icon: CreditCard },
+  { id: 7, title: "Confirm", icon: CheckCircle2 },
 ];
 
 export default function Booking() {
@@ -352,14 +353,14 @@ export default function Booking() {
     },
   });
 
-  // Auto-select doctor and skip to date step when doctor is preloaded
+  // Auto-select doctor and skip to patient selection step when doctor is preloaded
   useEffect(() => {
     if (preSelectedDoctor && !doctorPreloaded) {
       setSelectedDoctor(preSelectedDoctor);
       setProvince(preSelectedDoctor.province || "");
       setCity(preSelectedDoctor.city || "");
       setSpecialty(preSelectedDoctor.specialty || "");
-      setStep(4); // Skip directly to date selection
+      setStep(4); // Skip directly to patient selection
       setDoctorPreloaded(true);
     }
   }, [preSelectedDoctor, doctorPreloaded]);
@@ -456,7 +457,7 @@ export default function Booking() {
   };
 
   const handleNext = () => {
-    if (step < 6) setStep(step + 1);
+    if (step < 7) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -484,8 +485,9 @@ export default function Booking() {
       case 1: return province && city;
       case 2: return specialty;
       case 3: return selectedDoctor;
-      case 4: return selectedDate && availableSlots && availableSlots > 0 && !existingAppointment;
-      case 5: return paymentMethod && patientName && patientPhone;
+      case 4: return patientName && patientPhone; // Patient selection step
+      case 5: return selectedDate && availableSlots && availableSlots > 0 && !existingAppointment; // Date step
+      case 6: return paymentMethod; // Payment step
       default: return true;
     }
   };
@@ -743,10 +745,116 @@ export default function Booking() {
                   </div>
                 )}
 
-                {/* Step 4: Date Selection */}
+                {/* Step 4: Patient Selection */}
                 {step === 4 && (
                   <div className="space-y-6">
-                    {/* Selected Doctor Summary Card */}
+                    <div className="text-center mb-4">
+                      <Users className="w-12 h-12 text-primary mx-auto mb-2" />
+                      <h3 className="text-lg font-semibold">Who is this appointment for?</h3>
+                      <p className="text-sm text-muted-foreground">Select the patient for this booking</p>
+                    </div>
+                    
+                    {/* Patient Selection Cards */}
+                    <div className="space-y-3">
+                      {/* Self option */}
+                      <button
+                        onClick={() => {
+                          setSelectedPatientType("self");
+                          setPatientName(profile?.name || "");
+                          setPatientPhone(profile?.phone || "");
+                        }}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          selectedPatientType === "self"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <User className="w-6 h-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold">{profile?.name || "Myself"}</p>
+                            <p className="text-sm text-muted-foreground">Self (Primary Account)</p>
+                          </div>
+                          {selectedPatientType === "self" && (
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Managed Patients */}
+                      {managedPatients && managedPatients.map((patient) => (
+                        <button
+                          key={patient.id}
+                          onClick={() => {
+                            setSelectedPatientType(patient.id);
+                            setPatientName(patient.patient_name);
+                            setPatientPhone(profile?.phone || "");
+                          }}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                            selectedPatientType === patient.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                              <Users className="w-6 h-6 text-blue-500" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{patient.patient_name}</p>
+                              <p className="text-sm text-muted-foreground">{patient.relationship}</p>
+                            </div>
+                            {selectedPatientType === patient.id && (
+                              <CheckCircle2 className="w-5 h-5 text-primary" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Patient Details Form */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="font-medium text-sm text-muted-foreground">Patient Details</h4>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Full Name *</Label>
+                          <Input
+                            value={patientName}
+                            onChange={(e) => setPatientName(e.target.value)}
+                            placeholder="Patient full name"
+                            className="mt-2"
+                          />
+                        </div>
+                        <div>
+                          <Label>Phone Number *</Label>
+                          <Input
+                            value={patientPhone}
+                            onChange={(e) => setPatientPhone(e.target.value)}
+                            placeholder="+92 300 1234567"
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={patientEmail}
+                          onChange={(e) => setPatientEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Date Selection */}
+                {step === 5 && (
+                  <div className="space-y-6">
+                    {/* Selected Doctor & Patient Summary Card */}
                     {selectedDoctor && (
                       <div className="p-4 rounded-xl border bg-muted/50 space-y-4">
                         <div className="flex items-center gap-4">
@@ -768,14 +876,13 @@ export default function Booking() {
                             <p className="font-semibold truncate">
                               Dr. {selectedDoctor.profile?.name || "Doctor"}
                             </p>
+                            <p className="text-sm text-muted-foreground">
+                              Patient: <span className="font-medium text-foreground">{patientName}</span>
+                            </p>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Stethoscope className="w-3.5 h-3.5" />
                                 {selectedDoctor.specialty}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                {selectedDoctor.rating || 4.0}
                               </span>
                               <span className="font-medium text-primary">
                                 Rs. {selectedDoctor.fee}
@@ -785,10 +892,7 @@ export default function Booking() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => {
-                              setDoctorPreloaded(false);
-                              setStep(3);
-                            }}
+                            onClick={() => setStep(4)}
                           >
                             Change
                           </Button>
@@ -818,7 +922,7 @@ export default function Booking() {
                             {format(selectedDate, "EEEE, MMMM d, yyyy")}
                           </p>
                           {availableSlots !== undefined && !existingAppointment && (
-                            <p className={`text-center mt-2 ${availableSlots > 0 ? "text-green-600" : "text-red-600"}`}>
+                            <p className={`text-center mt-2 ${availableSlots > 0 ? "text-green-600" : "text-destructive"}`}>
                               {availableSlots > 0 
                                 ? `${availableSlots} slots available`
                                 : "No slots available for this date"
@@ -830,7 +934,7 @@ export default function Booking() {
                               <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
                                 <Info className="w-4 h-4 shrink-0" />
                                 <span>
-                                  {patientName || "You"} already have a booking on {format(selectedDate, "MMM d, yyyy")}. Only one appointment per day is allowed. Please choose a different date.
+                                  {patientName} already has a booking on {format(selectedDate, "MMM d, yyyy")}. Only one appointment per day is allowed. Please choose a different date.
                                 </span>
                               </p>
                             </div>
@@ -841,116 +945,44 @@ export default function Booking() {
                   </div>
                 )}
 
-                {/* Step 5: Payment & Details */}
-                {step === 5 && (
+                {/* Step 6: Payment Method */}
+                {step === 6 && (
                   <div className="space-y-6">
-                    {/* Patient Selection */}
-                    {managedPatients && managedPatients.length > 0 && (
-                      <div>
-                        <Label className="flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          Booking for
-                        </Label>
-                        <Select 
-                          value={selectedPatientType} 
-                          onValueChange={(value) => {
-                            setSelectedPatientType(value);
-                            if (value === "self") {
-                              setPatientName(profile?.name || "");
-                              setPatientPhone(profile?.phone || "");
-                            } else {
-                              const patient = managedPatients.find(p => p.id === value);
-                              if (patient) {
-                                setPatientName(patient.patient_name);
-                                // Keep phone from profile as managed patients don't have separate phones
-                                setPatientPhone(profile?.phone || "");
-                              }
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Select patient" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="self">
-                              <span className="flex items-center gap-2">
-                                <User className="w-4 h-4" />
-                                Myself ({profile?.name || "Self"})
-                              </span>
-                            </SelectItem>
-                            {managedPatients.map((patient) => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                <span className="flex items-center gap-2">
-                                  <Users className="w-4 h-4" />
-                                  {patient.patient_name} ({patient.relationship})
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                    <div className="text-center mb-4">
+                      <CreditCard className="w-12 h-12 text-primary mx-auto mb-2" />
+                      <h3 className="text-lg font-semibold">Select Payment Method</h3>
+                      <p className="text-sm text-muted-foreground">Choose how you'd like to pay for this consultation</p>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("Cash")}
+                        className={`flex flex-col items-center justify-center rounded-xl border-2 p-6 transition-all cursor-pointer ${
+                          paymentMethod === "Cash" 
+                            ? "border-primary bg-primary/5" 
+                            : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <Banknote className="mb-3 h-10 w-10" />
+                        <span className="font-medium">Pay at Clinic</span>
+                        <span className="text-xs text-muted-foreground mt-1">Cash on arrival</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("Online")}
+                        className={`flex flex-col items-center justify-center rounded-xl border-2 p-6 transition-all cursor-pointer ${
+                          paymentMethod === "Online" 
+                            ? "border-primary bg-primary/5" 
+                            : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <Smartphone className="mb-3 h-10 w-10" />
+                        <span className="font-medium">Online Payment</span>
+                        <span className="text-xs text-muted-foreground mt-1">Upload receipt</span>
+                      </button>
+                    </div>
 
-                    <div>
-                      <Label>Payment Method</Label>
-                      <div className="grid grid-cols-2 gap-4 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod("Cash")}
-                          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all cursor-pointer ${
-                            paymentMethod === "Cash" 
-                              ? "border-primary bg-primary/5" 
-                              : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
-                          }`}
-                        >
-                          <Banknote className="mb-3 h-8 w-8" />
-                          <span className="font-medium">Pay at Clinic</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod("Online")}
-                          className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all cursor-pointer ${
-                            paymentMethod === "Online" 
-                              ? "border-primary bg-primary/5" 
-                              : "border-muted bg-popover hover:bg-accent hover:text-accent-foreground"
-                          }`}
-                        >
-                          <Smartphone className="mb-3 h-8 w-8" />
-                          <span className="font-medium">Online Payment</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Full Name *</Label>
-                        <Input
-                          value={patientName}
-                          onChange={(e) => setPatientName(e.target.value)}
-                          placeholder="Patient full name"
-                          className="mt-2"
-                        />
-                      </div>
-                      <div>
-                        <Label>Phone Number *</Label>
-                        <Input
-                          value={patientPhone}
-                          onChange={(e) => setPatientPhone(e.target.value)}
-                          placeholder="+92 300 1234567"
-                          className="mt-2"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Email</Label>
-                      <Input
-                        type="email"
-                        value={patientEmail}
-                        onChange={(e) => setPatientEmail(e.target.value)}
-                        placeholder="your@email.com"
-                        className="mt-2"
-                      />
-                    </div>
                     <div>
                       <Label>Reason for Visit (Optional)</Label>
                       <Textarea
@@ -960,17 +992,28 @@ export default function Booking() {
                         className="mt-2"
                       />
                     </div>
+
+                    <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Info className="w-4 h-4 shrink-0" />
+                        <span>All bookings require PA confirmation before appearing in the doctor's queue.</span>
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Step 6: Confirmation */}
-                {step === 6 && (
+                {/* Step 7: Confirmation */}
+                {step === 7 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
                       <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
                       <h3 className="text-xl font-bold">Review Your Booking</h3>
                     </div>
                     <div className="grid gap-4 p-4 bg-muted rounded-xl">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Patient</span>
+                        <span className="font-medium">{patientName}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Doctor</span>
                         <span className="font-medium">Dr. {selectedDoctor?.profile?.name}</span>
@@ -1040,7 +1083,7 @@ export default function Booking() {
               Back
             </Button>
             
-            {step < 6 ? (
+            {step < 7 ? (
               <Button
                 variant="hero"
                 onClick={handleNext}
