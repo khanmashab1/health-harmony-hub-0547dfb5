@@ -106,54 +106,9 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       try {
-        const html = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-              .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-              .footer { background: #1f2937; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }
-              .highlight { background: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #3b82f6; }
-              .btn { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>📅 Follow-up Reminder</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${patientName},</p>
-                <p>This is a friendly reminder that you have a scheduled follow-up appointment coming up in <strong>3 days</strong>.</p>
-                
-                <div class="highlight">
-                  <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
-                  <p><strong>Follow-up Date:</strong> ${followUpDate}</p>
-                  ${appointment.department ? `<p><strong>Department:</strong> ${appointment.department}</p>` : ""}
-                </div>
-                
-                <p>Please make sure to:</p>
-                <ul>
-                  <li>Book your follow-up appointment if you haven't already</li>
-                  <li>Bring any updated lab reports or test results</li>
-                  <li>Prepare a list of any new symptoms or concerns</li>
-                  <li>Continue taking prescribed medications as directed</li>
-                </ul>
-                
-                <p>If you need to reschedule or have any questions, please contact us.</p>
-                
-                <p>Best regards,<br>Medical Booking Team</p>
-              </div>
-              <div class="footer">
-                <p>This is an automated reminder. Please do not reply directly to this email.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
+        const departmentLine = appointment.department ? `<p><strong>Department:</strong> ${appointment.department}</p>` : "";
+
+        const html = `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#3b82f6,#60a5fa);color:white;padding:20px;text-align:center;border-radius:8px 8px 0 0}.content{background:#f9fafb;padding:20px;border:1px solid #e5e7eb}.footer{background:#1f2937;color:#9ca3af;padding:15px;text-align:center;font-size:12px;border-radius:0 0 8px 8px}.highlight{background:#dbeafe;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #3b82f6}</style></head><body><div class="container"><div class="header"><h1>&#128197; Follow-up Reminder</h1></div><div class="content"><p>Dear ${patientName},</p><p>This is a friendly reminder that you have a scheduled follow-up appointment coming up in <strong>3 days</strong>.</p><div class="highlight"><p><strong>Doctor:</strong> Dr. ${doctorName}</p><p><strong>Follow-up Date:</strong> ${followUpDate}</p>${departmentLine}</div><p>Please make sure to:</p><ul><li>Book your follow-up appointment if you haven't already</li><li>Bring any updated lab reports or test results</li><li>Prepare a list of any new symptoms or concerns</li><li>Continue taking prescribed medications as directed</li></ul><p>If you need to reschedule or have any questions, please contact us.</p><p>Best regards,<br>Medical Booking Team</p></div><div class="footer"><p>This is an automated reminder. Please do not reply directly to this email.</p></div></div></body></html>`;
 
         await client.send({
           from: gmailUser,
