@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { CalendarCheck, Shield, Clock, Smartphone, Star, Stethoscope } from "lucide-react";
+import { CalendarCheck, Shield, Clock, Smartphone, Star, Stethoscope, ArrowRight } from "lucide-react";
 
 export default function OnlineDoctorAppointmentSystem() {
   return (
@@ -10,7 +10,7 @@ export default function OnlineDoctorAppointmentSystem() {
       <SEOHead
         title="Online Doctor Appointment System"
         description="Book doctor appointments online with MediCare+. Verified doctors in Pakistan, instant token allocation, digital prescriptions, and real-time queue tracking. Free for patients."
-        keywords="online doctor appointment system, book doctor appointment online Pakistan, doctor booking platform, healthcare appointment software"
+        keywords="online doctor appointment system, book doctor appointment online Pakistan, doctor booking platform, healthcare appointment software, doctor appointment app, online consultation booking Pakistan, best doctor appointment system Lahore Karachi Islamabad"
         canonicalUrl="/online-doctor-appointment-system"
         jsonLd={[
           seoSchemas.medicalService({
@@ -22,12 +22,26 @@ export default function OnlineDoctorAppointmentSystem() {
             { name: "Home", url: "/" },
             { name: "Online Doctor Appointment System", url: "/online-doctor-appointment-system" },
           ]),
+          seoSchemas.howTo({
+            name: "How to Book a Doctor Appointment Online on MediCare+",
+            description: "Step-by-step guide to booking a doctor appointment online using MediCare+.",
+            steps: [
+              { name: "Create a Free Account", text: "Sign up on MediCare+ with your email. Registration is free for all patients." },
+              { name: "Search for a Doctor", text: "Browse doctors by specialty, city, or name. View ratings, fees, and availability." },
+              { name: "Select a Date", text: "Choose an available date from the doctor's schedule. See real-time slot availability." },
+              { name: "Confirm Your Booking", text: "Select your payment method and confirm. You'll receive a token number with estimated consultation time." },
+              { name: "Visit the Doctor", text: "Arrive at your estimated time. After consultation, receive a digital prescription with QR verification." },
+            ],
+          }),
           seoSchemas.faq([
             { question: "How do I book a doctor appointment online on MediCare+?", answer: "Simply create a free account, search for a doctor by specialty or city, select a date, and confirm your booking. You'll receive a token number with an estimated consultation time." },
             { question: "Is online doctor booking free for patients?", answer: "Yes, booking appointments on MediCare+ is completely free for patients. Doctors may charge a consultation fee which is displayed on their profile." },
             { question: "Can I see doctor availability in real-time?", answer: "Yes, MediCare+ shows real-time doctor schedules including available slots, break times, and daily patient limits before you book." },
             { question: "What payment methods are supported?", answer: "MediCare+ supports cash payment at the clinic, bank transfers, JazzCash, and EasyPaisa for online payments." },
             { question: "Do I get a digital prescription after my appointment?", answer: "Yes, after your consultation, the doctor issues a digital prescription with a QR code that can be verified at any pharmacy." },
+            { question: "Can I book appointments in Lahore, Karachi, or Islamabad?", answer: "Yes, MediCare+ has verified doctors across major cities in Pakistan including Lahore, Karachi, Islamabad, Rawalpindi, Faisalabad, and more." },
+            { question: "Does MediCare+ support Urdu language?", answer: "Yes, the entire platform is available in both English and Urdu, making it accessible for all patients across Pakistan." },
+            { question: "Can I track my position in the queue?", answer: "Yes, after booking you can see your live queue position and estimated wait time from your patient dashboard." },
           ]),
         ]}
       />
@@ -58,6 +72,26 @@ export default function OnlineDoctorAppointmentSystem() {
           <p className="text-muted-foreground leading-relaxed">
             Doctors receive instant notifications for new appointments and can manage their daily patient queue through a dedicated dashboard. The system supports both online payment verification and walk-in patients managed by a physician assistant (PA).
           </p>
+        </section>
+
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Step-by-Step: Book Your Appointment</h2>
+          <div className="space-y-4">
+            {[
+              { step: "1", title: "Create a Free Account", desc: "Sign up with your email in seconds. No charges, no hidden fees." },
+              { step: "2", title: "Search for a Doctor", desc: "Browse by specialty (cardiologist, dentist, neurologist) or city (Lahore, Karachi, Islamabad)." },
+              { step: "3", title: "Check Availability & Book", desc: "View real-time schedules, select a date, choose your payment method, and confirm." },
+              { step: "4", title: "Get Your Token & Visit", desc: "Receive a token number with estimated time. After consultation, get a digital prescription." },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-4 items-start p-4 rounded-xl border border-border/50 bg-card/50">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">{item.step}</span>
+                <div>
+                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mb-12">
@@ -104,6 +138,25 @@ export default function OnlineDoctorAppointmentSystem() {
           <p className="text-muted-foreground leading-relaxed">
             Doctors get a powerful dashboard to manage appointments, write prescriptions, order lab tests, and track patient history. Set your own schedule, consultation fees, break times, and daily patient limits. The system handles token allocation automatically and sends email reminders to patients. Clinic administrators can manage multiple doctors, assign physician assistants, and view performance analytics — all from one platform.
           </p>
+        </section>
+
+        {/* Related Pages */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Explore More MediCare+ Solutions</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { title: "Clinic Management Software", desc: "Complete dashboard for doctors, PAs, and clinic admins.", url: "/clinic-management-software" },
+              { title: "Hospital Management Software", desc: "Multi-doctor, multi-department hospital operations.", url: "/hospital-management-software" },
+              { title: "AI Symptom Checker", desc: "Free AI-powered health assessment tool.", url: "/ai-symptom-checker" },
+            ].map((page) => (
+              <Link key={page.url} to={page.url} className="group p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 transition-colors">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                  {page.title} <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">{page.desc}</p>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-2xl bg-primary/5 border border-primary/20 p-8">

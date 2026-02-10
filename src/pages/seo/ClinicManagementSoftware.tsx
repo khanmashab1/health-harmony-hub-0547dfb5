@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, BarChart3, Bell, Settings } from "lucide-react";
+import { LayoutDashboard, Users, FileText, BarChart3, Bell, Settings, ArrowRight } from "lucide-react";
 
 export default function ClinicManagementSoftware() {
   return (
@@ -10,7 +10,7 @@ export default function ClinicManagementSoftware() {
       <SEOHead
         title="Clinic Management Software"
         description="MediCare+ clinic management software for healthcare providers in Pakistan. Manage appointments, patient queues, digital prescriptions, doctor schedules, and clinic analytics from one dashboard."
-        keywords="clinic management software, clinic management system Pakistan, doctor practice management, patient queue management software, healthcare CRM"
+        keywords="clinic management software, clinic management system Pakistan, doctor practice management, patient queue management software, healthcare CRM, clinic software Lahore, best clinic management system, doctor dashboard software, prescription management system"
         canonicalUrl="/clinic-management-software"
         jsonLd={[
           seoSchemas.medicalService({
@@ -22,11 +22,25 @@ export default function ClinicManagementSoftware() {
             { name: "Home", url: "/" },
             { name: "Clinic Management Software", url: "/clinic-management-software" },
           ]),
+          seoSchemas.softwareApplication(),
+          seoSchemas.howTo({
+            name: "How to Set Up MediCare+ for Your Clinic",
+            description: "Step-by-step guide to getting your clinic running on MediCare+.",
+            steps: [
+              { name: "Register as a Doctor", text: "Apply online with your medical credentials. Admin reviews and approves your application." },
+              { name: "Configure Your Schedule", text: "Set your working hours, break times, consultation duration, and maximum daily patients." },
+              { name: "Set Payment Methods", text: "Add your bank account, JazzCash, or EasyPaisa details for patient payments." },
+              { name: "Assign a Physician Assistant", text: "Optionally add a PA to manage walk-ins, enter vitals, and handle your patient queue." },
+              { name: "Start Accepting Patients", text: "Your profile goes live on the doctor directory. Patients can find and book you instantly." },
+            ],
+          }),
           seoSchemas.faq([
             { question: "What is clinic management software?", answer: "Clinic management software is a digital system that helps healthcare providers manage appointments, patient records, prescriptions, billing, and clinic operations from a single dashboard." },
             { question: "Is MediCare+ suitable for small clinics in Pakistan?", answer: "Yes, MediCare+ is designed for clinics of all sizes in Pakistan — from individual practitioners to multi-doctor facilities. It runs in any browser with no installation required." },
             { question: "Can physician assistants use MediCare+?", answer: "Yes, PAs get a dedicated dashboard to register walk-in patients, enter vitals, manage the doctor's queue, and prepare patients for consultations." },
             { question: "Does MediCare+ support Urdu language?", answer: "Yes, MediCare+ supports both English and Urdu interfaces, making it accessible for healthcare providers and patients across Pakistan." },
+            { question: "How much does MediCare+ cost for doctors?", answer: "MediCare+ is free for patients. Doctors can start with a basic plan and upgrade to access premium features like advanced analytics, higher patient limits, and organization management." },
+            { question: "Can I generate digital prescriptions?", answer: "Yes, doctors can create professional prescriptions with medicine search, dosage instructions, and QR-code verification that pharmacies can scan to verify authenticity." },
           ]),
         ]}
       />
@@ -57,6 +71,27 @@ export default function ClinicManagementSoftware() {
           <p className="text-muted-foreground leading-relaxed">
             Our multi-role architecture means every stakeholder — doctor, physician assistant, clinic admin, and patient — gets a dedicated dashboard designed for their specific workflow. No feature bloat, no unnecessary complexity.
           </p>
+        </section>
+
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Get Your Clinic Running in 5 Steps</h2>
+          <div className="space-y-4">
+            {[
+              { step: "1", title: "Register as a Doctor", desc: "Apply online with your medical credentials. Admin reviews and approves your application." },
+              { step: "2", title: "Configure Your Schedule", desc: "Set working hours, break times, consultation duration, and max daily patients per day." },
+              { step: "3", title: "Set Payment Methods", desc: "Add bank account, JazzCash, or EasyPaisa details so patients can pay online." },
+              { step: "4", title: "Assign a Physician Assistant", desc: "Optionally add a PA to manage walk-ins, enter vitals, and handle your queue." },
+              { step: "5", title: "Start Accepting Patients", desc: "Go live on the doctor directory. Patients find and book you instantly." },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-4 items-start p-4 rounded-xl border border-border/50 bg-card/50">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">{item.step}</span>
+                <div>
+                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mb-12">
@@ -103,6 +138,25 @@ export default function ClinicManagementSoftware() {
           <p className="text-muted-foreground leading-relaxed">
             MediCare+ is free for patients. Doctors can start with a basic plan and upgrade to access premium features like advanced analytics, priority support, higher patient limits, and organization management. Plans are managed through a secure Stripe-powered billing system with monthly and annual options.
           </p>
+        </section>
+
+        {/* Related Pages */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Explore More MediCare+ Solutions</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { title: "Online Doctor Appointments", desc: "Book verified doctors online with instant token allocation.", url: "/online-doctor-appointment-system" },
+              { title: "Hospital Management Software", desc: "Multi-doctor, multi-department hospital operations.", url: "/hospital-management-software" },
+              { title: "AI Symptom Checker", desc: "Free AI-powered health assessment tool.", url: "/ai-symptom-checker" },
+            ].map((page) => (
+              <Link key={page.url} to={page.url} className="group p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 transition-colors">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                  {page.title} <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">{page.desc}</p>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-2xl bg-primary/5 border border-primary/20 p-8">

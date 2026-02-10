@@ -174,4 +174,32 @@ export const seoSchemas = {
       name: item.name,
     })),
   }),
+
+  howTo: (data: { name: string; description: string; steps: { name: string; text: string }[] }) => ({
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: data.name,
+    description: data.description,
+    step: data.steps.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  }),
+
+  softwareApplication: () => ({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "MediCare+",
+    applicationCategory: "HealthApplication",
+    operatingSystem: "Web",
+    url: "https://medicareplus.app",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "PKR",
+      description: "Free for patients. Subscription plans available for doctors.",
+    },
+  }),
 };
