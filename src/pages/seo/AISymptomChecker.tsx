@@ -2,15 +2,15 @@ import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Brain, Search, BookOpen, AlertTriangle, Zap, Lock } from "lucide-react";
+import { Brain, Search, BookOpen, AlertTriangle, Zap, Lock, ArrowRight } from "lucide-react";
 
 export default function AISymptomChecker() {
   return (
     <Layout>
       <SEOHead
         title="AI Symptom Checker"
-        description="Free AI-powered symptom checker by MediCare+. Describe your symptoms and get instant health analysis, possible conditions, and doctor recommendations. Available in Pakistan."
-        keywords="AI symptom checker, online symptom checker Pakistan, free symptom analysis, health assessment tool, AI health checker, symptom diagnosis online"
+        description="Free AI-powered symptom checker by MediCare+. Describe your symptoms and get instant health analysis, possible conditions, and doctor recommendations. Available in English & Urdu."
+        keywords="AI symptom checker, online symptom checker Pakistan, free symptom analysis, health assessment tool, AI health checker, symptom diagnosis online, check symptoms online free, AI doctor Pakistan, medical symptom analyzer"
         canonicalUrl="/ai-symptom-checker"
         jsonLd={[
           seoSchemas.medicalService({
@@ -22,11 +22,24 @@ export default function AISymptomChecker() {
             { name: "Home", url: "/" },
             { name: "AI Symptom Checker", url: "/ai-symptom-checker" },
           ]),
+          seoSchemas.howTo({
+            name: "How to Use MediCare+ AI Symptom Checker",
+            description: "Step-by-step guide to checking your symptoms using MediCare+'s free AI health tool.",
+            steps: [
+              { name: "Enter Your Details", text: "Provide your age, gender, and any relevant medical history for a more accurate analysis." },
+              { name: "Describe Your Symptoms", text: "Type your symptoms in free text or select from common symptom tags. Available in English and Urdu." },
+              { name: "Get AI Analysis", text: "The AI processes your symptoms against a medical knowledge base and returns possible conditions with severity ratings." },
+              { name: "Review Recommendations", text: "See recommended specialist type, red flag warnings, and advice on when to seek immediate care." },
+              { name: "Book a Doctor", text: "Directly browse doctors in the recommended specialty and book an appointment from the results page." },
+            ],
+          }),
           seoSchemas.faq([
             { question: "Is the AI symptom checker free?", answer: "Yes, MediCare+'s AI Symptom Checker is completely free to use. No registration required, though signing in allows you to save your symptom history." },
             { question: "Can the AI symptom checker replace a doctor?", answer: "No, the AI symptom checker provides preliminary insights only and does not replace professional medical diagnosis. Always consult a qualified healthcare professional for diagnosis and treatment." },
             { question: "How accurate is the AI symptom checker?", answer: "The system uses AI combined with a curated medical knowledge base for preliminary assessment. It considers your age, gender, symptom duration, and medical history. However, it is designed for guidance only." },
             { question: "Can I book a doctor after checking my symptoms?", answer: "Yes, after the AI analysis, you can directly browse available doctors in the recommended specialty and book an appointment — all within the same platform." },
+            { question: "Does the symptom checker support Urdu?", answer: "Yes, you can select symptoms in Urdu and the system will process them accurately. The entire interface supports both English and Urdu languages." },
+            { question: "Is my health data private?", answer: "Yes, symptom data is processed securely. Analysis history is only stored if you're logged in and choose to save it. We never share your health information with third parties." },
           ]),
         ]}
       />
@@ -57,6 +70,26 @@ export default function AISymptomChecker() {
           <p className="text-muted-foreground leading-relaxed">
             You can enter symptoms as free text or select from common symptom tags. The system also considers your age, gender, symptom duration, and medical history to provide more accurate results. Every analysis comes with clear citations from our medical knowledge base, so you can trust the information provided.
           </p>
+        </section>
+
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Step-by-Step: Check Your Symptoms</h2>
+          <div className="space-y-4">
+            {[
+              { step: "1", title: "Enter Your Details", desc: "Provide age, gender, and medical history for a personalized analysis." },
+              { step: "2", title: "Describe Your Symptoms", desc: "Type freely or select from symptom tags. Works in English and Urdu." },
+              { step: "3", title: "Get AI Analysis", desc: "Receive possible conditions, severity rating, and specialist recommendations in seconds." },
+              { step: "4", title: "Book a Doctor", desc: "Browse recommended specialists and book an appointment directly from results." },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-4 items-start p-4 rounded-xl border border-border/50 bg-card/50">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">{item.step}</span>
+                <div>
+                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mb-12">
@@ -110,6 +143,25 @@ export default function AISymptomChecker() {
           <p className="text-muted-foreground leading-relaxed">
             Unlike generic AI chatbots, MediCare+'s symptom checker draws from a curated knowledge base that administrators can update. This means the system's medical information is always current and relevant to the conditions commonly seen in Pakistan. Administrators can add new disease entries, update symptom keywords, and refine recommendations through a dedicated management panel — ensuring the tool improves over time.
           </p>
+        </section>
+
+        {/* Related Pages */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Explore More MediCare+ Solutions</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { title: "Online Doctor Appointments", desc: "Book verified doctors online with instant token allocation.", url: "/online-doctor-appointment-system" },
+              { title: "Clinic Management Software", desc: "Complete dashboard for doctors, PAs, and clinic admins.", url: "/clinic-management-software" },
+              { title: "Hospital Management Software", desc: "Multi-doctor, multi-department hospital operations.", url: "/hospital-management-software" },
+            ].map((page) => (
+              <Link key={page.url} to={page.url} className="group p-4 rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 transition-colors">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                  {page.title} <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">{page.desc}</p>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-2xl bg-primary/5 border border-primary/20 p-8">
