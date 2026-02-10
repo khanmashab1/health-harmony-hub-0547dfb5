@@ -33,7 +33,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TopDoctorsSlider } from "@/components/home/TopDoctorsSlider";
 import { IntroVideo } from "@/components/home/IntroVideo";
 import { cn } from "@/lib/utils";
-import doctorConsultationImg from "@/assets/doctor-consultation.png";
+import doctorConsultationImg from "@/assets/doctor-consultation-v2.png";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Index() {
