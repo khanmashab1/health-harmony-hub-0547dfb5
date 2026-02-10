@@ -129,27 +129,27 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link to="/online-doctor-appointment-system" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Online Doctor Appointments
+                  {t("footer.onlineDoctorAppointments")}
                 </Link>
               </li>
               <li>
                 <Link to="/clinic-management-software" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Clinic Management Software
+                  {t("footer.clinicManagement")}
                 </Link>
               </li>
               <li>
                 <Link to="/hospital-management-software" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Hospital Management System
+                  {t("footer.hospitalManagement")}
                 </Link>
               </li>
               <li>
                 <Link to="/ai-symptom-checker" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  AI Symptom Checker
+                  {t("footer.aiSymptomChecker")}
                 </Link>
               </li>
               <li>
                 <Link to="/reviews" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
-                  Patient Reviews
+                  {t("footer.patientReviews")}
                 </Link>
               </li>
             </ul>

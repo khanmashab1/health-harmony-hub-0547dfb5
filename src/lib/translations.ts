@@ -285,7 +285,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.step4Desc": "Get your token number and appointment confirmation",
     "home.trustedPatients": "Trusted By Patients",
     "home.patientReviews": "Patient Reviews",
-    "home.whatPatientsSay": "What Our Patients Say",
+    "home.whatPatientsSay": "What Patients",
     "home.patientTestimonials": "Read testimonials from patients who have experienced our healthcare services",
     "home.verifiedDoctors": "Verified Doctors",
     "home.allDoctorsVerified": "All doctors are verified and certified",
@@ -293,7 +293,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.roundTheClock": "Round-the-clock medical assistance",
     "home.patientsCount": "10K+ Patients",
     "home.trustedByThousands": "Trusted by thousands of patients",
-    "home.readyToBook": "Ready to Book?",
+    "home.readyToBook": "Ready to Book Your Appointment?",
     "home.startJourney": "Start your health journey today",
     "home.ctaDescription": "Join thousands of satisfied patients who trust us with their healthcare needs. Book your first appointment now.",
     "home.moreSpecialties": "More Specialties",
@@ -610,6 +610,55 @@ export const translations: Record<Language, Record<string, string>> = {
     "notFound.goHome": "Go to Homepage",
     "notFound.findDoctor": "Find a Doctor",
     "notFound.checkSymptoms": "Check Symptoms",
+
+    // Index Page - Community Section
+    "home.community": "Community",
+    "home.ourPatientsTitle": "Our",
+    "home.ourPatientsHighlight": "Patients",
+    "home.communityDesc": "Join our growing community of patients receiving quality healthcare",
+    "home.appointments": "Appointments",
+    "home.member": "Member",
+    "home.noPatientsYet": "No patients yet. Be the first to join!",
+    "home.createAccount": "Create Account",
+    "home.failedLoadPatients": "Failed to load patients. Please try again later.",
+
+    // Index Page - Testimonials Section
+    "home.testimonials": "Testimonials",
+    "home.sayHighlight": "Say",
+    "home.realReviews": "Real reviews from our satisfied patients",
+    "home.reviews": "reviews",
+    "home.viewAllReviews": "View All Reviews",
+    "home.noReviewsYet": "No reviews yet. Be the first to share your experience!",
+    "home.failedLoadReviews": "Failed to load reviews. Please try again later.",
+    "home.greatExperience": "Great experience with the doctor and staff!",
+
+    // Index Page - CTA Section
+    "home.joinThousands": "Join thousands of patients who trust MediCare+ for their healthcare needs.",
+    "home.bookNowBtn": "Book Now",
+    "home.createAccountBtn": "Create Account",
+
+    // Index Page - Dashboard CTA
+    "home.welcomeBack": "Welcome back,",
+    "home.continueJourney": "Continue managing your health journey",
+    "home.goToDashboard": "Go to Dashboard",
+
+    // Top Doctors Slider
+    "slider.topRated": "Top Rated Doctor",
+    "slider.meet": "Meet",
+    "slider.ourExpert": "Our Expert",
+    "slider.rating": "Rating",
+    "slider.yearsExp": "Years Exp",
+    "slider.fee": "Fee",
+    "slider.recentReview": "Recent Review",
+    "slider.bookAppointment": "Book Appointment",
+    "slider.viewAllDoctors": "View All Doctors",
+
+    // Footer Services
+    "footer.onlineDoctorAppointments": "Online Doctor Appointments",
+    "footer.clinicManagement": "Clinic Management Software",
+    "footer.hospitalManagement": "Hospital Management System",
+    "footer.aiSymptomChecker": "AI Symptom Checker",
+    "footer.patientReviews": "Patient Reviews",
   },
   ur: {
     // Header / Navigation
@@ -895,7 +944,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.step4Desc": "اپنا ٹوکن نمبر اور اپائنٹمنٹ کی تصدیق حاصل کریں",
     "home.trustedPatients": "مریضوں کا اعتماد",
     "home.patientReviews": "مریضوں کے جائزے",
-    "home.whatPatientsSay": "ہمارے مریض کیا کہتے ہیں",
+    "home.whatPatientsSay": "مریض کیا",
     "home.patientTestimonials": "ان مریضوں کے تجربات پڑھیں جنہوں نے ہماری صحت کی خدمات کا تجربہ کیا ہے",
     "home.verifiedDoctors": "تصدیق شدہ ڈاکٹرز",
     "home.allDoctorsVerified": "تمام ڈاکٹر تصدیق شدہ اور مستند ہیں",
@@ -903,7 +952,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.roundTheClock": "چوبیس گھنٹے طبی مدد",
     "home.patientsCount": "10K+ مریض",
     "home.trustedByThousands": "ہزاروں مریضوں کا اعتماد",
-    "home.readyToBook": "بکنگ کے لیے تیار ہیں؟",
+    "home.readyToBook": "اپنی اپائنٹمنٹ بک کرنے کے لیے تیار ہیں؟",
     "home.startJourney": "آج ہی اپنا صحت کا سفر شروع کریں",
     "home.ctaDescription": "ہزاروں مطمئن مریضوں میں شامل ہوں جو اپنی صحت کی ضروریات کے لیے ہم پر اعتماد کرتے ہیں۔ ابھی اپنی پہلی اپائنٹمنٹ بک کریں۔",
     "home.moreSpecialties": "مزید خصوصیات",
@@ -1220,5 +1269,54 @@ export const translations: Record<Language, Record<string, string>> = {
     "notFound.goHome": "ہوم پیج پر جائیں",
     "notFound.findDoctor": "ڈاکٹر تلاش کریں",
     "notFound.checkSymptoms": "علامات چیک کریں",
+
+    // Index Page - Community Section
+    "home.community": "کمیونٹی",
+    "home.ourPatientsTitle": "ہمارے",
+    "home.ourPatientsHighlight": "مریض",
+    "home.communityDesc": "معیاری صحت کی دیکھ بھال حاصل کرنے والے مریضوں کی بڑھتی ہوئی کمیونٹی میں شامل ہوں",
+    "home.appointments": "اپائنٹمنٹس",
+    "home.member": "ممبر",
+    "home.noPatientsYet": "ابھی تک کوئی مریض نہیں۔ شامل ہونے والے پہلے بنیں!",
+    "home.createAccount": "اکاؤنٹ بنائیں",
+    "home.failedLoadPatients": "مریضوں کو لوڈ کرنے میں ناکامی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔",
+
+    // Index Page - Testimonials Section
+    "home.testimonials": "تعریفیں",
+    "home.sayHighlight": "کہتے ہیں",
+    "home.realReviews": "ہمارے مطمئن مریضوں کے حقیقی جائزے",
+    "home.reviews": "جائزے",
+    "home.viewAllReviews": "تمام جائزے دیکھیں",
+    "home.noReviewsYet": "ابھی تک کوئی جائزہ نہیں۔ اپنا تجربہ شیئر کرنے والے پہلے بنیں!",
+    "home.failedLoadReviews": "جائزے لوڈ کرنے میں ناکامی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔",
+    "home.greatExperience": "ڈاکٹر اور عملے کے ساتھ بہترین تجربہ!",
+
+    // Index Page - CTA Section
+    "home.joinThousands": "ہزاروں مریضوں میں شامل ہوں جو اپنی صحت کی ضروریات کے لیے MediCare+ پر بھروسہ کرتے ہیں۔",
+    "home.bookNowBtn": "ابھی بک کریں",
+    "home.createAccountBtn": "اکاؤنٹ بنائیں",
+
+    // Index Page - Dashboard CTA
+    "home.welcomeBack": "خوش آمدید،",
+    "home.continueJourney": "اپنی صحت کے سفر کا انتظام جاری رکھیں",
+    "home.goToDashboard": "ڈیش بورڈ پر جائیں",
+
+    // Top Doctors Slider
+    "slider.topRated": "اعلیٰ درجہ بندی والے ڈاکٹر",
+    "slider.meet": "ملیں",
+    "slider.ourExpert": "ہمارے ماہر",
+    "slider.rating": "درجہ بندی",
+    "slider.yearsExp": "سال تجربہ",
+    "slider.fee": "فیس",
+    "slider.recentReview": "حالیہ جائزہ",
+    "slider.bookAppointment": "اپائنٹمنٹ بک کریں",
+    "slider.viewAllDoctors": "تمام ڈاکٹرز دیکھیں",
+
+    // Footer Services
+    "footer.onlineDoctorAppointments": "آن لائن ڈاکٹر اپائنٹمنٹس",
+    "footer.clinicManagement": "کلینک مینجمنٹ سافٹ ویئر",
+    "footer.hospitalManagement": "ہسپتال مینجمنٹ سسٹم",
+    "footer.aiSymptomChecker": "اے آئی علامات چیکر",
+    "footer.patientReviews": "مریضوں کے جائزے",
   },
 };

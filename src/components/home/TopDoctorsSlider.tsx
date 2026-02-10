@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface DoctorWithReviews {
   user_id: string;
@@ -33,6 +34,7 @@ export function TopDoctorsSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Fetch doctors with their approved reviews
   const { data: doctors, isLoading } = useQuery({
@@ -179,7 +181,7 @@ export function TopDoctorsSlider() {
                   <div className="flex items-center gap-1 md:gap-2">
                     <Star className="w-3 h-3 md:w-4 md:h-4 text-amber-500 fill-amber-500" />
                     <span className="font-bold text-sm md:text-base">{currentDoctor.rating?.toFixed(1) || "N/A"}</span>
-                    <span className="text-muted-foreground text-[10px] md:text-xs">Rating</span>
+                    <span className="text-muted-foreground text-[10px] md:text-xs">{t("slider.rating")}</span>
                   </div>
                 </motion.div>
               </div>
@@ -201,11 +203,11 @@ export function TopDoctorsSlider() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="inline-block px-3 md:px-4 py-1 rounded-full bg-primary/10 text-primary text-xs md:text-sm font-medium"
               >
-                Top Rated Doctor
+                {t("slider.topRated")}
               </motion.span>
 
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-[1.1] tracking-tight">
-                Meet <span className="gradient-text">Dr. {currentDoctor.name || "Our Expert"}</span>
+                {t("slider.meet")} <span className="gradient-text">Dr. {currentDoctor.name || t("slider.ourExpert")}</span>
               </h1>
 
               <div className="flex flex-wrap items-center gap-2 md:gap-4 justify-center lg:justify-start">
@@ -236,7 +238,7 @@ export function TopDoctorsSlider() {
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-base md:text-lg leading-none">{currentDoctor.rating?.toFixed(1) || "N/A"}</p>
-                    <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-0.5">Rating</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-0.5">{t("slider.rating")}</p>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
                 </button>
@@ -246,7 +248,7 @@ export function TopDoctorsSlider() {
                   </div>
                   <div>
                     <p className="font-bold text-base md:text-lg">{currentDoctor.experience_years || 0}+</p>
-                    <p className="text-[10px] md:text-xs text-muted-foreground">Years Exp</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">{t("slider.yearsExp")}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -255,7 +257,7 @@ export function TopDoctorsSlider() {
                   </div>
                   <div>
                     <p className="font-bold text-base md:text-lg">{currentDoctor.fee}</p>
-                    <p className="text-[10px] md:text-xs text-muted-foreground">Fee</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">{t("slider.fee")}</p>
                   </div>
                 </div>
               </div>
@@ -263,7 +265,7 @@ export function TopDoctorsSlider() {
               {/* Recent Reviews - Hidden on small mobile */}
               {currentDoctor.reviews.length > 0 && (
                 <div className="space-y-2 md:space-y-3 hidden sm:block">
-                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-widest">Recent Review</h3>
+                  <h3 className="font-semibold text-xs md:text-sm text-muted-foreground uppercase tracking-widest">{t("slider.recentReview")}</h3>
                   {currentDoctor.reviews.slice(0, 1).map((review) => (
                     <Card key={review.id} className="p-3 md:p-4 bg-card/60 backdrop-blur-sm border-border/40 rounded-2xl">
                       <div className="flex items-start gap-3">
@@ -292,12 +294,12 @@ export function TopDoctorsSlider() {
                 <Link to={`/booking?doctor=${currentDoctor.user_id}`} className="flex-1 sm:flex-none">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2 text-xs sm:text-sm md:text-base px-3 sm:px-6 md:px-8 h-10 sm:h-11 md:h-12">
                     <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                    Book Appointment
+                    {t("slider.bookAppointment")}
                   </Button>
                 </Link>
                 <Link to="/our-doctors" className="flex-1 sm:flex-none">
                   <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 text-xs sm:text-sm md:text-base px-3 sm:px-6 md:px-8 h-10 sm:h-11 md:h-12">
-                    View All Doctors
+                    {t("slider.viewAllDoctors")}
                   </Button>
                 </Link>
               </div>

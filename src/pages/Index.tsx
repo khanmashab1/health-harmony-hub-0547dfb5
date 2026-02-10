@@ -460,20 +460,20 @@ export default function Index() {
               transition={{ delay: 0.2 }}
               className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
             >
-              Community
+              {t("home.community")}
             </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Our <span className="gradient-text">Patients</span>
+              {t("home.ourPatientsTitle")} <span className="gradient-text">{t("home.ourPatientsHighlight")}</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Join our growing community of patients receiving quality healthcare
+              {t("home.communityDesc")}
             </p>
           </motion.div>
 
           {patientsError ? (
             <Alert variant="destructive" className="max-w-md mx-auto">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Failed to load patients. Please try again later.</AlertDescription>
+              <AlertDescription>{t("home.failedLoadPatients")}</AlertDescription>
             </Alert>
           ) : loadingPatients ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
@@ -529,10 +529,10 @@ export default function Index() {
                       <p className="text-xs text-primary font-medium mt-1">{patient.patient_id}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || "Member"}
+                      {[patient.age && `${patient.age}y`, patient.gender].filter(Boolean).join(" • ") || t("home.member")}
                     </p>
                     <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-sm font-medium text-primary">{patient.appointment_count} Appointments</p>
+                      <p className="text-sm font-medium text-primary">{patient.appointment_count} {t("home.appointments")}</p>
                     </div>
                   </Card>
                 </motion.div>
@@ -552,9 +552,9 @@ export default function Index() {
               >
                 <Users className="w-10 h-10 text-muted-foreground" />
               </motion.div>
-              <p className="text-muted-foreground">No patients yet. Be the first to join!</p>
+              <p className="text-muted-foreground">{t("home.noPatientsYet")}</p>
               <Link to="/auth?mode=signup" className="mt-4 inline-block">
-                <Button variant="hero">Create Account</Button>
+                <Button variant="hero">{t("home.createAccount")}</Button>
               </Link>
             </motion.div>
           )}
@@ -578,13 +578,13 @@ export default function Index() {
               transition={{ delay: 0.2 }}
               className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
             >
-              Testimonials
+              {t("home.testimonials")}
             </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              What Patients <span className="gradient-text">Say</span>
+              {t("home.whatPatientsSay")} <span className="gradient-text">{t("home.sayHighlight")}</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Real reviews from our satisfied patients
+              {t("home.realReviews")}
             </p>
             {stats && stats.totalReviews > 0 && (
               <motion.div 
@@ -599,7 +599,7 @@ export default function Index() {
                   <span className="font-bold text-lg">{stats.rating}</span>
                 </div>
                 <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{stats.totalReviews} reviews</span>
+                <span className="text-muted-foreground">{stats.totalReviews} {t("home.reviews")}</span>
               </motion.div>
             )}
           </motion.div>
@@ -607,7 +607,7 @@ export default function Index() {
           {reviewsError ? (
             <Alert variant="destructive" className="max-w-md mx-auto">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Failed to load reviews. Please try again later.</AlertDescription>
+              <AlertDescription>{t("home.failedLoadReviews")}</AlertDescription>
             </Alert>
           ) : loadingReviews ? (
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -646,7 +646,7 @@ export default function Index() {
                         <Quote className="w-8 h-8 text-primary/20 mb-4" />
                       </motion.div>
                       <p className="text-muted-foreground mb-4 line-clamp-3">
-                        {review.comment || "Great experience with the doctor and staff!"}
+                        {review.comment || t("home.greatExperience")}
                       </p>
                       <div className="flex items-center justify-between">
                         <div>
@@ -685,7 +685,7 @@ export default function Index() {
               >
                 <Link to="/reviews">
                   <Button variant="outline" className="gap-2 group">
-                    View All Reviews
+                    {t("home.viewAllReviews")}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
@@ -705,7 +705,7 @@ export default function Index() {
               >
                 <Star className="w-10 h-10 text-muted-foreground" />
               </motion.div>
-              <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+              <p className="text-muted-foreground">{t("home.noReviewsYet")}</p>
             </motion.div>
           )}
         </div>
@@ -720,11 +720,11 @@ export default function Index() {
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold">Welcome back, {profile.name}!</p>
-                <p className="text-sm text-muted-foreground">Continue managing your health journey</p>
+                <p className="font-semibold">{t("home.welcomeBack")} {profile.name}!</p>
+                <p className="text-sm text-muted-foreground">{t("home.continueJourney")}</p>
               </div>
               <Link to={profile.role === "admin" ? "/admin" : profile.role === "doctor" ? "/doctor" : profile.role === "pa" ? "/pa" : "/profile"}>
-                <Button variant="hero">Go to Dashboard</Button>
+                <Button variant="hero">{t("home.goToDashboard")}</Button>
               </Link>
             </div>
           </div>
@@ -743,21 +743,21 @@ export default function Index() {
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
               <div className="relative z-10">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Ready to Book Your Appointment?
+                  {t("home.readyToBook")}
                 </h2>
                 <p className="text-white/80 max-w-2xl mx-auto mb-8">
-                  Join thousands of patients who trust MediCare+ for their healthcare needs.
+                  {t("home.joinThousands")}
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <Link to="/booking">
                     <Button variant="secondary" size="xl" className="gap-2">
                       <Calendar className="w-5 h-5" />
-                      Book Now
+                      {t("home.bookNowBtn")}
                     </Button>
                   </Link>
                   <Link to="/auth?mode=signup">
                     <Button variant="outline-white" size="xl" className="gap-2">
-                      Create Account
+                      {t("home.createAccountBtn")}
                     </Button>
                   </Link>
                 </div>
