@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Review {
   id: string;
@@ -35,13 +36,12 @@ interface Review {
 export default function DoctorProfile() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
-  // Scroll to top when page loads
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [doctorId]);
 
-  // Fetch doctor details using doctors_public view to avoid exposing sensitive payment info
   const { data: doctor, isLoading: loadingDoctor } = useQuery({
     queryKey: ["doctor-profile", doctorId],
     queryFn: async () => {
@@ -55,7 +55,6 @@ export default function DoctorProfile() {
       
       if (error) throw error;
 
-      // Get profile name
       const { data: profile } = await supabase
         .from("profiles")
         .select("name")
@@ -67,7 +66,6 @@ export default function DoctorProfile() {
     enabled: !!doctorId,
   });
 
-  // Fetch all approved reviews for this doctor
   const { data: reviews, isLoading: loadingReviews } = useQuery({
     queryKey: ["doctor-reviews", doctorId],
     queryFn: async () => {
@@ -100,10 +98,10 @@ export default function DoctorProfile() {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-muted-foreground mb-4">Doctor not found</p>
+          <p className="text-muted-foreground mb-4">{t("profile.doctorNotFound")}</p>
           <Button onClick={() => navigate("/booking")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Booking
+            {t("profile.backToBooking")}
           </Button>
         </div>
       </Layout>
@@ -141,17 +139,11 @@ export default function DoctorProfile() {
         })}
       />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-6"
-        >
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          {t("profile.back")}
         </Button>
 
-        {/* Doctor Header Card */}
         <Card className="mb-8 overflow-hidden">
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row gap-6">
@@ -182,11 +174,11 @@ export default function DoctorProfile() {
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    {averageRating} ({reviews?.length || 0} reviews)
+                    {averageRating} ({reviews?.length || 0} {t("profile.reviews")})
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {doctor.experience_years || 0} years experience
+                    {doctor.experience_years || 0} {t("profile.yearsExperience")}
                   </span>
                   {doctor.city && (
                     <span className="flex items-center gap-1">
@@ -199,10 +191,10 @@ export default function DoctorProfile() {
 
               <div className="text-center md:text-right">
                 <p className="text-3xl font-bold text-primary">Rs. {doctor.fee}</p>
-                <p className="text-sm text-muted-foreground mb-4">per consultation</p>
+                <p className="text-sm text-muted-foreground mb-4">{t("profile.perConsultation")}</p>
                 <Button onClick={() => navigate(`/booking?doctorId=${doctorId}`)} size="lg">
                   <Calendar className="w-4 h-4 mr-2" />
-                  Book Appointment
+                  {t("profile.bookAppointment")}
                 </Button>
               </div>
             </div>
@@ -210,15 +202,13 @@ export default function DoctorProfile() {
         </Card>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Left Column - Details */}
           <div className="md:col-span-2 space-y-6">
-            {/* About */}
             {doctor.bio && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="w-5 h-5" />
-                    About
+                    {t("profile.about")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -227,13 +217,12 @@ export default function DoctorProfile() {
               </Card>
             )}
 
-            {/* Qualifications */}
             {doctor.qualifications && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Award className="w-5 h-5" />
-                    Qualifications
+                    {t("profile.qualifications")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -242,12 +231,11 @@ export default function DoctorProfile() {
               </Card>
             )}
 
-            {/* Reviews Section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
-                  Patient Reviews ({reviews?.length || 0})
+                  {t("profile.patientReviews")} ({reviews?.length || 0})
                 </CardTitle>
                 {reviews && reviews.length > 0 && (
                   <Button
@@ -255,7 +243,7 @@ export default function DoctorProfile() {
                     size="sm"
                     onClick={() => navigate(`/reviews?doctor=${doctorId}`)}
                   >
-                    View All
+                    {t("profile.viewAll")}
                   </Button>
                 )}
               </CardHeader>
@@ -307,50 +295,49 @@ export default function DoctorProfile() {
                         className="w-full text-primary"
                         onClick={() => navigate(`/reviews?doctor=${doctorId}`)}
                       >
-                        View all {reviews.length} reviews →
+                        {t("profile.viewAllReviews")} {reviews.length} {t("profile.reviewsArrow")}
                       </Button>
                     )}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">
-                    No reviews yet. Be the first to review after your appointment!
+                    {t("profile.noReviews")}
                   </p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column - Quick Info */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Quick Info</CardTitle>
+                <CardTitle className="text-lg">{t("profile.quickInfo")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Specialty</span>
+                  <span className="text-muted-foreground">{t("profile.specialty")}</span>
                   <span className="font-medium">{doctor.specialty}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Experience</span>
-                  <span className="font-medium">{doctor.experience_years || 0} years</span>
+                  <span className="text-muted-foreground">{t("profile.experience")}</span>
+                  <span className="font-medium">{doctor.experience_years || 0} {t("common.years")}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fee</span>
+                  <span className="text-muted-foreground">{t("profile.fee")}</span>
                   <span className="font-medium">Rs. {doctor.fee}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Daily Limit</span>
-                  <span className="font-medium">{doctor.max_patients_per_day} patients</span>
+                  <span className="text-muted-foreground">{t("profile.dailyLimit")}</span>
+                  <span className="font-medium">{doctor.max_patients_per_day} {t("profile.patients")}</span>
                 </div>
                 {doctor.city && (
                   <>
                     <Separator />
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Location</span>
+                      <span className="text-muted-foreground">{t("profile.location")}</span>
                       <span className="font-medium">{doctor.city}</span>
                     </div>
                   </>
@@ -361,12 +348,12 @@ export default function DoctorProfile() {
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-6 text-center">
                 <Calendar className="w-12 h-12 mx-auto mb-4 text-primary" />
-                <h3 className="font-semibold mb-2">Ready to Book?</h3>
+                <h3 className="font-semibold mb-2">{t("profile.readyToBook")}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Schedule your appointment with Dr. {doctor.profile?.name?.split(" ")[0] || "Doctor"} today
+                  {t("profile.scheduleWith")} {doctor.profile?.name?.split(" ")[0] || "Doctor"} {t("profile.today")}
                 </p>
                 <Button onClick={() => navigate(`/booking?doctorId=${doctorId}`)} className="w-full">
-                  Book Now
+                  {t("profile.bookNow")}
                 </Button>
               </CardContent>
             </Card>
