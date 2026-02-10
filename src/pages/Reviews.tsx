@@ -12,19 +12,19 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Reviews() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const doctorFilter = searchParams.get("doctor");
   const [starFilter, setStarFilter] = useState<number | null>(null);
 
-  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Fetch doctor name if filtering by doctor
   const { data: doctorProfile } = useQuery({
     queryKey: ["doctor-profile-name", doctorFilter],
     queryFn: async () => {
@@ -39,7 +39,6 @@ export default function Reviews() {
     enabled: !!doctorFilter,
   });
 
-  // Fetch all approved reviews (optionally filtered by doctor)
   const { data: reviews, isLoading, error } = useQuery({
     queryKey: ["all-approved-reviews", doctorFilter],
     queryFn: async () => {
@@ -59,7 +58,6 @@ export default function Reviews() {
     },
   });
 
-  // Calculate rating distribution
   const ratingDistribution = useMemo(() => {
     if (!reviews || reviews.length === 0) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -74,7 +72,6 @@ export default function Reviews() {
     ? (reviews!.reduce((a, b) => a + b.rating, 0) / totalReviews).toFixed(1)
     : "0";
 
-  // Apply star filter
   const filteredReviews = useMemo(() => {
     if (!reviews) return [];
     if (starFilter === null) return reviews;
@@ -84,14 +81,13 @@ export default function Reviews() {
   return (
     <Layout>
       <SEOHead
-        title="Patient Reviews & Doctor Ratings"
+        title={t("reviews.patientReviews")}
         description="Read verified patient reviews and ratings for doctors on MediCare+. Transparent feedback from real patients to help you choose the best doctor."
         keywords="doctor reviews, patient feedback, doctor ratings, best rated doctors, healthcare reviews Pakistan"
         canonicalUrl="/reviews"
       />
       <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-background to-orange-50/20">
         <div className="container mx-auto px-4 py-12">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -99,25 +95,24 @@ export default function Reviews() {
           >
             <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {t("reviews.back")}
             </Button>
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 {doctorFilter && doctorProfile
-                  ? <>Dr. {doctorProfile.name}'s <span className="gradient-text">Reviews</span></>
-                  : <>Patient <span className="gradient-text">Reviews</span></>
+                  ? <>Dr. {doctorProfile.name} - <span className="gradient-text">{t("reviews.doctorReviews")}</span></>
+                  : <>{t("reviews.patientReviews").split(" ")[0]} <span className="gradient-text">{t("reviews.patientReviews").split(" ").slice(1).join(" ") || t("reviews.doctorReviews")}</span></>
                 }
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
                 {doctorFilter
-                  ? "See what patients have to say about this doctor"
-                  : "Read what our patients have to say about their healthcare experience"
+                  ? t("reviews.whatPatientsDoctor")
+                  : t("reviews.whatPatientsSay")
                 }
               </p>
             </div>
           </motion.div>
 
-          {/* Stats & Distribution */}
           {totalReviews > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -127,7 +122,6 @@ export default function Reviews() {
             >
               <Card className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row gap-8 items-center">
-                  {/* Average Rating */}
                   <div className="text-center flex-shrink-0">
                     <p className="text-5xl font-bold mb-1">{avgRating}</p>
                     <div className="flex gap-0.5 justify-center mb-1">
@@ -143,11 +137,10 @@ export default function Reviews() {
                       ))}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+                      {totalReviews} {totalReviews === 1 ? t("reviews.review") : t("reviews.title").toLowerCase()}
                     </p>
                   </div>
 
-                  {/* Rating Distribution */}
                   <div className="flex-1 w-full space-y-2">
                     {[5, 4, 3, 2, 1].map((star) => {
                       const count = ratingDistribution[star] || 0;
@@ -168,10 +161,7 @@ export default function Reviews() {
                             {star} <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                           </span>
                           <div className="flex-1">
-                            <Progress 
-                              value={percentage} 
-                              className="h-2.5" 
-                            />
+                            <Progress value={percentage} className="h-2.5" />
                           </div>
                           <span className="text-xs text-muted-foreground w-10 text-right">
                             {count}
@@ -182,19 +172,14 @@ export default function Reviews() {
                   </div>
                 </div>
 
-                {/* Active filter indicator */}
                 {starFilter !== null && (
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Filter className="w-4 h-4" />
-                      Showing {starFilter}-star reviews ({filteredReviews.length})
+                      {t("reviews.showingStar")} {starFilter}{t("reviews.starReviews")} ({filteredReviews.length})
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setStarFilter(null)}
-                    >
-                      Clear filter
+                    <Button variant="ghost" size="sm" onClick={() => setStarFilter(null)}>
+                      {t("reviews.clearFilter")}
                     </Button>
                   </div>
                 )}
@@ -202,11 +187,10 @@ export default function Reviews() {
             </motion.div>
           )}
 
-          {/* Reviews Grid */}
           {error ? (
             <Alert variant="destructive" className="max-w-md mx-auto">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Failed to load reviews. Please try again later.</AlertDescription>
+              <AlertDescription>{t("reviews.failedLoad")}</AlertDescription>
             </Alert>
           ) : isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -266,21 +250,21 @@ export default function Reviews() {
                 <Star className="w-12 h-12 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                {starFilter !== null ? "No Reviews with This Rating" : "No Reviews Yet"}
+                {starFilter !== null ? t("reviews.noReviewsRating") : t("reviews.noReviews")}
               </h3>
               <p className="text-muted-foreground mb-6">
                 {starFilter !== null 
-                  ? "Try selecting a different star rating"
-                  : "Be the first to share your healthcare experience!"
+                  ? t("reviews.tryDifferentRating")
+                  : t("reviews.beFirst")
                 }
               </p>
               {starFilter !== null ? (
                 <Button variant="outline" onClick={() => setStarFilter(null)}>
-                  Clear Filter
+                  {t("reviews.clearFilterBtn")}
                 </Button>
               ) : (
                 <Button variant="hero" onClick={() => navigate("/auth?mode=signup")}>
-                  Create Account to Review
+                  {t("reviews.createAccount")}
                 </Button>
               )}
             </div>
