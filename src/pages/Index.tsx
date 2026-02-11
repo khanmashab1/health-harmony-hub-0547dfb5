@@ -114,9 +114,9 @@ export default function Index() {
   return (
     <Layout>
       <SEOHead
-        title="Online Doctor Appointment System & Clinic Management"
-        description="MediCare+ — Book doctor appointments online, access AI symptom checker, manage clinic operations, and track patient health. Trusted healthcare platform in Pakistan."
-        keywords="online doctor appointment, book doctor appointment online, clinic management software, hospital management system, AI symptom checker, healthcare platform Pakistan, medical appointment booking, doctor near me"
+        title="Book Doctor Appointments Online in Pakistan — MediCare+"
+        description="Book verified doctors in Lahore, Karachi & Islamabad. Get instant tokens, digital prescriptions & AI symptom checks. Free to start — trusted by 100+ clinics."
+        keywords="book doctor appointment online Pakistan, doctor appointment app, online doctor booking Lahore, clinic management software, hospital management system, AI symptom checker, healthcare platform Pakistan, medical appointment booking, doctor near me, best doctor appointment system"
         canonicalUrl="/"
         jsonLd={[
           seoSchemas.organization(),
