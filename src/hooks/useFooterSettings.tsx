@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface FooterSettings {
   address: string;
   phone: string;
+  phone2: string;
+  phone3: string;
   email: string;
   facebook: string;
   twitter: string;
@@ -15,6 +17,8 @@ interface FooterSettings {
 const defaultSettings: FooterSettings = {
   address: "123 Medical Center, Blue Area, Islamabad, Pakistan",
   phone: "+92 51 1234567",
+  phone2: "",
+  phone3: "",
   email: "info@medicare.pk",
   facebook: "",
   twitter: "",
@@ -42,6 +46,8 @@ export function useFooterSettings() {
   const footerSettings: FooterSettings = {
     address: settings?.footer_address || defaultSettings.address,
     phone: settings?.footer_phone || defaultSettings.phone,
+    phone2: settings?.footer_phone2 || "",
+    phone3: settings?.footer_phone3 || "",
     email: settings?.footer_email || defaultSettings.email,
     facebook: settings?.footer_facebook || "",
     twitter: settings?.footer_twitter || "",
@@ -49,6 +55,8 @@ export function useFooterSettings() {
     linkedin: settings?.footer_linkedin || "",
     copyright: (settings?.footer_copyright || defaultSettings.copyright).replace("{year}", new Date().getFullYear().toString()),
   };
+
+  const phoneNumbers = [footerSettings.phone, footerSettings.phone2, footerSettings.phone3].filter(Boolean);
 
   const socialLinks = [
     { url: footerSettings.facebook, name: "Facebook" },
@@ -59,6 +67,7 @@ export function useFooterSettings() {
 
   return {
     ...footerSettings,
+    phoneNumbers,
     socialLinks,
     isLoading,
   };

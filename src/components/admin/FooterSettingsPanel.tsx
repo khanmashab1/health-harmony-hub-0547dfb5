@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface FooterSettings {
   footer_address: string;
   footer_phone: string;
+  footer_phone2: string;
+  footer_phone3: string;
   footer_email: string;
   footer_facebook: string;
   footer_twitter: string;
@@ -24,6 +26,8 @@ interface FooterSettings {
 const defaultSettings: FooterSettings = {
   footer_address: "123 Medical Center, Blue Area, Islamabad, Pakistan",
   footer_phone: "+92 51 1234567",
+  footer_phone2: "",
+  footer_phone3: "",
   footer_email: "info@medicare.pk",
   footer_facebook: "",
   footer_twitter: "",
@@ -58,6 +62,8 @@ export function FooterSettingsPanel() {
       setFormData({
         footer_address: settings.footer_address || defaultSettings.footer_address,
         footer_phone: settings.footer_phone || defaultSettings.footer_phone,
+        footer_phone2: settings.footer_phone2 || "",
+        footer_phone3: settings.footer_phone3 || "",
         footer_email: settings.footer_email || defaultSettings.footer_email,
         footer_facebook: settings.footer_facebook || "",
         footer_twitter: settings.footer_twitter || "",
@@ -161,11 +167,11 @@ export function FooterSettingsPanel() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-primary" />
-                Phone
+                Phone 1 (Primary)
               </Label>
               <Input
                 value={formData.footer_phone}
@@ -174,6 +180,32 @@ export function FooterSettingsPanel() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                Phone 2
+              </Label>
+              <Input
+                value={formData.footer_phone2}
+                onChange={(e) => setFormData(prev => ({ ...prev, footer_phone2: e.target.value }))}
+                placeholder="+92 300 1234567"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                Phone 3
+              </Label>
+              <Input
+                value={formData.footer_phone3}
+                onChange={(e) => setFormData(prev => ({ ...prev, footer_phone3: e.target.value }))}
+                placeholder="+92 321 1234567"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />

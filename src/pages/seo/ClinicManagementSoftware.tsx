@@ -8,9 +8,9 @@ export default function ClinicManagementSoftware() {
   return (
     <Layout>
       <SEOHead
-        title="Clinic Management Software"
-        description="MediCare+ clinic management software for healthcare providers in Pakistan. Manage appointments, patient queues, digital prescriptions, doctor schedules, and clinic analytics from one dashboard."
-        keywords="clinic management software, clinic management system Pakistan, doctor practice management, patient queue management software, healthcare CRM, clinic software Lahore, best clinic management system, doctor dashboard software, prescription management system"
+        title="Best Clinic Management Software in Pakistan — Free Trial"
+        description="Run your clinic from one dashboard: appointments, prescriptions, patient queues & analytics. Used by doctors in Lahore, Karachi & Islamabad. Start free today."
+        keywords="clinic management software Pakistan, best clinic management system, clinic management system Lahore, doctor practice management, patient queue management software, healthcare CRM, clinic software Karachi, doctor dashboard software, prescription management system, clinic software free trial"
         canonicalUrl="/clinic-management-software"
         jsonLd={[
           seoSchemas.medicalService({

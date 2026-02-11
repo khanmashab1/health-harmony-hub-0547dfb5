@@ -20,7 +20,7 @@ export function Footer() {
   const { t } = useLanguage();
   const { 
     address, 
-    phone, 
+    phoneNumbers,
     email, 
     socialLinks, 
     copyright 
@@ -165,12 +165,14 @@ export function Footer() {
                   {address}
                 </span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-primary shrink-0" />
-                <a href={`tel:${phone.replace(/\s/g, '')}`} className="text-header-foreground/70 text-sm hover:text-header-foreground transition-colors">
-                  {phone}
-                </a>
-              </li>
+              {phoneNumbers.map((ph, idx) => (
+                <li key={idx} className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-primary shrink-0" />
+                  <a href={`tel:${ph.replace(/\s/g, '')}`} className="text-header-foreground/70 text-sm hover:text-header-foreground transition-colors">
+                    {ph}
+                  </a>
+                </li>
+              ))}
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
                 <a href={`mailto:${email}`} className="text-header-foreground/70 text-sm hover:text-header-foreground transition-colors">

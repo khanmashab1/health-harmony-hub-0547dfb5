@@ -66,9 +66,9 @@ export default function BecomeDoctor() {
   return (
     <Layout>
       <SEOHead
-        title="Join as a Doctor - Grow Your Practice Online"
-        description="Register as a doctor on MediCare+. Manage appointments, digital prescriptions, patient queues, and grow your practice with our clinic management platform."
-        keywords="register as doctor online, join clinic management software, doctor practice management, online clinic platform, healthcare SaaS for doctors"
+        title="Register Your Clinic on MediCare+ — Free Setup, Grow Patients"
+        description="Join 100+ doctors managing clinics online. Digital prescriptions, patient queue system & appointment booking — all in one dashboard. Apply in 5 minutes."
+        keywords="register clinic online Pakistan, doctor practice management software, join clinic management platform, online clinic platform, healthcare SaaS for doctors, grow clinic patients, digital prescription system"
         canonicalUrl="/become-doctor"
       />
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
