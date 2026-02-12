@@ -30,6 +30,115 @@ function checkRateLimit(identifier: string): boolean {
   return true;
 }
 
+function parseAnalysisToStructured(text: string) {
+  // Extract likely condition (look for patterns like "Likely Condition:", "Primary Condition:", disease names with percentages)
+  const conditions: { name: string; percentage: number; description: string }[] = [];
+  const differentials: { name: string; description: string }[] = [];
+  let severity = "moderate";
+  let triageAdvice = "";
+  let confidenceLevel = 70;
+
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Try to extract percentage patterns like "Disease Name (XX%)" or "XX% - Disease"
+  const percentPattern = /(?:\*\*)?([A-Za-z\s\-']+?)(?:\*\*)?[\s:\-–]*(?:\()?(\d{1,3})%?\)?/g;
+  let match;
+  const foundConditions: { name: string; pct: number; lineIdx: number }[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    percentPattern.lastIndex = 0;
+    while ((match = percentPattern.exec(line)) !== null) {
+      const name = match[1].trim().replace(/^[-•*\d.]+\s*/, '');
+      const pct = parseInt(match[2]);
+      if (pct > 0 && pct <= 100 && name.length > 2 && name.length < 60) {
+        foundConditions.push({ name, pct, lineIdx: i });
+      }
+    }
+  }
+
+  // Sort by percentage descending
+  foundConditions.sort((a, b) => b.pct - a.pct);
+
+  // Top 1-2 are likely conditions, rest are differentials
+  for (let i = 0; i < foundConditions.length; i++) {
+    const c = foundConditions[i];
+    // Try to get description from next line
+    let desc = "";
+    if (c.lineIdx + 1 < lines.length) {
+      const nextLine = lines[c.lineIdx + 1];
+      if (!nextLine.match(/\d+%/) && !nextLine.startsWith('#') && !nextLine.startsWith('*')) {
+        desc = nextLine.replace(/^[-•*]+\s*/, '').substring(0, 150);
+      }
+    }
+    if (i < 2) {
+      conditions.push({ name: c.name, percentage: c.pct, description: desc });
+    } else {
+      differentials.push({ name: c.name, description: desc || `${c.pct}% likelihood based on symptoms` });
+    }
+  }
+
+  // Extract severity
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes('critical') || lowerText.includes('emergency') || lowerText.includes('life-threatening')) {
+    severity = "critical";
+  } else if (lowerText.includes('high severity') || lowerText.includes('severe') || lowerText.includes('immediate medical') || lowerText.includes('seek immediate')) {
+    severity = "high";
+  } else if (lowerText.includes('mild') || lowerText.includes('low risk') || lowerText.includes('self-care') || lowerText.includes('home remedies')) {
+    severity = "low";
+  }
+
+  // Extract triage advice - look for recommendation/advice sections
+  const triagePatterns = [
+    /(?:recommendation|advice|what to do|action|triage|next step)[s]?[:\s]*\n?([\s\S]{10,300}?)(?:\n\n|$)/i,
+    /(?:you should|we recommend|it is recommended)[:\s]*([\s\S]{10,200}?)(?:\n\n|$)/i,
+  ];
+  for (const p of triagePatterns) {
+    const m = text.match(p);
+    if (m) {
+      triageAdvice = m[1].trim().replace(/^[-•*]+\s*/gm, '• ').substring(0, 300);
+      break;
+    }
+  }
+
+  if (!triageAdvice) {
+    // Fallback: extract any bullet points that sound like advice
+    const adviceLines = lines.filter(l => 
+      l.match(/^[-•*]/) && (l.includes('consult') || l.includes('take') || l.includes('rest') || l.includes('drink') || l.includes('avoid') || l.includes('seek') || l.includes('monitor'))
+    );
+    triageAdvice = adviceLines.slice(0, 4).map(l => l.replace(/^[-•*]+\s*/, '• ')).join('\n');
+  }
+
+  // Confidence from top condition percentage or estimate
+  if (conditions.length > 0) {
+    confidenceLevel = conditions[0].percentage;
+  }
+
+  // If we couldn't parse structured conditions, create a fallback
+  if (conditions.length === 0) {
+    // Try to find any disease/condition names mentioned
+    const conditionPatterns = /(?:likely|possibly|suggests?|indicates?|consistent with)\s+(?:\*\*)?([A-Z][A-Za-z\s\-']+?)(?:\*\*)?(?:\.|,|\s-)/g;
+    let fallbackMatch;
+    while ((fallbackMatch = conditionPatterns.exec(text)) !== null) {
+      const name = fallbackMatch[1].trim();
+      if (name.length > 3 && name.length < 50) {
+        conditions.push({ name, percentage: 0, description: "" });
+        if (conditions.length >= 2) break;
+      }
+    }
+  }
+
+  return {
+    conditions: conditions.slice(0, 2),
+    differentials: differentials.slice(0, 3),
+    severity,
+    triage_advice: triageAdvice,
+    confidence_level: confidenceLevel,
+    raw_analysis: text,
+    consult_immediately: severity === 'critical' || severity === 'high',
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -53,13 +162,11 @@ serve(async (req) => {
       
       if (!authError && claims?.claims) {
         userId = claims.claims.sub as string;
-        console.log(`Authenticated user: ${userId}`);
       }
     }
 
     // Rate limiting
     if (!checkRateLimit(userId)) {
-      console.log(`Rate limit exceeded for: ${userId}`);
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -68,7 +175,6 @@ serve(async (req) => {
 
     const { symptoms, age, gender, duration, severity, medicalHistory, selectedTags } = await req.json();
 
-    // Validate input
     if ((!symptoms || typeof symptoms !== 'string' || symptoms.trim().length < 3) && (!selectedTags || selectedTags.length === 0)) {
       return new Response(
         JSON.stringify({ error: "Please provide valid symptoms (at least 3 characters) or select symptom tags" }),
@@ -76,21 +182,13 @@ serve(async (req) => {
       );
     }
 
-    // Build the combined symptoms text for the RAG agent
-    const allSymptoms = [
-      symptoms,
-      ...(selectedTags || [])
-    ].filter(Boolean).join(', ');
+    const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
 
-    console.log("Calling external RAG agent at:", RAG_AGENT_URL);
-    console.log("Symptoms:", allSymptoms);
+    console.log("Calling RAG agent:", allSymptoms);
 
-    // Call the external RAG agent
     const response = await fetch(RAG_AGENT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         symptoms: allSymptoms,
         age: age ? parseInt(age) : 0,
@@ -104,28 +202,18 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("RAG agent error:", response.status, errorText);
-      throw new Error(`RAG agent error: ${response.status} - ${errorText}`);
+      throw new Error(`RAG agent error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log("RAG agent response type:", typeof data.analysis);
-
-    // The RAG agent returns analysis as a markdown text string
-    // We pass it through as raw_analysis for the frontend to render
     const analysisText = typeof data.analysis === 'string' 
       ? data.analysis 
       : (typeof data === 'string' ? data : JSON.stringify(data));
 
-    // Try to extract urgency from the text
-    let urgencyLevel = 'moderate';
-    const lowerText = analysisText.toLowerCase();
-    if (lowerText.includes('emergency') || lowerText.includes('immediate') || lowerText.includes('urgent')) {
-      urgencyLevel = 'high';
-    } else if (lowerText.includes('mild') || lowerText.includes('low risk') || lowerText.includes('self-care')) {
-      urgencyLevel = 'low';
-    }
+    // Parse the raw text into structured data
+    const structured = parseAnalysisToStructured(analysisText);
 
-    // Save submission to database if user is logged in
+    // Save submission
     if (userId !== "anonymous") {
       try {
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -136,13 +224,11 @@ serve(async (req) => {
             symptoms_text: symptoms,
             selected_tags: selectedTags,
             age: age ? parseInt(age) : null,
-            gender,
-            duration,
-            severity,
+            gender, duration, severity,
             medical_history: medicalHistory,
-            result_condition: 'RAG Analysis',
-            result_advice: analysisText.substring(0, 500),
-            result_confidence: urgencyLevel === 'low' ? 80 : urgencyLevel === 'moderate' ? 60 : 40
+            result_condition: structured.conditions[0]?.name || 'Unknown',
+            result_advice: structured.triage_advice?.substring(0, 500) || '',
+            result_confidence: structured.confidence_level
           });
         }
       } catch (dbError) {
@@ -150,20 +236,11 @@ serve(async (req) => {
       }
     }
 
-    console.log("Symptom analysis completed successfully via external RAG agent.");
-
-    return new Response(JSON.stringify({ 
-      raw_analysis: analysisText,
-      urgency_level: urgencyLevel,
-      rag_info: {
-        source: "external_rag_agent",
-        agent_url: "health-ai-2026.onrender.com"
-      }
-    }), {
+    return new Response(JSON.stringify(structured), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    console.error("Error in analyze-symptoms function:", error);
+    console.error("Error:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
