@@ -384,44 +384,70 @@ export default function SymptomsChecker() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
+                className="space-y-5"
               >
                 {/* Urgency Level */}
                 <Card className={`border-2 ${getUrgencyColor(analysis.urgency_level)}`}>
-                  <CardContent className="flex items-center justify-between py-4">
-                    <div className="flex items-center gap-3">
+                  <CardContent className="flex items-center gap-4 py-5 px-6">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      analysis.urgency_level === 'high' || analysis.urgency_level === 'emergency'
+                        ? 'bg-red-500/15'
+                        : analysis.urgency_level === 'moderate'
+                        ? 'bg-yellow-500/15'
+                        : 'bg-green-500/15'
+                    }`}>
                       {analysis.urgency_level === 'high' || analysis.urgency_level === 'emergency' ? (
                         <AlertTriangle className="w-6 h-6" />
                       ) : (
                         <CheckCircle2 className="w-6 h-6" />
                       )}
-                      <div>
-                        <p className="font-semibold capitalize">{t("symptoms.urgencyLevel")}: {analysis.urgency_level}</p>
-                        <p className="text-sm opacity-80">
-                          {analysis.urgency_level === 'emergency' 
-                            ? t("symptoms.emergency")
-                            : analysis.urgency_level === 'high'
-                            ? t("symptoms.high")
-                            : t("symptoms.low")}
-                        </p>
-                      </div>
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg capitalize">{t("symptoms.urgencyLevel")}: {analysis.urgency_level}</p>
+                      <p className="text-sm opacity-75">
+                        {analysis.urgency_level === 'emergency' 
+                          ? t("symptoms.emergency")
+                          : analysis.urgency_level === 'high'
+                          ? t("symptoms.high")
+                          : t("symptoms.low")}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* AI Analysis */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Brain className="w-5 h-5 text-primary" />
-                      AI Analysis Report
-                    </CardTitle>
-                    <CardDescription>
-                      Powered by MediCare++ RAG AI Engine
-                    </CardDescription>
+                <Card className="overflow-hidden">
+                  <CardHeader className="bg-primary/5 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Brain className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">AI Analysis Report</CardTitle>
+                        <CardDescription className="text-xs">
+                          Powered by MediCare++ RAG AI Engine
+                        </CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h4]:text-base [&_h4]:font-medium [&_ul]:space-y-1 [&_li]:text-sm [&_p]:text-sm [&_strong]:text-foreground [&_hr]:my-4 [&_hr]:border-border">
+                  <CardContent className="p-6">
+                    <div className="
+                      prose prose-sm dark:prose-invert max-w-none
+                      [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:text-foreground [&_h1]:border-b [&_h1]:border-border/40 [&_h1]:pb-2
+                      [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-foreground [&_h2]:border-b [&_h2]:border-border/40 [&_h2]:pb-2
+                      [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-primary
+                      [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-1.5 [&_h4]:text-muted-foreground [&_h4]:uppercase [&_h4]:tracking-wide
+                      [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-foreground/85 [&_p]:mb-3
+                      [&_ul]:space-y-1.5 [&_ul]:my-3 [&_ul]:pl-1
+                      [&_ol]:space-y-1.5 [&_ol]:my-3
+                      [&_li]:text-sm [&_li]:leading-relaxed [&_li]:text-foreground/85
+                      [&_li::marker]:text-primary
+                      [&_strong]:text-foreground [&_strong]:font-semibold
+                      [&_em]:text-muted-foreground
+                      [&_hr]:my-5 [&_hr]:border-border/50
+                      [&_blockquote]:border-l-4 [&_blockquote]:border-primary/30 [&_blockquote]:pl-4 [&_blockquote]:py-1 [&_blockquote]:my-3 [&_blockquote]:bg-primary/5 [&_blockquote]:rounded-r-lg
+                      [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs
+                    ">
                       <ReactMarkdown>{analysis.raw_analysis}</ReactMarkdown>
                     </div>
                   </CardContent>
@@ -429,25 +455,24 @@ export default function SymptomsChecker() {
 
                 {/* Disclaimer */}
                 <Card className="border-amber-500/30 bg-amber-500/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-amber-600">
-                      <ShieldAlert className="w-5 h-5" />
-                      {t("symptoms.disclaimer")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-amber-700 dark:text-amber-400">
-                      {t("symptoms.disclaimerText")}
-                    </p>
+                  <CardContent className="flex items-start gap-3 py-4 px-5">
+                    <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-amber-600 dark:text-amber-400 mb-1">{t("symptoms.disclaimer")}</p>
+                      <p className="text-xs text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
+                        {t("symptoms.disclaimerText")}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex gap-4">
-                  <Button variant="outline" onClick={resetChecker} className="flex-1">
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={resetChecker} className="flex-1 h-12">
                     {t("symptoms.checkNewSymptoms")}
                   </Button>
-                  <Button onClick={() => window.location.href = '/booking'} className="flex-1">
+                  <Button onClick={() => window.location.href = '/booking'} className="flex-1 h-12">
+                    <Stethoscope className="w-4 h-4 mr-2" />
                     {t("symptoms.bookAppointment")}
                   </Button>
                 </div>
