@@ -111,23 +111,6 @@ export default function SymptomsChecker() {
       setAnalysis(data.analysis);
       setStep(3);
 
-      // Save submission to database if user is logged in
-      if (user) {
-        await supabase.from('symptom_submissions').insert({
-          patient_user_id: user.id,
-          symptoms_text: symptoms,
-          selected_tags: selectedTags,
-          age: age ? parseInt(age) : null,
-          gender,
-          duration,
-          severity,
-          medical_history: medicalHistory,
-          result_condition: data.analysis.possible_conditions?.[0]?.name,
-          result_advice: data.analysis.recommendations?.join('; '),
-          result_confidence: data.analysis.urgency_level === 'low' ? 80 : data.analysis.urgency_level === 'moderate' ? 60 : 40
-        });
-      }
-
       toast.success("Analysis complete!");
     } catch (error: any) {
       console.error("Error analyzing symptoms:", error);
