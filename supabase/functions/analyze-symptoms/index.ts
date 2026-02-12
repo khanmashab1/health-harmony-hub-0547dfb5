@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/api/analyze";
+const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/analyze";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -93,12 +93,11 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         symptoms: allSymptoms,
-        age: age || null,
-        gender: gender || null,
-        duration: duration || null,
-        severity: severity || null,
+        age: age ? parseInt(age) : 0,
+        gender: gender || "unknown",
+        duration: duration || "unknown",
+        severity: severity || "moderate",
         medical_history: medicalHistory || null,
-        selected_tags: selectedTags || [],
       }),
     });
 
@@ -109,20 +108,22 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("RAG agent response received successfully");
+    console.log("RAG agent response type:", typeof data.analysis);
 
-    // Normalize the response to match the expected frontend format
-    const analysis = data.analysis || data;
-    
-    // Ensure the analysis has the expected structure
-    const normalizedAnalysis = {
-      possible_conditions: analysis.possible_conditions || [],
-      recommendations: analysis.recommendations || [],
-      urgency_level: analysis.urgency_level || "moderate",
-      when_to_seek_help: analysis.when_to_seek_help || "If symptoms worsen or persist, consult a healthcare provider.",
-      lifestyle_tips: analysis.lifestyle_tips || [],
-      data_sources: analysis.data_sources || analysis.citations || [],
-    };
+    // The RAG agent returns analysis as a markdown text string
+    // We pass it through as raw_analysis for the frontend to render
+    const analysisText = typeof data.analysis === 'string' 
+      ? data.analysis 
+      : (typeof data === 'string' ? data : JSON.stringify(data));
+
+    // Try to extract urgency from the text
+    let urgencyLevel = 'moderate';
+    const lowerText = analysisText.toLowerCase();
+    if (lowerText.includes('emergency') || lowerText.includes('immediate') || lowerText.includes('urgent')) {
+      urgencyLevel = 'high';
+    } else if (lowerText.includes('mild') || lowerText.includes('low risk') || lowerText.includes('self-care')) {
+      urgencyLevel = 'low';
+    }
 
     // Save submission to database if user is logged in
     if (userId !== "anonymous") {
@@ -139,9 +140,9 @@ serve(async (req) => {
             duration,
             severity,
             medical_history: medicalHistory,
-            result_condition: normalizedAnalysis.possible_conditions?.[0]?.name,
-            result_advice: normalizedAnalysis.recommendations?.join('; '),
-            result_confidence: normalizedAnalysis.urgency_level === 'low' ? 80 : normalizedAnalysis.urgency_level === 'moderate' ? 60 : 40
+            result_condition: 'RAG Analysis',
+            result_advice: analysisText.substring(0, 500),
+            result_confidence: urgencyLevel === 'low' ? 80 : urgencyLevel === 'moderate' ? 60 : 40
           });
         }
       } catch (dbError) {
@@ -152,7 +153,8 @@ serve(async (req) => {
     console.log("Symptom analysis completed successfully via external RAG agent.");
 
     return new Response(JSON.stringify({ 
-      analysis: normalizedAnalysis,
+      raw_analysis: analysisText,
+      urgency_level: urgencyLevel,
       rag_info: {
         source: "external_rag_agent",
         agent_url: "health-ai-2026.onrender.com"

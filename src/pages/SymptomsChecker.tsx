@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -17,15 +18,10 @@ import {
   Stethoscope, 
   AlertTriangle, 
   CheckCircle2, 
-  Clock, 
-  Heart,
-  Thermometer,
   Activity,
-  Pill,
   ArrowRight,
   Loader2,
   ShieldAlert,
-  Lightbulb
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,15 +40,8 @@ const SYMPTOM_TAGS_EN = [
 ];
 
 interface Analysis {
-  possible_conditions: Array<{
-    name: string;
-    likelihood: string;
-    description: string;
-  }>;
-  recommendations: string[];
+  raw_analysis: string;
   urgency_level: string;
-  when_to_seek_help: string;
-  lifestyle_tips: string[];
 }
 
 export default function SymptomsChecker() {
@@ -108,7 +97,10 @@ export default function SymptomsChecker() {
         return;
       }
 
-      setAnalysis(data.analysis);
+      setAnalysis({
+        raw_analysis: data.raw_analysis || '',
+        urgency_level: data.urgency_level || 'moderate',
+      });
       setStep(3);
 
       toast.success("Analysis complete!");
@@ -398,9 +390,7 @@ export default function SymptomsChecker() {
                 <Card className={`border-2 ${getUrgencyColor(analysis.urgency_level)}`}>
                   <CardContent className="flex items-center justify-between py-4">
                     <div className="flex items-center gap-3">
-                      {analysis.urgency_level === 'emergency' ? (
-                        <AlertTriangle className="w-6 h-6" />
-                      ) : analysis.urgency_level === 'high' ? (
+                      {analysis.urgency_level === 'high' || analysis.urgency_level === 'emergency' ? (
                         <AlertTriangle className="w-6 h-6" />
                       ) : (
                         <CheckCircle2 className="w-6 h-6" />
@@ -419,82 +409,36 @@ export default function SymptomsChecker() {
                   </CardContent>
                 </Card>
 
-                {/* Possible Conditions */}
+                {/* AI Analysis */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Thermometer className="w-5 h-5 text-primary" />
-                      {t("symptoms.possibleConditions")}
+                      <Brain className="w-5 h-5 text-primary" />
+                      AI Analysis Report
                     </CardTitle>
                     <CardDescription>
-                      {t("symptoms.basedOnSymptoms")}
+                      Powered by MediCare++ RAG AI Engine
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {analysis.possible_conditions?.map((condition, index) => (
-                      <div key={index} className="p-4 rounded-lg bg-muted/50 border">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-semibold">{condition.name}</h4>
-                          <Badge className={getLikelihoodColor(condition.likelihood)}>
-                            {condition.likelihood} {t("symptoms.likelihood")}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{condition.description}</p>
-                      </div>
-                    ))}
+                  <CardContent>
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h4]:text-base [&_h4]:font-medium [&_ul]:space-y-1 [&_li]:text-sm [&_p]:text-sm [&_strong]:text-foreground [&_hr]:my-4 [&_hr]:border-border">
+                      <ReactMarkdown>{analysis.raw_analysis}</ReactMarkdown>
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Recommendations */}
-                <Card>
+                {/* Disclaimer */}
+                <Card className="border-amber-500/30 bg-amber-500/5">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Pill className="w-5 h-5 text-primary" />
-                      {t("symptoms.recommendations")}
+                    <CardTitle className="flex items-center gap-2 text-amber-600">
+                      <ShieldAlert className="w-5 h-5" />
+                      {t("symptoms.disclaimer")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-3">
-                      {analysis.recommendations?.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                {/* When to Seek Help */}
-                <Card className="border-orange-500/30 bg-orange-500/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-orange-600">
-                      <Clock className="w-5 h-5" />
-                      {t("symptoms.whenToSeekMedicalHelp")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-orange-700 dark:text-orange-400">{analysis.when_to_seek_help}</p>
-                  </CardContent>
-                </Card>
-
-                {/* Lifestyle Tips */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-primary" />
-                      {t("symptoms.wellnessTips")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {analysis.lifestyle_tips?.map((tip, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <Heart className="w-5 h-5 text-pink-500 flex-shrink-0 mt-0.5" />
-                          <span>{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      {t("symptoms.disclaimerText")}
+                    </p>
                   </CardContent>
                 </Card>
 
