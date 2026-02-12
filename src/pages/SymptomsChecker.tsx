@@ -328,16 +328,16 @@ export default function SymptomsChecker() {
                 )}
 
                 {/* Likely Conditions */}
-                {analysis.conditions.length > 0 && (
+                {(analysis.conditions || []).length > 0 && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <Target className="w-5 h-5 text-primary" />
-                        Likely Condition{analysis.conditions.length > 1 ? 's' : ''}
+                        Likely Condition{(analysis.conditions || []).length > 1 ? 's' : ''}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {analysis.conditions.map((c, i) => (
+                      {(analysis.conditions || []).map((c, i) => (
                         <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
                           <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex flex-col items-center justify-center">
                             <span className="text-lg font-bold text-primary">{c.percentage > 0 ? `${c.percentage}%` : '—'}</span>
@@ -423,7 +423,7 @@ export default function SymptomsChecker() {
                 )}
 
                 {/* Differential Considerations */}
-                {analysis.differentials.length > 0 && (
+                {(analysis.differentials || []).length > 0 && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -434,7 +434,7 @@ export default function SymptomsChecker() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {analysis.differentials.map((d, i) => (
+                        {(analysis.differentials || []).map((d, i) => (
                           <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/30">
                             <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-xs font-medium text-muted-foreground">{i + 1}</span>
