@@ -362,15 +362,15 @@ export default function SymptomsChecker() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {conditions.slice(0, 2).map((c, i) => (
-                        <div key={i} className="p-4 rounded-xl bg-muted/50 border border-border/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="font-semibold text-foreground text-base">{c.name}</p>
+                        <div key={i} className="p-5 rounded-xl bg-muted/50 border border-border/50">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-bold text-foreground text-lg md:text-xl">{c.name}</p>
                             {c.percentage > 0 && (
-                              <span className="text-sm font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">{c.percentage}%</span>
+                              <span className="text-base font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{c.percentage}%</span>
                             )}
                           </div>
                           {c.description && (
-                            <p className="text-sm text-muted-foreground leading-relaxed">{c.description}</p>
+                            <p className="text-base text-muted-foreground leading-relaxed">{c.description}</p>
                           )}
                         </div>
                       ))}
@@ -434,8 +434,8 @@ export default function SymptomsChecker() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                        <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">{analysis.triage_advice}</p>
+                      <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
+                        <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">{analysis.triage_advice}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -450,7 +450,7 @@ export default function SymptomsChecker() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm font-medium leading-relaxed">{recommendation.text}</p>
+                    <p className="text-base font-medium leading-relaxed">{recommendation.text}</p>
                   </CardContent>
                 </Card>
 
@@ -467,13 +467,13 @@ export default function SymptomsChecker() {
                     <CardContent>
                       <div className="space-y-2">
                         {differentials.map((d, i) => (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/30">
-                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-xs font-medium text-muted-foreground">{i + 1}</span>
+                          <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border border-border/30">
+                            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-sm font-medium text-muted-foreground">{i + 1}</span>
                             </div>
                             <div>
-                              <p className="font-medium text-sm text-foreground">{d.name}</p>
-                              {d.description && <p className="text-xs text-muted-foreground mt-0.5">{d.description}</p>}
+                              <p className="font-semibold text-base text-foreground">{d.name}</p>
+                              {d.description && <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{d.description}</p>}
                             </div>
                           </div>
                         ))}
@@ -486,7 +486,7 @@ export default function SymptomsChecker() {
                 <Card className="border-amber-500/30 bg-amber-500/5">
                   <CardContent className="flex items-start gap-3 py-4">
                     <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
+                    <p className="text-sm text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
                       This is an AI-powered triage and not a substitute for professional medical advice.
                     </p>
                   </CardContent>
