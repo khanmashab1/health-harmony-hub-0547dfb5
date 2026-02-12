@@ -307,11 +307,30 @@ export default function SymptomsChecker() {
             )}
 
             {/* Step 3: Results */}
-            {step === 3 && analysis && (
+            {step === 3 && analysis && (() => {
+              const conditions = analysis.conditions || [];
+              const differentials = analysis.differentials || [];
+              const confidence = analysis.confidence_level || 0;
+              const primaryCondition = conditions[0];
+              const isLikely = confidence >= 85;
+              const severityCfg = getSeverityConfig(analysis.severity);
+
+              // Recommendation based on severity
+              const getRecommendation = () => {
+                switch (analysis.severity) {
+                  case 'critical': return { text: 'Seek emergency medical care immediately. Do not delay.', urgent: true };
+                  case 'high': return { text: 'Consult a doctor within 24 hours. Schedule an urgent appointment.', urgent: true };
+                  case 'moderate': return { text: 'Schedule a doctor visit if symptoms persist beyond 48 hours or worsen.', urgent: false };
+                  default: return { text: 'Monitor at home. If symptoms worsen or persist beyond a week, schedule a visit.', urgent: false };
+                }
+              };
+              const recommendation = getRecommendation();
+
+              return (
               <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
 
                 {/* Emergency Banner */}
-                {analysis.consult_immediately && (
+                {recommendation.urgent && (
                   <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}>
                     <Card className="border-2 border-red-500/50 bg-red-500/5">
                       <CardContent className="flex items-center gap-4 py-5">
@@ -320,36 +339,38 @@ export default function SymptomsChecker() {
                         </div>
                         <div>
                           <p className="font-bold text-red-600 text-lg">Consult a Doctor Immediately</p>
-                          <p className="text-sm text-red-600/80">Your symptoms suggest a condition that needs urgent medical attention. Please visit a healthcare provider as soon as possible.</p>
+                          <p className="text-sm text-red-600/80">{recommendation.text}</p>
                         </div>
                       </CardContent>
                     </Card>
                   </motion.div>
                 )}
 
-                {/* Likely Conditions */}
-                {(analysis.conditions || []).length > 0 && (
+                {/* Primary Condition Card */}
+                {primaryCondition && (
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Target className="w-5 h-5 text-primary" />
-                        Likely Condition{(analysis.conditions || []).length > 1 ? 's' : ''}
-                      </CardTitle>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <Target className="w-5 h-5 text-primary" />
+                          {isLikely ? 'Likely Condition' : 'Possible Consideration'}
+                        </CardTitle>
+                        <Badge variant={isLikely ? "default" : "secondary"} className="text-xs">
+                          {isLikely ? 'High Match' : 'Possible'}
+                        </Badge>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      {(analysis.conditions || []).map((c, i) => (
-                        <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
-                          <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex flex-col items-center justify-center">
-                            <span className="text-lg font-bold text-primary">{c.percentage > 0 ? `${c.percentage}%` : '—'}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
+                    <CardContent className="space-y-4">
+                      {conditions.slice(0, 2).map((c, i) => (
+                        <div key={i} className="p-4 rounded-xl bg-muted/50 border border-border/50">
+                          <div className="flex items-center justify-between mb-2">
                             <p className="font-semibold text-foreground text-base">{c.name}</p>
-                            {c.description && (
-                              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{c.description}</p>
+                            {c.percentage > 0 && (
+                              <span className="text-sm font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">{c.percentage}%</span>
                             )}
                           </div>
-                          {i === 0 && (
-                            <Badge variant="secondary" className="flex-shrink-0 text-xs">Primary</Badge>
+                          {c.description && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">{c.description}</p>
                           )}
                         </div>
                       ))}
@@ -357,9 +378,8 @@ export default function SymptomsChecker() {
                   </Card>
                 )}
 
-                {/* Confidence & Severity Row */}
+                {/* Confidence & Risk Level Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Confidence Level */}
                   <Card>
                     <CardContent className="pt-5 pb-5">
                       <div className="flex items-center gap-3 mb-3">
@@ -370,14 +390,14 @@ export default function SymptomsChecker() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-end justify-between">
-                          <span className="text-3xl font-bold text-foreground">{analysis.confidence_level}%</span>
-                          <span className="text-xs text-muted-foreground">match accuracy</span>
+                          <span className="text-3xl font-bold text-foreground">{confidence}%</span>
+                          <span className="text-xs text-muted-foreground">database match</span>
                         </div>
                         <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
                           <motion.div
                             className="h-full bg-primary rounded-full"
                             initial={{ width: 0 }}
-                            animate={{ width: `${analysis.confidence_level}%` }}
+                            animate={{ width: `${confidence}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
                           />
                         </div>
@@ -385,33 +405,32 @@ export default function SymptomsChecker() {
                     </CardContent>
                   </Card>
 
-                  {/* Severity Assessment */}
-                  <Card className={`border ${getSeverityConfig(analysis.severity).color}`}>
+                  <Card className={`border ${severityCfg.color}`}>
                     <CardContent className="pt-5 pb-5">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-lg bg-current/10 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
                           <Gauge className="w-4 h-4" />
                         </div>
-                        <p className="text-sm font-medium">Severity Assessment</p>
+                        <p className="text-sm font-medium">Risk Level</p>
                       </div>
-                      <p className="text-3xl font-bold capitalize">{getSeverityConfig(analysis.severity).label}</p>
+                      <p className="text-3xl font-bold capitalize">{severityCfg.label}</p>
                       <p className="text-xs mt-1 opacity-75">
-                        {analysis.severity === 'low' && 'Manageable with self-care at home'}
-                        {analysis.severity === 'moderate' && 'Monitor symptoms, consult if worsening'}
-                        {analysis.severity === 'high' && 'See a doctor within 24 hours'}
-                        {analysis.severity === 'critical' && 'Seek emergency medical care now'}
+                        {analysis.severity === 'low' && 'Low risk — manageable with self-care'}
+                        {analysis.severity === 'moderate' && 'Medium risk — monitor closely'}
+                        {analysis.severity === 'high' && 'High risk — medical attention advised'}
+                        {analysis.severity === 'critical' && 'Critical — seek emergency care'}
                       </p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Triage Advice */}
+                {/* Advice to Treat */}
                 {analysis.triage_advice && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <ListChecks className="w-5 h-5 text-primary" />
-                        Actionable Advice
+                        Advice to Treat
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -422,8 +441,21 @@ export default function SymptomsChecker() {
                   </Card>
                 )}
 
+                {/* Recommendation */}
+                <Card className={recommendation.urgent ? "border-red-500/30 bg-red-500/5" : "border-primary/30 bg-primary/5"}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Stethoscope className="w-5 h-5" />
+                      Recommendation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm font-medium leading-relaxed">{recommendation.text}</p>
+                  </CardContent>
+                </Card>
+
                 {/* Differential Considerations */}
-                {(analysis.differentials || []).length > 0 && (
+                {differentials.length > 0 && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -434,7 +466,7 @@ export default function SymptomsChecker() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {(analysis.differentials || []).map((d, i) => (
+                        {differentials.map((d, i) => (
                           <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/30">
                             <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-xs font-medium text-muted-foreground">{i + 1}</span>
@@ -455,7 +487,7 @@ export default function SymptomsChecker() {
                   <CardContent className="flex items-start gap-3 py-4">
                     <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
-                      <strong className="text-amber-600 dark:text-amber-400">{t("symptoms.disclaimer")}</strong> {t("symptoms.disclaimerText")}
+                      This is an AI-powered triage and not a substitute for professional medical advice.
                     </p>
                   </CardContent>
                 </Card>
@@ -471,7 +503,8 @@ export default function SymptomsChecker() {
                   </Button>
                 </div>
               </motion.div>
-            )}
+              );
+            })()}
           </AnimatePresence>
         </div>
       </div>
