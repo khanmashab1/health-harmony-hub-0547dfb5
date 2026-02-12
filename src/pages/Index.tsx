@@ -221,7 +221,7 @@ export default function Index() {
                   <img 
                     src={doctorConsultationImg} 
                     alt="Doctor consulting with patient at MediCare+ clinic management platform" 
-                    className="w-full max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-lg rounded-3xl shadow-2xl border-4 border-border/20"
+                    className="w-full max-w-[140px] sm:max-w-[180px] md:max-w-sm lg:max-w-lg rounded-3xl shadow-2xl border-4 border-border/20"
                     loading="eager"
                     width="512"
                     height="512"
