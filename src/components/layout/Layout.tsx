@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { BackButton } from "@/components/shared/BackButton";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ export function Layout({ children, showFooter = true, showHeader = true }: Layou
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {showHeader && <Header />}
+      {showHeader && <BackButton />}
       <main className={`flex-1 ${showHeader ? 'pt-[72px]' : ''}`} role="main">
         {children}
       </main>
