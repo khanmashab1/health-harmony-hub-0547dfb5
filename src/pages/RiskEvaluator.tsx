@@ -69,12 +69,12 @@ export default function RiskEvaluator() {
         setResult(null);
         throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
       }
-      if (!data?.risk_level) {
+      if (!data?.prediction && !data?.risk_level) {
         setResult(null);
         throw new Error("Invalid response from server. Please check your inputs and try again.");
       }
       setError(null);
-      setResult(data);
+      setResult({ ...data, risk_level: data.risk_level || data.prediction });
     } catch (err: unknown) {
       setResult(null);
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
