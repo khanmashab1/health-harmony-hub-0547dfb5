@@ -55,6 +55,7 @@ interface Analysis {
   severity: string;
   triage_advice: string;
   confidence_level: number;
+  recommendation_text: string;
   raw_analysis: string;
   consult_immediately: boolean;
 }
@@ -315,8 +316,14 @@ export default function SymptomsChecker() {
               const isLikely = confidence >= 85;
               const severityCfg = getSeverityConfig(analysis.severity);
 
-              // Recommendation based on severity
+              // Use recommendation from RAG agent if available, otherwise fallback by severity
               const getRecommendation = () => {
+                if (analysis.recommendation_text) {
+                  const urgent = analysis.severity === 'critical' || analysis.severity === 'high' ||
+                    analysis.recommendation_text.toLowerCase().includes('immediately') ||
+                    analysis.recommendation_text.toLowerCase().includes('emergency');
+                  return { text: analysis.recommendation_text, urgent };
+                }
                 switch (analysis.severity) {
                   case 'critical': return { text: 'Seek emergency medical care immediately. Do not delay.', urgent: true };
                   case 'high': return { text: 'Consult a doctor within 24 hours. Schedule an urgent appointment.', urgent: true };
