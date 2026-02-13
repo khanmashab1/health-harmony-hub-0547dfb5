@@ -59,7 +59,12 @@ export function Header() {
 
   const DashboardIcon = getDashboardIcon();
 
-  const isActiveLink = (path: string) => location.pathname === path;
+  const navItems = [
+    { to: "/our-doctors", icon: Users, label: t("nav.ourDoctors") },
+    { to: "/booking", icon: Calendar, label: t("nav.bookAppointment") },
+    { to: "/symptoms", icon: Activity, label: t("nav.symptomsChecker") },
+    { to: "/risk-evaluator", icon: HeartPulse, label: "AI Risk Checker" },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-border/40 bg-header text-header-foreground">
@@ -89,77 +94,13 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Desktop Nav - Center */}
-          <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-            <Link to="/our-doctors">
-              <button
-                className={`nav-pill ${isActiveLink('/our-doctors') ? 'active' : ''}`}
-              >
-                <Users className="w-4 h-4" />
-                {t("nav.ourDoctors")}
-              </button>
-            </Link>
-            <Link to="/booking">
-              <button
-                className={`nav-pill ${isActiveLink('/booking') ? 'active' : ''}`}
-              >
-                <Calendar className="w-4 h-4" />
-                {t("nav.bookAppointment")}
-              </button>
-            </Link>
-            <Link to="/symptoms">
-              <button
-                className={`nav-pill ${isActiveLink('/symptoms') ? 'active' : ''}`}
-              >
-                <Activity className="w-4 h-4" />
-                {t("nav.symptomsChecker")}
-              </button>
-            </Link>
-            <Link to="/risk-evaluator">
-              <button
-                className={`nav-pill ${isActiveLink('/risk-evaluator') ? 'active' : ''}`}
-              >
-                <HeartPulse className="w-4 h-4" />
-                AI Risk Checker
-              </button>
-            </Link>
-          </nav>
-
-          {/* Desktop Actions - Right */}
-          <div className="hidden md:flex items-center gap-3">
-            <LanguageToggle />
-            <ThemeToggle />
-            {user ? (
-              <>
-                <Link to={getDashboardLink()}>
-                  <Button variant="ghost" className="gap-2">
-                    <DashboardIcon className="w-4 h-4" />
-                    {t("nav.dashboard")}
-                  </Button>
-                </Link>
-                <Button variant="outline-muted" onClick={handleSignOut} className="gap-2">
-                  <LogOut className="w-4 h-4" />
-                  {t("nav.signOut")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button variant="outline">{t("nav.signIn")}</Button>
-                </Link>
-                <Link to="/auth?mode=signup">
-                  <Button variant="hero">{t("nav.getStarted")}</Button>
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile: Language Toggle + Menu Button */}
-          <div className="md:hidden flex items-center gap-1">
+          {/* Right side: Language Toggle + Menu Button */}
+          <div className="flex items-center gap-1">
             <LanguageToggle />
             <button
               className="p-2 rounded-xl hover:bg-muted transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -171,7 +112,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Dropdown Menu (all screen sizes) */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -179,16 +120,10 @@ export function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="md:hidden border-t border-border/40 bg-background overflow-hidden"
+            className="border-t border-border/40 bg-background overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {/* Navigation Links */}
-              {[
-                { to: "/our-doctors", icon: Users, label: t("nav.ourDoctors") },
-                { to: "/booking", icon: Calendar, label: t("nav.bookAppointment") },
-                { to: "/symptoms", icon: Activity, label: t("nav.symptomsChecker") },
-                { to: "/risk-evaluator", icon: HeartPulse, label: "AI Risk Checker" },
-              ].map((item, i) => (
+              {navItems.map((item, i) => (
                 <motion.div
                   key={item.to}
                   initial={{ opacity: 0, x: -30 }}
@@ -207,7 +142,7 @@ export function Header() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.15, duration: 0.2 }}
+                transition={{ delay: 0.2, duration: 0.2 }}
                 className="border-t border-border/40 my-2"
               />
 
@@ -215,7 +150,7 @@ export function Header() {
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 0.25, ease: "easeOut" }}
+                transition={{ delay: 0.25, duration: 0.25, ease: "easeOut" }}
                 className="flex items-center gap-2 px-2"
               >
                 <ThemeToggle />
@@ -224,7 +159,7 @@ export function Header() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.25, duration: 0.2 }}
+                transition={{ delay: 0.3, duration: 0.2 }}
                 className="border-t border-border/40 my-2"
               />
 
@@ -234,7 +169,7 @@ export function Header() {
                   <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3, duration: 0.25, ease: "easeOut" }}
+                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
                   >
                     <Link to={getDashboardLink()} onClick={() => setIsMenuOpen(false)}>
                       <Button variant="secondary" className="w-full justify-start gap-2">
@@ -246,7 +181,7 @@ export function Header() {
                   <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
+                    transition={{ delay: 0.4, duration: 0.25, ease: "easeOut" }}
                   >
                     <Button
                       variant="outline"
@@ -266,7 +201,7 @@ export function Header() {
                   <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3, duration: 0.25, ease: "easeOut" }}
+                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
                   >
                     <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="outline" className="w-full">
@@ -277,7 +212,7 @@ export function Header() {
                   <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.35, duration: 0.25, ease: "easeOut" }}
+                    transition={{ delay: 0.4, duration: 0.25, ease: "easeOut" }}
                   >
                     <Link to="/auth?mode=signup" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="hero" className="w-full">
