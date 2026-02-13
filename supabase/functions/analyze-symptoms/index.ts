@@ -101,12 +101,11 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     const parsed = parseConditionBlock(block);
     if (!parsed.name) continue;
 
-    // Force confidence into 85-95% range for matched conditions
+    // Force confidence into 85-90% range for matched conditions
     let boostedConfidence = parsed.confidence;
-    if (boostedConfidence < 85) {
-      boostedConfidence = 85 + Math.round(Math.random() * 10); // 85-95%
+    if (boostedConfidence < 85 || boostedConfidence > 90) {
+      boostedConfidence = 85 + Math.round(Math.random() * 5); // 85-90%
     }
-    if (boostedConfidence > 98) boostedConfidence = 95;
 
     allConditions.push({
       name: parsed.name,
