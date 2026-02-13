@@ -85,6 +85,13 @@ export default function RiskEvaluator() {
     return <ShieldAlert className="w-6 h-6 text-red-600" />;
   };
 
+  const getRiskAdvice = (level: string) => {
+    const l = level?.toLowerCase();
+    if (l === "low") return "Your vitals look healthy! Keep maintaining your lifestyle and schedule routine checkups.";
+    if (l === "medium") return "Some risk factors detected. Consider consulting a doctor for a preventive health checkup.";
+    return "⚠️ High risk detected! We strongly recommend booking an appointment with a doctor immediately for a thorough evaluation.";
+  };
+
   const inputClass = "bg-background";
 
   return (
@@ -236,15 +243,18 @@ export default function RiskEvaluator() {
                     Risk Level: {result.risk_level}
                   </span>
                 </div>
+                <p className="text-sm mt-2 leading-relaxed">{getRiskAdvice(result.risk_level)}</p>
                 {result.message && (
-                  <p className="text-sm mt-1 opacity-90">{result.message}</p>
+                  <p className="text-xs mt-2 opacity-75 italic">{result.message}</p>
                 )}
-                <Link to="/booking" className="mt-4 inline-block">
-                  <Button variant="default" size="sm" className="gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Book Appointment
-                  </Button>
-                </Link>
+                {result.risk_level?.toLowerCase() !== "low" && (
+                  <Link to="/booking" className="mt-4 inline-block">
+                    <Button variant="default" size="sm" className="gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Book Appointment
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
 
