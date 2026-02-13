@@ -12,12 +12,13 @@ export function BackButton() {
   return (
     <Button
       variant="ghost"
-      size="sm"
+      size="icon"
       onClick={() => navigate(-1)}
-      className="fixed top-[80px] left-4 z-40 gap-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all"
+      className="fixed top-[80px] left-3 z-40 h-9 w-9 sm:h-10 sm:w-auto sm:px-3 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md transition-all"
+      aria-label="Go back"
     >
       <ArrowLeft className="w-4 h-4" />
-      <span className="hidden sm:inline text-sm">Back</span>
+      <span className="hidden sm:inline text-sm ml-1">Back</span>
     </Button>
   );
 }
