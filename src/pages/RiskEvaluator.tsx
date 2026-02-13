@@ -61,10 +61,22 @@ export default function RiskEvaluator() {
       const { data, error: fnError } = await supabase.functions.invoke("health-risk-proxy", {
         body: payload,
       });
-      if (fnError) throw new Error(fnError.message);
-      if (data?.error) throw new Error(data.error);
+      if (fnError) {
+        setResult(null);
+        throw new Error(fnError.message);
+      }
+      if (data?.error) {
+        setResult(null);
+        throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+      }
+      if (!data?.risk_level) {
+        setResult(null);
+        throw new Error("Invalid response from server. Please check your inputs and try again.");
+      }
+      setError(null);
       setResult(data);
     } catch (err: unknown) {
+      setResult(null);
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
