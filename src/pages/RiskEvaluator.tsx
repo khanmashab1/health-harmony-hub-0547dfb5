@@ -26,7 +26,12 @@ export default function RiskEvaluator() {
 
   // Form state
   const [age, setAge] = useState("");
-  const [bmi, setBmi] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
+
+  const calculatedBmi = heightCm && weightKg
+    ? (parseFloat(weightKg) / ((parseFloat(heightCm) / 100) ** 2)).toFixed(1)
+    : "";
   const [bpSystolic, setBpSystolic] = useState("");
   const [oxygenLevel, setOxygenLevel] = useState("");
   const [diet, setDiet] = useState("");
@@ -45,7 +50,7 @@ export default function RiskEvaluator() {
 
     const payload = {
       age: parseInt(age),
-      bmi: parseFloat(bmi),
+      bmi: parseFloat(calculatedBmi),
       bp_systolic: parseInt(bpSystolic),
       oxygen_level: parseFloat(oxygenLevel),
       diet: diet,
@@ -138,10 +143,25 @@ export default function RiskEvaluator() {
                     <Input id="age" type="number" min={1} max={120} required placeholder="e.g. 30" value={age} onChange={e => setAge(e.target.value)} className={inputClass} />
                   </div>
                   <div>
-                    <Label htmlFor="bmi">BMI</Label>
-                    <p className="text-[11px] text-muted-foreground mb-1">Body Mass Index (weight÷height²). Normal: 18.5–24.9</p>
-                    <Input id="bmi" type="number" step="0.1" min={10} max={60} required placeholder="e.g. 24.5" value={bmi} onChange={e => setBmi(e.target.value)} className={inputClass} />
+                    <Label htmlFor="height">Height (cm)</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Your height in centimeters</p>
+                    <Input id="height" type="number" min={50} max={250} required placeholder="e.g. 170" value={heightCm} onChange={e => setHeightCm(e.target.value)} className={inputClass} />
                   </div>
+                  <div>
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Your weight in kilograms</p>
+                    <Input id="weight" type="number" step="0.1" min={10} max={300} required placeholder="e.g. 70" value={weightKg} onChange={e => setWeightKg(e.target.value)} className={inputClass} />
+                  </div>
+                  {calculatedBmi && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-muted-foreground">
+                        Calculated BMI: <span className="font-semibold text-foreground">{calculatedBmi}</span>
+                        <span className="ml-2 text-[11px]">
+                          {parseFloat(calculatedBmi) < 18.5 ? "(Underweight)" : parseFloat(calculatedBmi) <= 24.9 ? "(Normal)" : parseFloat(calculatedBmi) <= 29.9 ? "(Overweight)" : "(Obese)"}
+                        </span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </fieldset>
 
