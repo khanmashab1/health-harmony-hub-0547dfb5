@@ -5,7 +5,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Header / Navigation
     "nav.ourDoctors": "Our Doctors",
     "nav.bookAppointment": "Book Appointment",
-    "nav.symptomsChecker": "Symptoms Checker",
+    "nav.symptomsChecker": "AI Symptom Advisor",
+    "nav.aiHealthRiskChecker": "AI Health Risk Checker",
     "nav.dashboard": "Dashboard",
     "nav.signIn": "Sign In",
     "nav.signOut": "Sign Out",
@@ -330,7 +331,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "ourDoctors.consultationFee": "Consultation Fee",
 
     // Symptoms Checker Page
-    "symptoms.title": "AI Symptom Checker",
+    "symptoms.title": "AI Symptom Advisor",
     "symptoms.description": "Describe your symptoms and get AI-powered health insights. Remember, this is not a replacement for professional medical advice.",
     "symptoms.disclaimer": "Medical Disclaimer:",
     "symptoms.disclaimerText": "This tool provides general health information only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a healthcare provider for medical concerns.",
@@ -657,14 +658,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.onlineDoctorAppointments": "Online Doctor Appointments",
     "footer.clinicManagement": "Clinic Management Software",
     "footer.hospitalManagement": "Hospital Management System",
-    "footer.aiSymptomChecker": "AI Symptom Checker",
+    "footer.aiSymptomChecker": "AI Symptom Advisor",
     "footer.patientReviews": "Patient Reviews",
   },
   ur: {
     // Header / Navigation
     "nav.ourDoctors": "ہمارے ڈاکٹرز",
     "nav.bookAppointment": "اپائنٹمنٹ بک کریں",
-    "nav.symptomsChecker": "علامات چیکر",
+    "nav.symptomsChecker": "AI علامات مشیر",
+    "nav.aiHealthRiskChecker": "AI صحت خطرہ چیکر",
     "nav.dashboard": "ڈیش بورڈ",
     "nav.signIn": "سائن ان",
     "nav.signOut": "سائن آؤٹ",
@@ -989,7 +991,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "ourDoctors.consultationFee": "مشاورت فیس",
 
     // Symptoms Checker Page
-    "symptoms.title": "AI علامات چیکر",
+    "symptoms.title": "AI علامات مشیر",
     "symptoms.description": "اپنی علامات بیان کریں اور AI سے صحت کی بصیرت حاصل کریں۔ یاد رکھیں، یہ پیشہ ورانہ طبی مشورے کا متبادل نہیں ہے۔",
     "symptoms.disclaimer": "طبی دستبرداری:",
     "symptoms.disclaimerText": "یہ ٹول صرف عمومی صحت کی معلومات فراہم کرتا ہے۔ یہ پیشہ ورانہ طبی مشورے، تشخیص، یا علاج کا متبادل نہیں ہے۔ طبی خدشات کے لیے ہمیشہ صحت فراہم کنندہ سے مشورہ کریں۔",
@@ -1316,7 +1318,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.onlineDoctorAppointments": "آن لائن ڈاکٹر اپائنٹمنٹس",
     "footer.clinicManagement": "کلینک مینجمنٹ سافٹ ویئر",
     "footer.hospitalManagement": "ہسپتال مینجمنٹ سسٹم",
-    "footer.aiSymptomChecker": "اے آئی علامات چیکر",
+    "footer.aiSymptomChecker": "اے آئی علامات مشیر",
     "footer.patientReviews": "مریضوں کے جائزے",
   },
 };

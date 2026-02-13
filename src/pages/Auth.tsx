@@ -307,10 +307,12 @@ export default function Auth() {
 
           <Card variant="elevated" className="border-0 shadow-xl">
             <CardHeader className="text-center pb-2">
-              <div className="lg:hidden flex justify-center mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
+              <div className="lg:hidden flex flex-col items-center mb-4 gap-1">
+                <img src="/logo-medicare.png" alt="MediCare+ Logo" className="h-12 w-auto object-contain" />
+                <span className="text-lg tracking-tight italic" style={{ fontFamily: "'Alegreya', serif" }}>
+                  <span className="text-blue-600 dark:text-blue-400">MediCare</span>
+                  <span className="text-teal-500 dark:text-teal-400 font-extrabold">+</span>
+                </span>
               </div>
               <CardTitle className="text-2xl font-bold">
                 {mode === "signup" 
