@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const API_URL = "https://ai-driven-health-risk-evaluator.onrender.com";
+const API_URL = "https://ai-driven-health-risk-evaluator.onrender.com/predict";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
