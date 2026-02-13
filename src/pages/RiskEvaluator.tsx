@@ -134,10 +134,12 @@ export default function RiskEvaluator() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="age">Age</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Your current age in years</p>
                     <Input id="age" type="number" min={1} max={120} required placeholder="e.g. 30" value={age} onChange={e => setAge(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <Label htmlFor="bmi">BMI</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Body Mass Index (weight÷height²). Normal: 18.5–24.9</p>
                     <Input id="bmi" type="number" step="0.1" min={10} max={60} required placeholder="e.g. 24.5" value={bmi} onChange={e => setBmi(e.target.value)} className={inputClass} />
                   </div>
                 </div>
@@ -149,10 +151,12 @@ export default function RiskEvaluator() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="bp">Systolic BP</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Upper blood pressure reading (mmHg). Normal: ~120</p>
                     <Input id="bp" type="number" min={60} max={250} required placeholder="e.g. 120" value={bpSystolic} onChange={e => setBpSystolic(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <Label htmlFor="oxygen">Oxygen Level %</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Blood oxygen saturation (SpO2). Normal: 95–100%</p>
                     <Input id="oxygen" type="number" step="0.1" min={50} max={100} required placeholder="e.g. 98" value={oxygenLevel} onChange={e => setOxygenLevel(e.target.value)} className={inputClass} />
                   </div>
                 </div>
@@ -164,6 +168,7 @@ export default function RiskEvaluator() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Diet</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Overall quality of your daily eating habits</p>
                     <Select value={diet} onValueChange={setDiet} required>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -175,14 +180,17 @@ export default function RiskEvaluator() {
                   </div>
                   <div>
                     <Label htmlFor="exercise">Exercise Days/Week</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">How many days per week you exercise (0–7)</p>
                     <Input id="exercise" type="number" min={0} max={7} required placeholder="0-7" value={exerciseDays} onChange={e => setExerciseDays(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <Label htmlFor="sleep">Sleep Hours</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Average hours of sleep per night. Ideal: 7–9</p>
                     <Input id="sleep" type="number" step="0.5" min={0} max={24} required placeholder="e.g. 7" value={sleepHours} onChange={e => setSleepHours(e.target.value)} className={inputClass} />
                   </div>
                   <div>
                     <Label>Stress Level</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Your general day-to-day stress level</p>
                     <Select value={stress} onValueChange={setStress} required>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -201,6 +209,7 @@ export default function RiskEvaluator() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>Smoking</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Do you currently smoke?</p>
                     <Select value={smoking} onValueChange={setSmoking} required>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -211,6 +220,7 @@ export default function RiskEvaluator() {
                   </div>
                   <div>
                     <Label>Alcohol</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Your alcohol intake level</p>
                     <Select value={alcohol} onValueChange={setAlcohol} required>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -222,6 +232,7 @@ export default function RiskEvaluator() {
                   </div>
                   <div>
                     <Label>Family History</Label>
+                    <p className="text-[11px] text-muted-foreground mb-1">Any chronic illness in close relatives?</p>
                     <Select value={familyHistory} onValueChange={setFamilyHistory} required>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
