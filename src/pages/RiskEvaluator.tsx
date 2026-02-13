@@ -259,14 +259,19 @@ export default function RiskEvaluator() {
                 {result.message && (
                   <p className="text-xs mt-2 opacity-75 italic">{result.message}</p>
                 )}
-                {result.risk_level?.toLowerCase() !== "low" && (
-                  <Link to="/booking" className="mt-4 inline-block">
-                    <Button variant="default" size="sm" className="gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Book Appointment
-                    </Button>
-                  </Link>
-                )}
+                <div className="flex gap-3 mt-4 flex-wrap">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => { setResult(null); setError(null); }}>
+                    Check Again
+                  </Button>
+                  {result.risk_level?.toLowerCase() !== "low" && (
+                    <Link to="/booking">
+                      <Button variant="default" size="sm" className="gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Book Appointment
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
 
