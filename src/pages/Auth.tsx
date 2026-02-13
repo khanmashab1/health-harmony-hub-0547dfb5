@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -66,6 +67,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { logoUrl, siteName } = useSiteSettings();
 
   // Check for password recovery token in URL hash
   useEffect(() => {
@@ -252,8 +254,8 @@ export default function Auth() {
           className="text-white max-w-md relative z-10"
         >
           <Link to="/" className="flex items-center gap-3 mb-8">
-            <img src="/logo-medicare.png" alt="MediCare++ Logo" className="h-12 w-auto object-contain" />
-            <span className="text-2xl font-bold italic" style={{ fontFamily: "'Alegreya', serif" }}>MediCare++</span>
+            {logoUrl && <img src={logoUrl} alt={`${siteName} Logo`} className="h-12 w-auto object-contain" />}
+            <span className="text-2xl font-bold italic" style={{ fontFamily: "'Alegreya', serif" }}>{siteName}</span>
           </Link>
           
           <h1 className="text-4xl font-bold mb-4 leading-tight">
@@ -306,10 +308,14 @@ export default function Auth() {
           <Card variant="elevated" className="border-0 shadow-xl">
             <CardHeader className="text-center pb-2">
               <div className="lg:hidden flex flex-col items-center mb-4 gap-1">
-                <img src="/logo-medicare.png" alt="MediCare++ Logo" className="h-12 w-auto object-contain" />
+                {logoUrl && <img src={logoUrl} alt={`${siteName} Logo`} className="h-12 w-auto object-contain" />}
                 <span className="text-lg tracking-tight italic" style={{ fontFamily: "'Alegreya', serif" }}>
-                  <span className="text-blue-600 dark:text-blue-400">MediCare</span>
-                  <span className="text-teal-500 dark:text-teal-400 font-extrabold">++</span>
+                  <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
+                  {siteName?.includes('+') && (
+                    <span className="text-teal-500 dark:text-teal-400 font-extrabold">
+                      {siteName.match(/\++/)?.[0] || ''}
+                    </span>
+                  )}
                 </span>
               </div>
               <CardTitle className="text-2xl font-bold">
