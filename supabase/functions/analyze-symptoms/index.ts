@@ -30,178 +30,123 @@ function checkRateLimit(identifier: string): boolean {
   return true;
 }
 
-function parseAnalysisToStructured(text: string, ragConfidence?: number) {
-  const conditions: { name: string; percentage: number; description: string }[] = [];
-  const differentials: { name: string; description: string }[] = [];
-  let severity = "moderate";
-  let triageAdvice = "";
-  let confidenceLevel = ragConfidence || 70;
-  let recommendation = "";
-
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-
-  // --- Parse the RAG agent's structured output format ---
-  let conditionName = "";
-  let conditionDescription = "";
-  let riskLevel = "";
-  let adviceLines: string[] = [];
+function parseConditionBlock(block: string) {
+  const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+  let name = "", confidence = 0, description = "", riskLevel = "", recommendation = "";
+  const adviceLines: string[] = [];
   let inAdvice = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i].replace(/\*\*/g, '');
 
-    // Match "Likely Condition:" or "Possible Consideration:"
-    const condMatch = line.match(/^(?:\*\*)?(?:Likely Condition|Possible Consideration|Primary Condition)[:\s]*(?:\*\*)?\s*(.+)/i);
-    if (condMatch) {
-      conditionName = condMatch[1].replace(/\*\*/g, '').trim();
-      inAdvice = false;
-      continue;
-    }
+    const condMatch = line.match(/^(?:Likely Condition|Possible Consideration|Primary Condition)[:\s]*(.+)/i);
+    if (condMatch) { name = condMatch[1].trim(); inAdvice = false; continue; }
 
-    // Match "Confidence Level: XX%"
-    const confMatch = line.match(/^(?:\*\*)?Confidence Level[:\s]*(?:\*\*)?\s*(\d+(?:\.\d+)?)\s*%?/i);
-    if (confMatch) {
-      confidenceLevel = parseFloat(confMatch[1]);
-      inAdvice = false;
-      continue;
-    }
+    const confMatch = line.match(/Confidence Level[:\s]*(\d+(?:\.\d+)?)\s*%?/i);
+    if (confMatch) { confidence = parseFloat(confMatch[1]); inAdvice = false; continue; }
 
-    // Match "Description:"
-    const descMatch = line.match(/^(?:\*\*)?Description[:\s]*(?:\*\*)?\s*(.+)/i);
+    const descMatch = line.match(/^Description[:\s]*(.*)/i);
     if (descMatch) {
-      conditionDescription = descMatch[1].replace(/\*\*/g, '').trim();
-      // Collect continuation lines
+      description = descMatch[1].trim();
       for (let j = i + 1; j < lines.length; j++) {
-        const nextLine = lines[j];
-        if (nextLine.match(/^(?:\*\*)?(?:Risk Level|Advice|Recommendation|Confidence)[:\s]/i)) break;
-        conditionDescription += " " + nextLine.replace(/\*\*/g, '').trim();
+        const next = lines[j].replace(/\*\*/g, '');
+        if (next.match(/^(?:Risk Level|Advice|Recommendation|Confidence|Likely|Possible)[:\s]/i)) break;
+        description += " " + next.trim();
         i = j;
       }
-      inAdvice = false;
-      continue;
+      inAdvice = false; continue;
     }
 
-    // Match "Risk Level:"
-    const riskMatch = line.match(/^(?:\*\*)?Risk Level[:\s]*(?:\*\*)?\s*(.+)/i);
-    if (riskMatch) {
-      riskLevel = riskMatch[1].replace(/\*\*/g, '').trim().toLowerCase();
-      inAdvice = false;
-      continue;
-    }
+    const riskMatch = line.match(/^Risk Level[:\s]*(.+)/i);
+    if (riskMatch) { riskLevel = riskMatch[1].trim().toLowerCase(); inAdvice = false; continue; }
 
-    // Match "Advice to Treat:" section
-    const adviceMatch = line.match(/^(?:\*\*)?Advice(?:\s+to\s+Treat)?[:\s]*(?:\*\*)?\s*(.*)/i);
+    const adviceMatch = line.match(/^Advice(?:\s+to\s+Treat)?[:\s]*(.*)/i);
     if (adviceMatch) {
-      if (adviceMatch[1].trim()) adviceLines.push(adviceMatch[1].replace(/\*\*/g, '').trim());
-      inAdvice = true;
-      continue;
+      if (adviceMatch[1].trim()) adviceLines.push(adviceMatch[1].trim());
+      inAdvice = true; continue;
     }
 
-    // Match "Recommendation:"
-    const recMatch = line.match(/^(?:\*\*)?Recommendation[:\s]*(?:\*\*)?\s*(.+)/i);
+    const recMatch = line.match(/^Recommendation[:\s]*(.+)/i);
     if (recMatch) {
-      recommendation = recMatch[1].replace(/\*\*/g, '').trim();
-      // Collect continuation lines
-      for (let j = i + 1; j < lines.length; j++) {
-        const nextLine = lines[j];
-        if (nextLine.match(/^(?:\*\*)?(?:Risk Level|Advice|Description|Confidence|Likely|Possible|Disclaimer)[:\s]/i)) break;
-        if (nextLine.match(/^This is an AI/i)) break;
-        recommendation += " " + nextLine.replace(/\*\*/g, '').trim();
-        i = j;
-      }
-      inAdvice = false;
-      continue;
+      recommendation = recMatch[1].trim();
+      inAdvice = false; continue;
     }
 
-    // If we're in the advice section, collect bullet points
     if (inAdvice) {
-      if (line.match(/^(?:\*\*)?(?:Recommendation|Risk Level|Description|Confidence|Likely|Possible|Disclaimer)[:\s]/i)) {
-        inAdvice = false;
-      } else if (line.match(/^This is an AI/i)) {
+      if (line.match(/^(?:Recommendation|Risk Level|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) {
         inAdvice = false;
       } else {
-        adviceLines.push(line.replace(/^[-•*\d.]+\s*/, '').replace(/\*\*/g, '').trim());
+        const cleaned = line.replace(/^[-•*\d.]+\s*/, '').trim();
+        if (cleaned.length > 5) adviceLines.push(cleaned);
       }
     }
   }
 
-  // Build conditions array
-  if (conditionName) {
-    conditions.push({
-      name: conditionName,
-      percentage: confidenceLevel,
-      description: conditionDescription,
+  return { name, confidence, description: description.substring(0, 300), riskLevel, recommendation, adviceLines };
+}
+
+function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
+  // Split by --- separator for multi-condition RAG output
+  const rawText = text.replace(/\*\*/g, '');
+  const blocks = rawText.split(/\n---\n|\n-{3,}\n/).filter(b => b.trim());
+
+  const allConditions: { name: string; percentage: number; description: string }[] = [];
+  const differentials: { name: string; description: string }[] = [];
+  let primarySeverity = "moderate";
+  let primaryAdvice: string[] = [];
+  let primaryRecommendation = "";
+  let primaryConfidence = 0;
+
+  for (const block of blocks) {
+    const parsed = parseConditionBlock(block);
+    if (!parsed.name) continue;
+
+    allConditions.push({
+      name: parsed.name,
+      percentage: parsed.confidence, // Use LLM's stated confidence, NOT vector score
+      description: parsed.description,
     });
+
+    // Use the highest-confidence condition's details as primary
+    if (parsed.confidence > primaryConfidence) {
+      primaryConfidence = parsed.confidence;
+      primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
+        : parsed.riskLevel.includes('high') ? "high"
+        : parsed.riskLevel.includes('medium') || parsed.riskLevel.includes('moderate') ? "moderate"
+        : parsed.riskLevel.includes('low') ? "low" : "moderate";
+      primaryAdvice = parsed.adviceLines;
+      primaryRecommendation = parsed.recommendation;
+    }
   }
 
-  // Map risk level to severity
-  if (riskLevel.includes('critical')) severity = "critical";
-  else if (riskLevel.includes('high')) severity = "high";
-  else if (riskLevel.includes('medium') || riskLevel.includes('moderate')) severity = "moderate";
-  else if (riskLevel.includes('low')) severity = "low";
+  // Cap advice to 5 concise points max
+  const cappedAdvice = primaryAdvice
+    .filter(a => a.length > 10)
+    .slice(0, 5)
+    .map(a => a.length > 120 ? a.substring(0, 117) + "…" : a);
 
-  // Build triage advice
-  triageAdvice = adviceLines.length > 0
-    ? adviceLines.map(a => `• ${a}`).join('\n')
+  const triageAdvice = cappedAdvice.length > 0
+    ? cappedAdvice.map(a => `• ${a}`).join('\n')
     : "";
 
-  // --- Fallback: try old generic parsing if structured parsing found nothing ---
-  if (conditions.length === 0) {
-    const percentPattern = /(?:\*\*)?([A-Za-z\s\-']+?)(?:\*\*)?[\s:\-–]*(?:\()?(\d{1,3})%?\)?/g;
-    let match;
-    const foundConditions: { name: string; pct: number; lineIdx: number }[] = [];
+  // Sort conditions by confidence descending
+  allConditions.sort((a, b) => b.percentage - a.percentage);
 
-    for (let i = 0; i < lines.length; i++) {
-      percentPattern.lastIndex = 0;
-      while ((match = percentPattern.exec(lines[i])) !== null) {
-        const name = match[1].trim().replace(/^[-•*\d.]+\s*/, '');
-        const pct = parseInt(match[2]);
-        if (pct > 0 && pct <= 100 && name.length > 2 && name.length < 60) {
-          foundConditions.push({ name, pct, lineIdx: i });
-        }
-      }
-    }
-
-    foundConditions.sort((a, b) => b.pct - a.pct);
-    for (let i = 0; i < foundConditions.length; i++) {
-      const c = foundConditions[i];
-      let desc = "";
-      if (c.lineIdx + 1 < lines.length) {
-        const nextLine = lines[c.lineIdx + 1];
-        if (!nextLine.match(/\d+%/) && !nextLine.startsWith('#')) {
-          desc = nextLine.replace(/^[-•*]+\s*/, '').substring(0, 150);
-        }
-      }
-      if (i < 2) conditions.push({ name: c.name, percentage: c.pct, description: desc });
-      else differentials.push({ name: c.name, description: desc || `${c.pct}% likelihood` });
-    }
-  }
-
-  // Fallback triage advice
-  if (!triageAdvice) {
-    const fallbackAdvice = lines.filter(l =>
-      l.match(/^[-•*]/) && (l.includes('consult') || l.includes('take') || l.includes('rest') || l.includes('drink') || l.includes('avoid') || l.includes('seek') || l.includes('monitor'))
-    );
-    triageAdvice = fallbackAdvice.slice(0, 4).map(l => `• ${l.replace(/^[-•*]+\s*/, '')}`).join('\n');
-  }
-
-  // Fallback severity from raw text
-  if (severity === "moderate" && conditions.length === 0) {
-    const lowerText = text.toLowerCase();
-    if (lowerText.includes('critical') || lowerText.includes('emergency')) severity = "critical";
-    else if (lowerText.includes('severe') || lowerText.includes('immediate medical')) severity = "high";
-    else if (lowerText.includes('mild') || lowerText.includes('low risk') || lowerText.includes('self-care')) severity = "low";
+  // Primary conditions (top 2), rest as differentials
+  const conditions = allConditions.slice(0, 2);
+  for (const c of allConditions.slice(2)) {
+    differentials.push({ name: c.name, description: c.description || `${c.percentage}% likelihood` });
   }
 
   return {
-    conditions: conditions.slice(0, 2),
+    conditions,
     differentials: differentials.slice(0, 3),
-    severity,
+    severity: primarySeverity,
     triage_advice: triageAdvice,
-    confidence_level: confidenceLevel,
-    recommendation_text: recommendation,
+    confidence_level: primaryConfidence,
+    recommendation_text: primaryRecommendation,
     raw_analysis: text,
-    consult_immediately: severity === 'critical' || severity === 'high',
+    consult_immediately: primarySeverity === 'critical' || primarySeverity === 'high',
   };
 }
 
