@@ -136,7 +136,7 @@ export default function RiskEvaluator() {
               {/* Biometrics */}
               <fieldset className="space-y-3">
                 <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Biometrics</legend>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="age">Age</Label>
                     <p className="text-[11px] text-muted-foreground mb-1">Your current age in years</p>
@@ -153,7 +153,7 @@ export default function RiskEvaluator() {
                     <Input id="weight" type="number" step="0.1" min={10} max={300} required placeholder="e.g. 70" value={weightKg} onChange={e => setWeightKg(e.target.value)} className={inputClass} />
                   </div>
                   {calculatedBmi && (
-                    <div className="col-span-2">
+                    <div className="sm:col-span-2">
                       <p className="text-sm text-muted-foreground">
                         Calculated BMI: <span className="font-semibold text-foreground">{calculatedBmi}</span>
                         <span className="ml-2 text-[11px]">
@@ -168,7 +168,7 @@ export default function RiskEvaluator() {
               {/* Clinical Vitals */}
               <fieldset className="space-y-3">
                 <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Clinical Vitals</legend>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="bp">Systolic BP</Label>
                     <p className="text-[11px] text-muted-foreground mb-1">Upper blood pressure reading (mmHg). Normal: ~120</p>
@@ -185,7 +185,7 @@ export default function RiskEvaluator() {
               {/* Lifestyle */}
               <fieldset className="space-y-3">
                 <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Lifestyle</legend>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Diet</Label>
                     <p className="text-[11px] text-muted-foreground mb-1">Overall quality of your daily eating habits</p>
@@ -226,7 +226,7 @@ export default function RiskEvaluator() {
               {/* Habits & Genetics */}
               <fieldset className="space-y-3">
                 <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Habits & Genetics</legend>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label>Smoking</Label>
                     <p className="text-[11px] text-muted-foreground mb-1">Do you currently smoke?</p>
