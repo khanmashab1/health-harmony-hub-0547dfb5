@@ -9,6 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Loader2, HeartPulse, Calendar, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RiskResult {
   risk_level: string;
@@ -16,7 +17,7 @@ interface RiskResult {
   [key: string]: unknown;
 }
 
-const API_URL = "https://ai-driven-health-risk-evaluator.onrender.com";
+// Proxied through edge function to avoid CORS
 
 export default function RiskEvaluator() {
   const [loading, setLoading] = useState(false);
@@ -57,13 +58,11 @@ export default function RiskEvaluator() {
     };
 
     try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const { data, error: fnError } = await supabase.functions.invoke("health-risk-proxy", {
+        body: payload,
       });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
       setResult(data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
