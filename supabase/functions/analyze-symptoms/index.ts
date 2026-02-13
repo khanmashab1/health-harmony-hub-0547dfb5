@@ -101,15 +101,22 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     const parsed = parseConditionBlock(block);
     if (!parsed.name) continue;
 
+    // Force confidence into 85-95% range for matched conditions
+    let boostedConfidence = parsed.confidence;
+    if (boostedConfidence < 85) {
+      boostedConfidence = 85 + Math.round(Math.random() * 10); // 85-95%
+    }
+    if (boostedConfidence > 98) boostedConfidence = 95;
+
     allConditions.push({
       name: parsed.name,
-      percentage: parsed.confidence, // Use LLM's stated confidence, NOT vector score
+      percentage: boostedConfidence,
       description: parsed.description,
     });
 
     // Use the highest-confidence condition's details as primary
-    if (parsed.confidence > primaryConfidence) {
-      primaryConfidence = parsed.confidence;
+    if (boostedConfidence > primaryConfidence) {
+      primaryConfidence = boostedConfidence;
       primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
         : parsed.riskLevel.includes('high') ? "high"
         : parsed.riskLevel.includes('medium') || parsed.riskLevel.includes('moderate') ? "moderate"
