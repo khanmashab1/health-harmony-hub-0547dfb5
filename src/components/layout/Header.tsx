@@ -11,7 +11,8 @@ import {
   Shield,
   UserCog,
   Stethoscope,
-  Users
+  Users,
+  HeartPulse
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -114,6 +115,14 @@ export function Header() {
                 {t("nav.symptomsChecker")}
               </button>
             </Link>
+            <Link to="/risk-evaluator">
+              <button
+                className={`nav-pill ${isActiveLink('/risk-evaluator') ? 'active' : ''}`}
+              >
+                <HeartPulse className="w-4 h-4" />
+                AI Risk Checker
+              </button>
+            </Link>
           </nav>
 
           {/* Desktop Actions - Right */}
@@ -178,6 +187,7 @@ export function Header() {
                 { to: "/our-doctors", icon: Users, label: t("nav.ourDoctors") },
                 { to: "/booking", icon: Calendar, label: t("nav.bookAppointment") },
                 { to: "/symptoms", icon: Activity, label: t("nav.symptomsChecker") },
+                { to: "/risk-evaluator", icon: HeartPulse, label: "AI Risk Checker" },
               ].map((item, i) => (
                 <motion.div
                   key={item.to}

@@ -33,6 +33,7 @@ import OnlineDoctorAppointmentSystem from "./pages/seo/OnlineDoctorAppointmentSy
 import ClinicManagementSoftware from "./pages/seo/ClinicManagementSoftware";
 import HospitalManagementSoftware from "./pages/seo/HospitalManagementSoftware";
 import AISymptomChecker from "./pages/seo/AISymptomChecker";
+import RiskEvaluator from "./pages/RiskEvaluator";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
                 <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
                 <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
+                <Route path="/risk-evaluator" element={<RiskEvaluator />} />
                 <Route path="/token/:appointmentId" element={<TokenPrint />} />
                 <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
                 <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
