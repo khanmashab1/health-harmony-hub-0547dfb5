@@ -76,9 +76,17 @@ export default function SymptomsChecker() {
   const [medicalHistory, setMedicalHistory] = useState("");
 
   const toggleTag = (tag: string) => {
+    const isSelected = selectedTags.includes(tag);
     setSelectedTags(prev => 
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+      isSelected ? prev.filter(t => t !== tag) : [...prev, tag]
     );
+    // Sync tag text into the description textarea
+    const englishTag = SYMPTOM_TAGS_EN[SYMPTOM_TAG_KEYS.indexOf(tag)] || tag;
+    if (isSelected) {
+      setSymptoms(prev => prev.split(", ").filter(s => s.trim() !== englishTag && s.trim() !== tag).join(", "));
+    } else {
+      setSymptoms(prev => prev.trim() ? `${prev.trim()}, ${englishTag}` : englishTag);
+    }
   };
 
   const handleAnalyze = async () => {
