@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
+import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
 import { toast } from "sonner";
 import { 
   Brain, 
@@ -63,6 +65,7 @@ interface Analysis {
 export default function SymptomsChecker() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const usageLimit = useAIUsageLimit("symptom_checker");
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -92,6 +95,13 @@ export default function SymptomsChecker() {
   const handleAnalyze = async () => {
     if (!symptoms.trim() && selectedTags.length === 0) {
       toast.error(t("symptoms.whatSymptoms"));
+      return;
+    }
+
+    // Check usage limit before proceeding
+    const allowed = await usageLimit.checkAndIncrement();
+    if (!allowed) {
+      toast.error(`Daily limit of ${usageLimit.dailyLimit} free uses reached. Subscribe for more!`);
       return;
     }
 
@@ -160,6 +170,7 @@ export default function SymptomsChecker() {
       />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8">
         <div className="container max-w-4xl mx-auto px-4">
+          <AIUsageBanner {...usageLimit} />
           {/* Header */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
@@ -306,8 +317,8 @@ export default function SymptomsChecker() {
                     </div>
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(1)} className="flex-1">{t("common.back")}</Button>
-                      <Button onClick={handleAnalyze} disabled={isAnalyzing} className="flex-1">
-                        {isAnalyzing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("symptoms.analyzing")}</>) : (<><Brain className="w-4 h-4 mr-2" />{t("symptoms.analyzeSymptoms")}</>)}
+                      <Button onClick={handleAnalyze} disabled={isAnalyzing || !usageLimit.canUse} className="flex-1">
+                        {isAnalyzing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("symptoms.analyzing")}</>) : !usageLimit.canUse ? "Daily Limit Reached" : (<><Brain className="w-4 h-4 mr-2" />{t("symptoms.analyzeSymptoms")}</>)}
                       </Button>
                     </div>
                   </CardContent>

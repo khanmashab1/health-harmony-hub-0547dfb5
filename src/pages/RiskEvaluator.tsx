@@ -11,6 +11,9 @@ import { Loader2, HeartPulse, Calendar, AlertTriangle, ShieldCheck, ShieldAlert,
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
+import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
+import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts";
 
 interface RiskResult {
@@ -33,6 +36,7 @@ interface HealthMetric {
 }
 
 export default function RiskEvaluator() {
+  const usageLimit = useAIUsageLimit("risk_evaluator");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RiskResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +217,14 @@ export default function RiskEvaluator() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check usage limit
+    const allowed = await usageLimit.checkAndIncrement();
+    if (!allowed) {
+      toast.error(`Daily limit of ${usageLimit.dailyLimit} free uses reached. Subscribe for more!`);
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     setError(null);
@@ -332,6 +344,7 @@ export default function RiskEvaluator() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <AIUsageBanner {...usageLimit} />
             <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
               {/* Biometrics */}
               <fieldset className="space-y-3">
@@ -464,8 +477,8 @@ export default function RiskEvaluator() {
                 </div>
               </fieldset>
 
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-                {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyzing…</> : "Analyze Health Risk"}
+              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading || !usageLimit.canUse}>
+                {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Analyzing…</> : !usageLimit.canUse ? "Daily Limit Reached" : "Analyze Health Risk"}
               </Button>
             </form>
 
