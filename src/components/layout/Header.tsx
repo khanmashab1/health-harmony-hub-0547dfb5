@@ -167,7 +167,7 @@ export function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="border-t border-border/40 bg-background overflow-hidden"
+            className="md:hidden border-t border-border/40 bg-background overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {navItems.map((item, i) => (
@@ -178,7 +178,7 @@ export function Header() {
                   transition={{ delay: 0.05 * i, duration: 0.25, ease: "easeOut" }}
                 >
                   <Link to={item.to} onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-2">
+                    <Button variant={location.pathname === item.to ? "secondary" : "ghost"} className="w-full justify-start gap-2">
                       <item.icon className="w-4 h-4" />
                       {item.label}
                     </Button>
