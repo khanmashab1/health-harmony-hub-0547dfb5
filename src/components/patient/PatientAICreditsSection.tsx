@@ -133,12 +133,12 @@ export function PatientAICreditsSection() {
           </div>
           {remainingCredits <= 0 && totalCredits > 0 && (
             <p className="text-sm text-destructive mt-3">
-              You've used all your credits. Purchase more below to continue using AI features.
+              You've used all your purchased credits. Purchase more below or use your 15 free daily credits.
             </p>
           )}
           {totalCredits === 0 && (
             <p className="text-sm text-muted-foreground mt-3">
-              You have 3 free AI uses per day. Purchase credits for unlimited analyses.
+              You get 15 free AI credits daily (5 credits per use = 3 analyses/day). Purchase credits for more.
             </p>
           )}
         </CardContent>
