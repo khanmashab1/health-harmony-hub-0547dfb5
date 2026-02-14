@@ -98,8 +98,45 @@ serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        logStep("Checkout completed", { sessionId: session.id, customerId: session.customer });
+        logStep("Checkout completed", { sessionId: session.id, customerId: session.customer, metadata: session.metadata });
         
+        // Handle AI credits purchase
+        if (session.metadata?.type === "ai_credits") {
+          const userId = session.metadata.user_id;
+          const planId = session.metadata.plan_id;
+          
+          if (userId && planId) {
+            // Get plan details
+            const { data: plan } = await supabaseClient
+              .from("patient_ai_plans")
+              .select("credits, price, name")
+              .eq("id", planId)
+              .single();
+            
+            if (plan) {
+              // Add credits to user
+              await supabaseClient.rpc("add_ai_credits", {
+                p_user_id: userId,
+                p_credits: plan.credits,
+              });
+
+              // Record purchase
+              await supabaseClient.from("patient_ai_purchases").insert({
+                user_id: userId,
+                plan_id: planId,
+                credits_purchased: plan.credits,
+                amount_paid: plan.price,
+                stripe_session_id: session.id,
+                status: "completed",
+              });
+
+              logStep("AI credits added", { userId, credits: plan.credits, planName: plan.name });
+            }
+          }
+          break;
+        }
+
+        // Handle doctor subscription checkout
         if (session.mode === "subscription" && session.customer_email) {
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
           const productId = subscription.items.data[0]?.price.product as string;
@@ -120,14 +157,12 @@ serve(async (req) => {
                 .eq("user_id", userId);
               logStep("Updated doctor plan from checkout", { userId, planId: matchingPlan.id });
 
-              // Get doctor name for email
               const { data: profile } = await supabaseClient
                 .from("profiles")
                 .select("name")
                 .eq("id", userId)
                 .single();
 
-              // Send upgrade email notification
               await sendSubscriptionEmail(
                 supabaseUrl,
                 serviceRoleKey,
