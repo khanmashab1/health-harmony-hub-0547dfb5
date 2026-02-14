@@ -94,25 +94,72 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Right side: Language Toggle + Menu Button */}
+          {/* Desktop nav links */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link key={item.to} to={item.to}>
+                <Button
+                  variant={location.pathname === item.to ? "secondary" : "ghost"}
+                  size="sm"
+                  className="gap-1.5 text-sm"
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right side: Desktop auth + toggles, Mobile hamburger */}
           <div className="flex items-center gap-1">
-            <LanguageToggle />
-            <button
-              className="p-2 rounded-xl hover:bg-muted transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <X className="w-6 h-6" />
+            {/* Desktop-only auth & toggles */}
+            <div className="hidden md:flex items-center gap-1">
+              <ThemeToggle />
+              <LanguageToggle />
+              {user ? (
+                <>
+                  <Link to={getDashboardLink()}>
+                    <Button variant="secondary" size="sm" className="gap-1.5">
+                      <DashboardIcon className="w-4 h-4" />
+                      {t("nav.dashboard")}
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </>
               ) : (
-                <Menu className="w-6 h-6" />
+                <>
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm">{t("nav.signIn")}</Button>
+                  </Link>
+                  <Link to="/auth?mode=signup">
+                    <Button variant="hero" size="sm">{t("nav.getStarted")}</Button>
+                  </Link>
+                </>
               )}
-            </button>
+            </div>
+
+            {/* Mobile-only: Language + Hamburger */}
+            <div className="flex md:hidden items-center gap-1">
+              <LanguageToggle />
+              <button
+                className="p-2 rounded-xl hover:bg-muted transition-colors"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                {isMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Dropdown Menu (all screen sizes) */}
+      {/* Mobile-only Dropdown Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
