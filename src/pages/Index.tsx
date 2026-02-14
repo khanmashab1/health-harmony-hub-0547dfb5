@@ -181,27 +181,27 @@ export default function Index() {
                 </Link>
               </div>
 
-              {/* Quick Stats */}
-              <div className="flex flex-wrap gap-4 md:gap-8 pt-4 md:pt-6 justify-center lg:justify-start">
+              {/* Quick Stats - visible on desktop only (inline) */}
+              <div className="hidden lg:flex flex-wrap gap-8 pt-6 justify-start">
                 <div className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.doctors || 0}+</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">{t("home.expertDoctors")}</p>
+                  <p className="text-3xl font-bold text-foreground">{stats?.doctors || 0}+</p>
+                  <p className="text-sm text-muted-foreground">{t("home.expertDoctors")}</p>
                 </div>
                 <div className="text-center">
-                   <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
-                   <p className="text-xs md:text-sm text-muted-foreground">{t("home.ourPatients")}</p>
+                   <p className="text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
+                   <p className="text-sm text-muted-foreground">{t("home.ourPatients")}</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <Star className="w-4 h-4 md:w-5 md:h-5 text-amber-500 fill-amber-500" />
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats?.rating || "4.8"}</p>
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    <p className="text-3xl font-bold text-foreground">{stats?.rating || "4.8"}</p>
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground">{t("home.averageRating")}</p>
+                  <p className="text-sm text-muted-foreground">{t("home.averageRating")}</p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Right - Hero Image - Now visible on mobile too */}
+            {/* Right - Hero Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, x: 50 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -230,6 +230,30 @@ export default function Index() {
               </div>
             </motion.div>
           </div>
+
+          {/* Quick Stats - visible on mobile/tablet only (below image) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex lg:hidden justify-center gap-6 sm:gap-10 pt-8"
+          >
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{stats?.doctors || 0}+</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t("home.expertDoctors")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{stats?.patients || 0}+</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t("home.ourPatients")}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 fill-amber-500" />
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">{stats?.rating || "4.8"}</p>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t("home.averageRating")}</p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
