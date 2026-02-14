@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format, differenceInYears } from "date-fns";
 import { 
   User, Calendar, Activity, FileText, Star, 
-  Edit, History, Heart, Pencil, PenSquare
+  Edit, History, Heart, Pencil, PenSquare, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { PatientSwitcher } from "@/components/patient/PatientSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
+import { PatientAICreditsSection } from "@/components/patient/PatientAICreditsSection";
 import { KeyRound } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -321,7 +322,7 @@ export default function PatientDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Tabs defaultValue="appointments" className="space-y-6">
+            <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") || "appointments"} className="space-y-6">
               <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex-wrap h-auto gap-1">
                 <TabsTrigger value="appointments" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
@@ -347,6 +348,10 @@ export default function PatientDashboard() {
                 <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Star className="w-4 h-4 mr-1 sm:mr-2" />
                   {t("patient.reviews")}
+                </TabsTrigger>
+                <TabsTrigger value="ai-credits" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Zap className="w-4 h-4 mr-1 sm:mr-2" />
+                  AI Credits
                 </TabsTrigger>
               </TabsList>
 
@@ -577,6 +582,21 @@ export default function PatientDashboard() {
                         </Button>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* AI Credits Tab */}
+              <TabsContent value="ai-credits">
+                <Card variant="glass" className="border-border/30 dark:border-border/20">
+                  <CardHeader className="border-b border-border/30">
+                    <CardTitle className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-primary" />
+                      AI Credits
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <PatientAICreditsSection />
                   </CardContent>
                 </Card>
               </TabsContent>

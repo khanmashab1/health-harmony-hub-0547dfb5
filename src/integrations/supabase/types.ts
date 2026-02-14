@@ -989,6 +989,116 @@ export type Database = {
           },
         ]
       }
+      patient_ai_credits: {
+        Row: {
+          id: string
+          total_credits: number
+          updated_at: string
+          used_credits: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      patient_ai_plans: {
+        Row: {
+          created_at: string
+          credits: number
+          description: string | null
+          id: string
+          is_active: boolean
+          is_popular: boolean | null
+          name: string
+          price: number
+          sort_order: number | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean | null
+          name: string
+          price?: number
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean | null
+          name?: string
+          price?: number
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      patient_ai_purchases: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          credits_purchased: number
+          id: string
+          plan_id: string | null
+          status: string
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          credits_purchased: number
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          credits_purchased?: number
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_ai_purchases_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "patient_ai_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
@@ -1330,6 +1440,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_ai_credits: {
+        Args: { p_credits: number; p_user_id: string }
+        Returns: undefined
+      }
       allocate_token: {
         Args: { p_date: string; p_doctor_id: string }
         Returns: number
@@ -1343,6 +1457,7 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_ai_credit: { Args: { p_user_id: string }; Returns: boolean }
       get_active_patient_count: { Args: never; Returns: number }
       get_available_slots: {
         Args: { p_date: string; p_doctor_id: string }
