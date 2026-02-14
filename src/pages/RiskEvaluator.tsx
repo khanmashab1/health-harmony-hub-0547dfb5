@@ -618,7 +618,7 @@ export default function RiskEvaluator() {
 
             {/* Disclaimer */}
             <p className="text-xs text-muted-foreground text-center mt-6">
-              ⚕️ This AI tool is for educational purposes and does not replace professional medical diagnosis.
+              ⚕️ This AI-generated result may not be 100% accurate. Always consult a qualified healthcare professional for proper diagnosis and treatment.
             </p>
           </CardContent>
         </Card>
