@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_tracking: {
+        Row: {
+          anonymous_id: string | null
+          created_at: string
+          feature_type: string
+          id: string
+          updated_at: string
+          usage_count: number
+          usage_date: string
+          user_id: string | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          created_at?: string
+          feature_type: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          user_id?: string | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          created_at?: string
+          feature_type?: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           allergies: string | null
@@ -1302,6 +1335,14 @@ export type Database = {
         Returns: number
       }
       calculate_age: { Args: { birth_date: string }; Returns: number }
+      check_ai_usage: {
+        Args: {
+          p_daily_limit: number
+          p_feature_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_active_patient_count: { Args: never; Returns: number }
       get_available_slots: {
         Args: { p_date: string; p_doctor_id: string }
