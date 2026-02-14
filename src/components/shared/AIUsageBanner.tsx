@@ -12,17 +12,19 @@ interface AIUsageBannerProps {
   isLoading: boolean;
   creditsRemaining: number;
   hasCredits: boolean;
+  creditsPerUse?: number;
+  dailyCredits?: number;
 }
 
-export function AIUsageBanner({ canUse, currentCount, dailyLimit, remaining, userTier, isLoading, creditsRemaining, hasCredits }: AIUsageBannerProps) {
+export function AIUsageBanner({ canUse, currentCount, dailyLimit, remaining, userTier, isLoading, creditsRemaining, hasCredits, creditsPerUse = 5, dailyCredits = 15 }: AIUsageBannerProps) {
   if (isLoading || userTier === "enterprise") return null;
 
-  // Credits-based user
+  // Credits-based user (purchased credits)
   if (userTier === "credits") {
     return (
       <div className="text-xs text-muted-foreground text-center mb-4 flex items-center justify-center gap-1">
         <Zap className="w-3 h-3 text-primary" />
-        {creditsRemaining} AI credits remaining
+        {creditsRemaining} AI credits remaining ({creditsPerUse} credits per use)
       </div>
     );
   }
@@ -33,7 +35,7 @@ export function AIUsageBanner({ canUse, currentCount, dailyLimit, remaining, use
         <Lock className="h-4 w-4 text-destructive" />
         <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
           <span className="text-destructive font-medium">
-            You've reached your daily limit of {dailyLimit} free uses. Purchase AI credits for more analyses.
+            You've used all {dailyCredits} daily credits ({dailyLimit} uses × {creditsPerUse} credits each). Purchase more credits for additional analyses.
           </span>
           <Button size="sm" variant="destructive" asChild>
             <Link to="/profile?tab=ai-credits">
@@ -46,12 +48,13 @@ export function AIUsageBanner({ canUse, currentCount, dailyLimit, remaining, use
   }
 
   if (remaining <= 1 && dailyLimit !== Infinity) {
+    const remainingCreditsDisplay = remaining * creditsPerUse;
     return (
       <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-900/10 mb-6">
         <Sparkles className="h-4 w-4 text-amber-600" />
         <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
           <span className="text-amber-700 dark:text-amber-400">
-            {remaining} of {dailyLimit} free {remaining === 1 ? "use" : "uses"} remaining today.
+            {remainingCreditsDisplay} credits left today ({remaining} {remaining === 1 ? "use" : "uses"} remaining)
           </span>
           <Button size="sm" variant="outline" asChild>
             <Link to="/profile?tab=ai-credits">
@@ -64,9 +67,10 @@ export function AIUsageBanner({ canUse, currentCount, dailyLimit, remaining, use
   }
 
   if (userTier === "free" && dailyLimit !== Infinity) {
+    const usedCredits = currentCount * creditsPerUse;
     return (
       <div className="text-xs text-muted-foreground text-center mb-4">
-        {currentCount}/{dailyLimit} free uses today • {remaining} remaining
+        {usedCredits}/{dailyCredits} daily credits used • {remaining} {remaining === 1 ? "use" : "uses"} remaining ({creditsPerUse} credits per use)
       </div>
     );
   }
