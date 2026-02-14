@@ -109,7 +109,16 @@ export function PatientAICreditsSection() {
 
   const totalCredits = credits?.total_credits || 0;
   const usedCredits = credits?.used_credits || 0;
-  const remainingCredits = totalCredits - usedCredits;
+  const purchasedRemaining = totalCredits - usedCredits;
+  const hasPurchasedCredits = totalCredits > 0 && purchasedRemaining > 0;
+
+  // Free tier: 15 daily credits (5 per use = 3 uses/day)
+  const FREE_DAILY_CREDITS = 15;
+  const displayCredits = hasPurchasedCredits ? purchasedRemaining : FREE_DAILY_CREDITS;
+  const displayLabel = hasPurchasedCredits ? "purchased credits remaining" : "free daily credits";
+  const displaySubtext = hasPurchasedCredits
+    ? `${usedCredits} used of ${totalCredits} total purchased`
+    : "5 credits per use • Resets daily";
 
   return (
     <div className="space-y-6">
@@ -120,23 +129,18 @@ export function PatientAICreditsSection() {
             <div>
               <p className="text-sm text-muted-foreground">Your AI Credits</p>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-4xl font-bold text-primary">{remainingCredits}</span>
-                <span className="text-sm text-muted-foreground">remaining</span>
+                <span className="text-4xl font-bold text-primary">{displayCredits}</span>
+                <span className="text-sm text-muted-foreground">{displayLabel}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {usedCredits} used of {totalCredits} total
+                {displaySubtext}
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-primary/10">
               <Zap className="w-8 h-8 text-primary" />
             </div>
           </div>
-          {remainingCredits <= 0 && totalCredits > 0 && (
-            <p className="text-sm text-destructive mt-3">
-              You've used all your purchased credits. Purchase more below or use your 15 free daily credits.
-            </p>
-          )}
-          {totalCredits === 0 && (
+          {hasPurchasedCredits ? null : (
             <p className="text-sm text-muted-foreground mt-3">
               You get 15 free AI credits daily (5 credits per use = 3 analyses/day). Purchase credits for more.
             </p>
