@@ -14,13 +14,17 @@ interface AIUsageLimitResult {
   userTier: "free" | "professional" | "enterprise" | "credits";
   creditsRemaining: number;
   hasCredits: boolean;
+  creditsPerUse: number;
+  dailyCredits: number;
 }
 
-const LIMITS = {
-  free: 3,
-  professional: 20,
+const CREDITS_PER_USE = 5;
+
+const DAILY_CREDITS = {
+  free: 15,        // 15 credits = 3 uses
+  professional: 100, // 100 credits = 20 uses
   enterprise: Infinity,
-  credits: Infinity, // credits-based, no daily limit
+  credits: Infinity, // purchased credits, no daily limit
 };
 
 export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
@@ -97,7 +101,8 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
     fetchTierAndCredits();
   }, [user, profile]);
 
-  const dailyLimit = LIMITS[userTier];
+  const dailyCredits = DAILY_CREDITS[userTier];
+  const dailyUses = dailyCredits === Infinity ? Infinity : Math.floor(dailyCredits / CREDITS_PER_USE);
 
   // Fetch current daily usage count
   useEffect(() => {
@@ -105,7 +110,6 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       setIsLoading(true);
       try {
         if (userTier === "credits" || userTier === "enterprise") {
-          // No daily limit tracking needed
           setCurrentCount(0);
           setIsLoading(false);
           return;
@@ -138,10 +142,9 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
   }, [user, featureType, userTier]);
 
   const checkAndIncrement = useCallback(async (): Promise<boolean> => {
-    // Enterprise: always allowed
     if (userTier === "enterprise") return true;
 
-    // Credits-based: consume a credit
+    // Credits-based: consume 5 credits per use
     if (userTier === "credits" && user) {
       const { data, error } = await supabase.rpc("consume_ai_credit", {
         p_user_id: user.id,
@@ -149,12 +152,12 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
 
       if (error) {
         console.error("Credit consumption error:", error);
-        return true; // Allow on error
+        return true;
       }
 
       if (data === true) {
-        setCreditsRemaining(prev => Math.max(0, prev - 1));
-        if (creditsRemaining - 1 <= 0) {
+        setCreditsRemaining(prev => Math.max(0, prev - CREDITS_PER_USE));
+        if (creditsRemaining - CREDITS_PER_USE <= 0) {
           setHasCredits(false);
           setUserTier("free");
         }
@@ -163,12 +166,12 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       return false;
     }
 
-    // Daily limit based (free/professional)
+    // Daily limit based (free/professional) - tracked as uses, limit is dailyUses
     if (user) {
       const { data, error } = await supabase.rpc("check_ai_usage", {
         p_user_id: user.id,
         p_feature_type: featureType,
-        p_daily_limit: dailyLimit,
+        p_daily_limit: dailyUses as number,
       });
 
       if (error) {
@@ -180,12 +183,11 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       setCurrentCount(result.current_count);
       return result.allowed;
     } else {
-      // Anonymous: localStorage
       const today = new Date().toISOString().split("T")[0];
       const key = `ai_usage_${featureType}_${today}`;
       const count = parseInt(localStorage.getItem(key) || "0");
 
-      if (count >= dailyLimit) {
+      if (count >= (dailyUses as number)) {
         setCurrentCount(count);
         return false;
       }
@@ -195,20 +197,23 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       setCurrentCount(newCount);
       return true;
     }
-  }, [user, featureType, dailyLimit, userTier, creditsRemaining]);
+  }, [user, featureType, dailyUses, userTier, creditsRemaining]);
 
-  const remaining = dailyLimit === Infinity ? Infinity : Math.max(0, dailyLimit - currentCount);
-  const canUse = userTier === "enterprise" || userTier === "credits" || currentCount < dailyLimit;
+  const remainingUses = dailyUses === Infinity ? Infinity : Math.max(0, (dailyUses as number) - currentCount);
+  const remainingCredits = dailyUses === Infinity ? Infinity : remainingUses * CREDITS_PER_USE;
+  const canUse = userTier === "enterprise" || userTier === "credits" || currentCount < (dailyUses as number);
 
   return {
     canUse,
     currentCount,
-    dailyLimit,
-    remaining,
+    dailyLimit: dailyUses as number,
+    remaining: remainingUses,
     isLoading,
     checkAndIncrement,
     userTier,
-    creditsRemaining,
+    creditsRemaining: userTier === "credits" ? creditsRemaining : remainingCredits as number,
     hasCredits,
+    creditsPerUse: CREDITS_PER_USE,
+    dailyCredits: dailyCredits as number,
   };
 }
