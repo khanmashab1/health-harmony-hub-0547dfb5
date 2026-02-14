@@ -11,37 +11,33 @@ interface AIUsageLimitResult {
   remaining: number;
   isLoading: boolean;
   checkAndIncrement: () => Promise<boolean>;
-  userTier: "free" | "professional" | "enterprise";
+  userTier: "free" | "professional" | "enterprise" | "credits";
+  creditsRemaining: number;
+  hasCredits: boolean;
 }
 
 const LIMITS = {
   free: 3,
   professional: 20,
   enterprise: Infinity,
+  credits: Infinity, // credits-based, no daily limit
 };
-
-// Generate a persistent anonymous ID for non-logged-in users
-function getAnonymousId(): string {
-  const key = "ai_usage_anon_id";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
 
 export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
   const { user, profile } = useAuth();
   const [currentCount, setCurrentCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [userTier, setUserTier] = useState<"free" | "professional" | "enterprise">("free");
+  const [userTier, setUserTier] = useState<"free" | "professional" | "enterprise" | "credits">("free");
+  const [creditsRemaining, setCreditsRemaining] = useState(0);
+  const [hasCredits, setHasCredits] = useState(false);
 
-  // Determine user tier
+  // Determine user tier and credits
   useEffect(() => {
-    async function fetchTier() {
+    async function fetchTierAndCredits() {
       if (!user) {
         setUserTier("free");
+        setHasCredits(false);
+        setCreditsRemaining(0);
         return;
       }
 
@@ -59,12 +55,36 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
             const name = plan.name?.toLowerCase() || "";
             if (name.includes("enterprise") || name.includes("unlimited") || plan.price >= 7000) {
               setUserTier("enterprise");
+              return;
             } else if (name.includes("professional") || name.includes("pro") || plan.price >= 2000) {
               setUserTier("professional");
-            } else {
-              setUserTier("free");
+              return;
             }
-            return;
+          }
+        } catch {
+          // Fall through
+        }
+        setUserTier("free");
+        return;
+      }
+
+      // For patients: check if they have purchased credits
+      if (profile?.role === "patient") {
+        try {
+          const { data: credits } = await supabase
+            .from("patient_ai_credits")
+            .select("total_credits, used_credits")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (credits) {
+            const remaining = credits.total_credits - credits.used_credits;
+            setCreditsRemaining(remaining);
+            setHasCredits(remaining > 0);
+            if (remaining > 0) {
+              setUserTier("credits");
+              return;
+            }
           }
         } catch {
           // Fall through to free
@@ -74,16 +94,23 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       setUserTier("free");
     }
 
-    fetchTier();
+    fetchTierAndCredits();
   }, [user, profile]);
 
   const dailyLimit = LIMITS[userTier];
 
-  // Fetch current usage count
+  // Fetch current daily usage count
   useEffect(() => {
     async function fetchUsage() {
       setIsLoading(true);
       try {
+        if (userTier === "credits" || userTier === "enterprise") {
+          // No daily limit tracking needed
+          setCurrentCount(0);
+          setIsLoading(false);
+          return;
+        }
+
         if (user) {
           const today = new Date().toISOString().split("T")[0];
           const { data } = await supabase
@@ -96,7 +123,6 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
 
           setCurrentCount(data?.usage_count || 0);
         } else {
-          // For anonymous users, use localStorage
           const key = `ai_usage_${featureType}_${new Date().toISOString().split("T")[0]}`;
           const count = parseInt(localStorage.getItem(key) || "0");
           setCurrentCount(count);
@@ -109,13 +135,36 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
     }
 
     fetchUsage();
-  }, [user, featureType]);
+  }, [user, featureType, userTier]);
 
   const checkAndIncrement = useCallback(async (): Promise<boolean> => {
-    if (dailyLimit === Infinity) return true;
+    // Enterprise: always allowed
+    if (userTier === "enterprise") return true;
 
+    // Credits-based: consume a credit
+    if (userTier === "credits" && user) {
+      const { data, error } = await supabase.rpc("consume_ai_credit", {
+        p_user_id: user.id,
+      });
+
+      if (error) {
+        console.error("Credit consumption error:", error);
+        return true; // Allow on error
+      }
+
+      if (data === true) {
+        setCreditsRemaining(prev => Math.max(0, prev - 1));
+        if (creditsRemaining - 1 <= 0) {
+          setHasCredits(false);
+          setUserTier("free");
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // Daily limit based (free/professional)
     if (user) {
-      // Use the database function
       const { data, error } = await supabase.rpc("check_ai_usage", {
         p_user_id: user.id,
         p_feature_type: featureType,
@@ -124,15 +173,14 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
 
       if (error) {
         console.error("Usage check error:", error);
-        return true; // Allow on error to not block users
+        return true;
       }
 
       const result = data as any;
       setCurrentCount(result.current_count);
-
       return result.allowed;
     } else {
-      // Anonymous: use localStorage
+      // Anonymous: localStorage
       const today = new Date().toISOString().split("T")[0];
       const key = `ai_usage_${featureType}_${today}`;
       const count = parseInt(localStorage.getItem(key) || "0");
@@ -147,10 +195,10 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
       setCurrentCount(newCount);
       return true;
     }
-  }, [user, featureType, dailyLimit]);
+  }, [user, featureType, dailyLimit, userTier, creditsRemaining]);
 
   const remaining = dailyLimit === Infinity ? Infinity : Math.max(0, dailyLimit - currentCount);
-  const canUse = dailyLimit === Infinity || currentCount < dailyLimit;
+  const canUse = userTier === "enterprise" || userTier === "credits" || currentCount < dailyLimit;
 
   return {
     canUse,
@@ -160,5 +208,7 @@ export function useAIUsageLimit(featureType: FeatureType): AIUsageLimitResult {
     isLoading,
     checkAndIncrement,
     userTier,
+    creditsRemaining,
+    hasCredits,
   };
 }

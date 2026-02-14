@@ -28,7 +28,8 @@ import {
   Video,
   Trash2,
   Image,
-  CreditCard
+  CreditCard,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +84,7 @@ import { FooterSettingsPanel } from "@/components/admin/FooterSettingsPanel";
 import { DoctorApplicationsPanel } from "@/components/admin/DoctorApplicationsPanel";
 import { PaymentPlansPanel } from "@/components/admin/PaymentPlansPanel";
 import { SubscriptionsPanel } from "@/components/admin/SubscriptionsPanel";
+import { AIPlansPanel } from "@/components/admin/AIPlansPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -434,6 +436,11 @@ export default function AdminDashboard() {
                   <span className="hidden sm:inline">Subscriptions</span>
                   <span className="sm:hidden">Subs</span>
                 </TabsTrigger>
+                <TabsTrigger value="ai-plans" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">AI Plans</span>
+                  <span className="sm:hidden">AI</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
@@ -445,6 +452,7 @@ export default function AdminDashboard() {
               <TabsContent value="medicines"><MedicinesPanel /></TabsContent>
               <TabsContent value="plans"><PaymentPlansPanel /></TabsContent>
               <TabsContent value="subscriptions"><SubscriptionsPanel /></TabsContent>
+              <TabsContent value="ai-plans"><AIPlansPanel /></TabsContent>
 
               {/* Doctor Applications Tab */}
               <TabsContent value="applications">
