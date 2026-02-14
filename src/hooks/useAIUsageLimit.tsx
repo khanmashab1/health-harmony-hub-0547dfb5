@@ -22,7 +22,7 @@ const CREDITS_PER_USE = 5;
 
 const DAILY_CREDITS = {
   free: 15,        // 15 credits = 3 uses
-  professional: 100, // 100 credits = 20 uses
+  professional: 200, // 200 credits = 40 uses
   enterprise: Infinity,
   credits: Infinity, // purchased credits, no daily limit
 };
