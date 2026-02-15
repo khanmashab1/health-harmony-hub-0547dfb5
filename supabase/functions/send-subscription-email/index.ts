@@ -64,115 +64,33 @@ serve(async (req) => {
       case "upgrade":
         subject = `🎉 Welcome to ${planName} Plan - ${siteName}`;
         heading = "Your Subscription is Active!";
-        message = `
-          <p>Dear Dr. ${doctorName},</p>
-          <p>Thank you for upgrading to the <strong>${planName}</strong> plan!</p>
-          <p>Your subscription is now active and you have access to all premium features.</p>
-          ${planPrice ? `<p>Monthly price: <strong>PKR ${planPrice.toLocaleString()}</strong></p>` : ""}
-          <p>Here's what you can now enjoy:</p>
-          <ul>
-            <li>Advanced analytics dashboard</li>
-            <li>Priority customer support</li>
-            <li>Custom branding options</li>
-            <li>Increased patient capacity</li>
-          </ul>
-        `;
+        message = `<p>Dear Dr. ${doctorName},</p><p>Thank you for upgrading to the <strong>${planName}</strong> plan!</p><p>Your subscription is now active and you have access to all premium features.</p>${planPrice ? `<p>Monthly price: <strong>PKR ${planPrice.toLocaleString()}</strong></p>` : ""}<p>Here's what you can now enjoy:</p><ul><li>Advanced analytics dashboard</li><li>Priority customer support</li><li>Custom branding options</li><li>Increased patient capacity</li></ul>`;
         ctaText = "View Your Dashboard";
         break;
 
       case "cancel":
         subject = `Subscription Cancelled - ${siteName}`;
         heading = "We're Sorry to See You Go";
-        message = `
-          <p>Dear Dr. ${doctorName},</p>
-          <p>Your subscription has been cancelled.</p>
-          ${subscriptionEnd ? `<p>You will continue to have access to premium features until <strong>${new Date(subscriptionEnd).toLocaleDateString()}</strong>.</p>` : ""}
-          <p>After this date, your account will revert to the Basic plan.</p>
-          <p>If you change your mind, you can resubscribe at any time from your dashboard.</p>
-        `;
+        message = `<p>Dear Dr. ${doctorName},</p><p>Your subscription has been cancelled.</p>${subscriptionEnd ? `<p>You will continue to have access to premium features until <strong>${new Date(subscriptionEnd).toLocaleDateString()}</strong>.</p>` : ""}<p>After this date, your account will revert to the Basic plan.</p><p>If you change your mind, you can resubscribe at any time from your dashboard.</p>`;
         ctaText = "Resubscribe";
         break;
 
       case "renewal":
         subject = `✅ Subscription Renewed - ${siteName}`;
         heading = "Your Subscription Has Been Renewed";
-        message = `
-          <p>Dear Dr. ${doctorName},</p>
-          <p>Your <strong>${planName}</strong> subscription has been successfully renewed.</p>
-          ${planPrice ? `<p>Amount charged: <strong>PKR ${planPrice.toLocaleString()}</strong></p>` : ""}
-          ${subscriptionEnd ? `<p>Next billing date: <strong>${new Date(subscriptionEnd).toLocaleDateString()}</strong></p>` : ""}
-          <p>Thank you for your continued trust in ${siteName}!</p>
-        `;
+        message = `<p>Dear Dr. ${doctorName},</p><p>Your <strong>${planName}</strong> subscription has been successfully renewed.</p>${planPrice ? `<p>Amount charged: <strong>PKR ${planPrice.toLocaleString()}</strong></p>` : ""}${subscriptionEnd ? `<p>Next billing date: <strong>${new Date(subscriptionEnd).toLocaleDateString()}</strong></p>` : ""}<p>Thank you for your continued trust in ${siteName}!</p>`;
         ctaText = "View Subscription";
         break;
 
       case "payment_failed":
         subject = `⚠️ Payment Failed - Action Required - ${siteName}`;
         heading = "Payment Failed";
-        message = `
-          <p>Dear Dr. ${doctorName},</p>
-          <p>We were unable to process your subscription payment.</p>
-          <p>Please update your payment method to avoid service interruption.</p>
-          <p>If you need assistance, our support team is here to help.</p>
-        `;
+        message = `<p>Dear Dr. ${doctorName},</p><p>We were unable to process your subscription payment.</p><p>Please update your payment method to avoid service interruption.</p><p>If you need assistance, our support team is here to help.</p>`;
         ctaText = "Update Payment Method";
         break;
     }
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <!-- Header -->
-                <tr>
-                  <td style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 30px; text-align: center;">
-                    ${logoUrl ? `<img src="${logoUrl}" alt="${siteName}" style="max-height: 50px; margin-bottom: 15px;">` : ""}
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">${heading}</h1>
-                  </td>
-                </tr>
-                
-                <!-- Content -->
-                <tr>
-                  <td style="padding: 40px 30px;">
-                    <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-                      ${message}
-                    </div>
-                    
-                    <!-- CTA Button -->
-                    <div style="text-align: center; margin-top: 30px;">
-                      <a href="${ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                        ${ctaText}
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                
-                <!-- Footer -->
-                <tr>
-                  <td style="background-color: #f9fafb; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                      © ${new Date().getFullYear()} ${siteName}. All rights reserved.
-                    </p>
-                    <p style="color: #9ca3af; font-size: 12px; margin: 10px 0 0;">
-                      This email was sent regarding your subscription at ${siteName}.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f4f4f5;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);"><tr><td style="background:linear-gradient(135deg,#14b8a6 0%,#0d9488 100%);padding:30px;text-align:center;">${logoUrl ? `<img src="${logoUrl}" alt="${siteName}" style="max-height:50px;margin-bottom:15px;">` : ""}<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">${heading}</h1></td></tr><tr><td style="padding:40px 30px;"><div style="color:#374151;font-size:16px;line-height:1.6;">${message}</div><div style="text-align:center;margin-top:30px;"><a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#14b8a6 0%,#0d9488 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">${ctaText}</a></div></td></tr><tr><td style="background-color:#f9fafb;padding:25px 30px;text-align:center;border-top:1px solid #e5e7eb;"><p style="color:#6b7280;font-size:14px;margin:0;">&copy; ${new Date().getFullYear()} ${siteName}. All rights reserved.</p><p style="color:#9ca3af;font-size:12px;margin:10px 0 0;">This email was sent regarding your subscription at ${siteName}.</p></td></tr></table></td></tr></table></body></html>`;
 
     // Send email via Resend if API key is available
     if (RESEND_API_KEY) {
