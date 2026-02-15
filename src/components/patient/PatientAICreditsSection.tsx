@@ -24,19 +24,42 @@ export function PatientAICreditsSection() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Handle purchase success redirect
+  // Handle purchase success redirect - verify and fulfill credits
   useEffect(() => {
-    if (searchParams.get("purchase") === "success") {
-      toast.success("AI credits purchased successfully!");
-      // Refresh credits data
-      queryClient.invalidateQueries({ queryKey: ["patient-ai-credits"] });
-      queryClient.invalidateQueries({ queryKey: ["patient-ai-purchases"] });
-      // Clean up URL
-      searchParams.delete("purchase");
-      searchParams.delete("plan");
-      setSearchParams(searchParams, { replace: true });
+    const purchaseStatus = searchParams.get("purchase");
+    const planId = searchParams.get("plan");
+
+    if (purchaseStatus === "success" && planId && user) {
+      const verifyPurchase = async () => {
+        try {
+          toast.loading("Verifying your purchase...", { id: "verify-purchase" });
+          const { data, error } = await supabase.functions.invoke("verify-ai-purchase", {
+            body: { planId },
+          });
+          if (error) throw error;
+          if (data?.success) {
+            if (data.already_fulfilled) {
+              toast.success("Credits already added to your account!", { id: "verify-purchase" });
+            } else {
+              toast.success(`${data.credits_added} AI credits added to your account!`, { id: "verify-purchase" });
+            }
+          } else {
+            toast.error(data?.error || "Could not verify purchase", { id: "verify-purchase" });
+          }
+        } catch (err: any) {
+          console.error("Verify purchase error:", err);
+          toast.error("Failed to verify purchase. Credits will be added shortly.", { id: "verify-purchase" });
+        } finally {
+          queryClient.invalidateQueries({ queryKey: ["patient-ai-credits"] });
+          queryClient.invalidateQueries({ queryKey: ["patient-ai-purchases"] });
+          searchParams.delete("purchase");
+          searchParams.delete("plan");
+          setSearchParams(searchParams, { replace: true });
+        }
+      };
+      verifyPurchase();
     }
-  }, [searchParams, setSearchParams, queryClient]);
+  }, [searchParams, setSearchParams, queryClient, user]);
 
   const { data: credits } = useQuery({
     queryKey: ["patient-ai-credits", user?.id],
