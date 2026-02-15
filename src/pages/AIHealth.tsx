@@ -46,13 +46,13 @@ export default function AIHealth() {
         description="Explore AI-powered health tools: Risk Evaluator, Diet & Exercise Planner, and more. Get personalized health insights instantly."
         canonicalUrl="/ai-health"
       />
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
+      <div className="container mx-auto px-4 py-6 md:py-10 max-w-5xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-6 md:mb-10"
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             <Brain className="w-4 h-4" />
@@ -67,7 +67,7 @@ export default function AIHealth() {
         </motion.div>
 
         {/* Cards Grid */}
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
           {features.map((feature, idx) => (
             <motion.div
               key={feature.title}
@@ -87,7 +87,7 @@ export default function AIHealth() {
                   </div>
                 )}
 
-                <CardContent className="p-6 md:p-8 relative z-10 flex flex-col h-full">
+                <CardContent className="p-5 md:p-8 relative z-10 flex flex-col h-full">
                   {/* Icon */}
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                     <feature.icon className="w-7 h-7 text-white" />
