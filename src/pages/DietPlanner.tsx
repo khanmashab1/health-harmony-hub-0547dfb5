@@ -11,15 +11,17 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
 import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { generateDietPlanPDF } from "@/lib/dietPlanPdfGenerator";
 import {
   Salad, Loader2, Apple, Dumbbell, Moon, Droplets, Target,
   Flame, Clock, Activity, Heart, Lightbulb, ChevronRight, Utensils,
-  Coffee, Sun, Sunset
+  Coffee, Sun, Sunset, Download, ClipboardCheck, NotebookPen
 } from "lucide-react";
 
 interface MealItem {
@@ -55,6 +57,11 @@ interface HealthPlan {
   weeklyGoals: string[];
 }
 
+interface MealLog {
+  eaten: boolean;
+  notes: string;
+}
+
 const mealIcons: Record<string, typeof Coffee> = {
   breakfast: Coffee,
   morningSnack: Sun,
@@ -83,6 +90,10 @@ export default function DietPlanner() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<HealthPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTracker, setShowTracker] = useState(false);
+
+  // Meal tracker state: key = "mealKey-index"
+  const [mealLogs, setMealLogs] = useState<Record<string, MealLog>>({});
 
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
@@ -108,6 +119,8 @@ export default function DietPlanner() {
     setLoading(true);
     setPlan(null);
     setError(null);
+    setMealLogs({});
+    setShowTracker(false);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("diet-planner", {
@@ -130,6 +143,46 @@ export default function DietPlanner() {
     if (cat === "Overweight") return "text-yellow-600 dark:text-yellow-400";
     return "text-red-600 dark:text-red-400";
   };
+
+  const toggleMealEaten = (key: string) => {
+    setMealLogs(prev => ({
+      ...prev,
+      [key]: { ...prev[key], eaten: !prev[key]?.eaten, notes: prev[key]?.notes || "" }
+    }));
+  };
+
+  const setMealNote = (key: string, notes: string) => {
+    setMealLogs(prev => ({
+      ...prev,
+      [key]: { ...prev[key], eaten: prev[key]?.eaten || false, notes }
+    }));
+  };
+
+  const getTrackerStats = () => {
+    if (!plan) return { total: 0, eaten: 0, calories: 0 };
+    let total = 0;
+    let eaten = 0;
+    let calories = 0;
+    Object.entries(plan.dietPlan).forEach(([mealKey, meals]) => {
+      (meals as MealItem[]).forEach((item, i) => {
+        total++;
+        const key = `${mealKey}-${i}`;
+        if (mealLogs[key]?.eaten) {
+          eaten++;
+          calories += item.calories;
+        }
+      });
+    });
+    return { total, eaten, calories };
+  };
+
+  const handleDownloadPDF = () => {
+    if (!plan) return;
+    generateDietPlanPDF(plan, { age, gender, height, weight, goal, dietaryPreference, activityLevel }, mealLogs, mealLabels);
+    toast.success("PDF downloaded successfully!");
+  };
+
+  const stats = plan ? getTrackerStats() : null;
 
   return (
     <Layout>
@@ -316,10 +369,11 @@ export default function DietPlanner() {
 
             {/* Tabbed Content */}
             <Tabs defaultValue="diet" className="w-full">
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="diet" className="gap-1.5"><Apple className="w-4 h-4" />Diet</TabsTrigger>
-                <TabsTrigger value="exercise" className="gap-1.5"><Dumbbell className="w-4 h-4" />Exercise</TabsTrigger>
-                <TabsTrigger value="lifestyle" className="gap-1.5"><Lightbulb className="w-4 h-4" />Lifestyle</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-4">
+                <TabsTrigger value="diet" className="gap-1.5"><Apple className="w-4 h-4" /><span className="hidden sm:inline">Diet</span></TabsTrigger>
+                <TabsTrigger value="tracker" className="gap-1.5"><ClipboardCheck className="w-4 h-4" /><span className="hidden sm:inline">Tracker</span></TabsTrigger>
+                <TabsTrigger value="exercise" className="gap-1.5"><Dumbbell className="w-4 h-4" /><span className="hidden sm:inline">Exercise</span></TabsTrigger>
+                <TabsTrigger value="lifestyle" className="gap-1.5"><Lightbulb className="w-4 h-4" /><span className="hidden sm:inline">Lifestyle</span></TabsTrigger>
               </TabsList>
 
               {/* Diet Tab */}
@@ -352,6 +406,87 @@ export default function DietPlanner() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </TabsContent>
+
+              {/* Meal Tracker Tab */}
+              <TabsContent value="tracker" className="space-y-4 mt-4">
+                {/* Tracker Summary */}
+                {stats && (
+                  <Card variant="elevated" className="border-primary/20">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                          <ClipboardCheck className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">Today's Progress</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {stats.eaten} of {stats.total} meals logged • {stats.calories} kcal consumed
+                          </p>
+                        </div>
+                        <Badge variant={stats.eaten === stats.total ? "default" : "secondary"} className="text-sm">
+                          {stats.total > 0 ? Math.round((stats.eaten / stats.total) * 100) : 0}%
+                        </Badge>
+                      </div>
+                      <Progress value={stats.total > 0 ? (stats.eaten / stats.total) * 100 : 0} className="h-2.5" />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Meal-by-meal tracker */}
+                {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
+                  const Icon = mealIcons[mealKey] || Utensils;
+                  return (
+                    <Card key={mealKey} variant="default">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="p-2 rounded-xl bg-primary/10">
+                            <Icon className="w-5 h-5 text-primary" />
+                          </div>
+                          <h3 className="font-semibold text-foreground">{mealLabels[mealKey]}</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {(meals as MealItem[]).map((item, i) => {
+                            const key = `${mealKey}-${i}`;
+                            const log = mealLogs[key];
+                            const isEaten = log?.eaten || false;
+                            return (
+                              <div key={i} className={`p-3 rounded-lg border transition-colors ${isEaten ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : "bg-muted/30 border-border"}`}>
+                                <div className="flex items-start gap-3">
+                                  <Checkbox
+                                    checked={isEaten}
+                                    onCheckedChange={() => toggleMealEaten(key)}
+                                    className="mt-0.5"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`font-medium text-sm ${isEaten ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                        {item.meal}
+                                      </span>
+                                      <Badge variant={isEaten ? "default" : "secondary"} className="shrink-0 text-xs">
+                                        {item.calories} kcal
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{item.details}</p>
+                                    {/* Notes input */}
+                                    <div className="mt-2">
+                                      <Input
+                                        placeholder="What did you actually eat? (optional)"
+                                        value={log?.notes || ""}
+                                        onChange={(e) => setMealNote(key, e.target.value)}
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </CardContent>
                     </Card>
@@ -442,6 +577,10 @@ export default function DietPlanner() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={() => setPlan(null)} variant="outline" size="lg" className="flex-1">
                 Generate New Plan
+              </Button>
+              <Button onClick={handleDownloadPDF} variant="outline" size="lg" className="flex-1 gap-2">
+                <Download className="w-4 h-4" />
+                Download PDF
               </Button>
               <Button asChild size="lg" className="flex-1">
                 <a href="/booking">Book a Nutritionist</a>
