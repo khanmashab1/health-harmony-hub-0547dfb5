@@ -79,6 +79,8 @@ interface SavedPlan {
   created_at: string;
 }
 
+const mealOrder = ["breakfast", "morningSnack", "lunch", "eveningSnack", "dinner"];
+
 const mealIcons: Record<string, typeof Coffee> = {
   breakfast: Coffee,
   morningSnack: Sun,
@@ -311,7 +313,8 @@ export default function DietPlanner() {
   const getTrackerStats = () => {
     if (!plan) return { total: 0, eaten: 0, calories: 0 };
     let total = 0, eaten = 0, calories = 0;
-    Object.entries(plan.dietPlan).forEach(([mealKey, meals]) => {
+    mealOrder.forEach((mealKey) => {
+      const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
       (meals as MealItem[]).forEach((item, i) => {
         total++;
         if (mealLogs[`${mealKey}-${i}`]?.eaten) { eaten++; calories += item.calories; }
@@ -696,7 +699,8 @@ export default function DietPlanner() {
 
                 {/* Diet Tab */}
                 <TabsContent value="diet" className="space-y-4 mt-4">
-                  {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
+                  {mealOrder.map((mealKey) => {
+                    const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
                     const Icon = mealIcons[mealKey] || Utensils;
                     const totalCals = (meals as MealItem[]).reduce((s, m) => s + m.calories, 0);
                     return (
@@ -751,7 +755,8 @@ export default function DietPlanner() {
                     </Card>
                   )}
 
-                  {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
+                  {mealOrder.map((mealKey) => {
+                    const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
                     const Icon = mealIcons[mealKey] || Utensils;
                     return (
                       <Card key={mealKey} variant="default">
