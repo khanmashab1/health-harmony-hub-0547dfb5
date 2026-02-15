@@ -137,133 +137,13 @@ serve(async (req) => {
     });
 
     // Generate email HTML
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table width="650" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <!-- Header -->
-                <tr>
-                  <td style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">📊 Subscription Report</h1>
-                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 14px;">Last 10 Days Summary - ${siteName}</p>
-                  </td>
-                </tr>
-                
-                <!-- Summary Cards -->
-                <tr>
-                  <td style="padding: 30px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="50%" style="padding: 10px;">
-                          <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 20px; border-radius: 10px; text-align: center;">
-                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 12px;">TOTAL DOCTORS</p>
-                            <p style="color: #ffffff; margin: 5px 0 0; font-size: 28px; font-weight: bold;">${totalDoctors}</p>
-                          </div>
-                        </td>
-                        <td width="50%" style="padding: 10px;">
-                          <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 20px; border-radius: 10px; text-align: center;">
-                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 12px;">PAID SUBSCRIBERS</p>
-                            <p style="color: #ffffff; margin: 5px 0 0; font-size: 28px; font-weight: bold;">${subscribedDoctors}</p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td width="50%" style="padding: 10px;">
-                          <div style="background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); padding: 20px; border-radius: 10px; text-align: center;">
-                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 12px;">MONTHLY REVENUE</p>
-                            <p style="color: #ffffff; margin: 5px 0 0; font-size: 24px; font-weight: bold;">PKR ${monthlyRevenue.toLocaleString()}</p>
-                          </div>
-                        </td>
-                        <td width="50%" style="padding: 10px;">
-                          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 20px; border-radius: 10px; text-align: center;">
-                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 12px;">NEW (LAST 10 DAYS)</p>
-                            <p style="color: #ffffff; margin: 5px 0 0; font-size: 28px; font-weight: bold;">${newSubscriptions.length}</p>
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+    const planRows = planDistribution.map(p => `<tr><td style="padding:12px;font-size:14px;color:#374151;border-bottom:1px solid #e5e7eb;">${p.name}</td><td style="padding:12px;text-align:center;font-size:14px;color:#374151;border-bottom:1px solid #e5e7eb;">${p.count}</td><td style="padding:12px;text-align:right;font-size:14px;color:#374151;border-bottom:1px solid #e5e7eb;">PKR ${p.revenue.toLocaleString()}</td></tr>`).join('');
 
-                <!-- Plan Distribution -->
-                <tr>
-                  <td style="padding: 0 30px 30px;">
-                    <h3 style="color: #374151; margin: 0 0 15px; font-size: 16px;">📋 Plan Distribution</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                      <tr style="background-color: #f9fafb;">
-                        <th style="padding: 12px; text-align: left; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Plan</th>
-                        <th style="padding: 12px; text-align: center; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Doctors</th>
-                        <th style="padding: 12px; text-align: right; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Monthly Revenue</th>
-                      </tr>
-                      ${planDistribution.map(p => `
-                        <tr>
-                          <td style="padding: 12px; font-size: 14px; color: #374151; border-bottom: 1px solid #e5e7eb;">${p.name}</td>
-                          <td style="padding: 12px; text-align: center; font-size: 14px; color: #374151; border-bottom: 1px solid #e5e7eb;">${p.count}</td>
-                          <td style="padding: 12px; text-align: right; font-size: 14px; color: #374151; border-bottom: 1px solid #e5e7eb;">PKR ${p.revenue.toLocaleString()}</td>
-                        </tr>
-                      `).join('')}
-                    </table>
-                  </td>
-                </tr>
+    const recentRows = recentDoctorsList.slice(0, 10).map(d => `<tr><td style="padding:10px;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb;">${d.name}</td><td style="padding:10px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${d.specialty}</td><td style="padding:10px;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb;">${d.plan}</td><td style="padding:10px;font-size:13px;color:#6b7280;text-align:right;border-bottom:1px solid #e5e7eb;">${d.joinedDate}</td></tr>`).join('');
 
-                ${recentDoctorsList.length > 0 ? `
-                <!-- New Subscriptions -->
-                <tr>
-                  <td style="padding: 0 30px 30px;">
-                    <h3 style="color: #374151; margin: 0 0 15px; font-size: 16px;">🆕 New Subscriptions (Last 10 Days)</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                      <tr style="background-color: #f9fafb;">
-                        <th style="padding: 10px; text-align: left; font-size: 11px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Doctor</th>
-                        <th style="padding: 10px; text-align: left; font-size: 11px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Specialty</th>
-                        <th style="padding: 10px; text-align: left; font-size: 11px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Plan</th>
-                        <th style="padding: 10px; text-align: right; font-size: 11px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Joined</th>
-                      </tr>
-                      ${recentDoctorsList.slice(0, 10).map(d => `
-                        <tr>
-                          <td style="padding: 10px; font-size: 13px; color: #374151; border-bottom: 1px solid #e5e7eb;">${d.name}</td>
-                          <td style="padding: 10px; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">${d.specialty}</td>
-                          <td style="padding: 10px; font-size: 13px; color: #374151; border-bottom: 1px solid #e5e7eb;">${d.plan}</td>
-                          <td style="padding: 10px; font-size: 13px; color: #6b7280; text-align: right; border-bottom: 1px solid #e5e7eb;">${d.joinedDate}</td>
-                        </tr>
-                      `).join('')}
-                    </table>
-                    ${recentDoctorsList.length > 10 ? `<p style="color: #6b7280; font-size: 12px; margin: 10px 0 0;">... and ${recentDoctorsList.length - 10} more</p>` : ''}
-                  </td>
-                </tr>
-                ` : ''}
+    const recentSection = recentDoctorsList.length > 0 ? `<tr><td style="padding:0 30px 30px;"><h3 style="color:#374151;margin:0 0 15px;font-size:16px;">🆕 New Subscriptions (Last 10 Days)</h3><table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;"><tr style="background-color:#f9fafb;"><th style="padding:10px;text-align:left;font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Doctor</th><th style="padding:10px;text-align:left;font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Specialty</th><th style="padding:10px;text-align:left;font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Plan</th><th style="padding:10px;text-align:right;font-size:11px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Joined</th></tr>${recentRows}</table>${recentDoctorsList.length > 10 ? `<p style="color:#6b7280;font-size:12px;margin:10px 0 0;">... and ${recentDoctorsList.length - 10} more</p>` : ''}</td></tr>` : '';
 
-                <!-- CTA -->
-                <tr>
-                  <td style="padding: 0 30px 30px; text-align: center;">
-                    <a href="${siteUrl}/admin?tab=subscriptions" style="display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      View Full Dashboard
-                    </a>
-                  </td>
-                </tr>
-                
-                <!-- Footer -->
-                <tr>
-                  <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 12px; margin: 0;">
-                      This is an automated report from ${siteName}. Generated on ${new Date().toLocaleDateString('en-PK')}.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f4f4f5;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;"><tr><td align="center"><table width="650" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);"><tr><td style="background:linear-gradient(135deg,#14b8a6 0%,#0d9488 100%);padding:30px;text-align:center;"><h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">📊 Subscription Report</h1><p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:14px;">Last 10 Days Summary - ${siteName}</p></td></tr><tr><td style="padding:30px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="50%" style="padding:10px;"><div style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);padding:20px;border-radius:10px;text-align:center;"><p style="color:rgba(255,255,255,0.8);margin:0;font-size:12px;">TOTAL DOCTORS</p><p style="color:#ffffff;margin:5px 0 0;font-size:28px;font-weight:bold;">${totalDoctors}</p></div></td><td width="50%" style="padding:10px;"><div style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);padding:20px;border-radius:10px;text-align:center;"><p style="color:rgba(255,255,255,0.8);margin:0;font-size:12px;">PAID SUBSCRIBERS</p><p style="color:#ffffff;margin:5px 0 0;font-size:28px;font-weight:bold;">${subscribedDoctors}</p></div></td></tr><tr><td width="50%" style="padding:10px;"><div style="background:linear-gradient(135deg,#a855f7 0%,#9333ea 100%);padding:20px;border-radius:10px;text-align:center;"><p style="color:rgba(255,255,255,0.8);margin:0;font-size:12px;">MONTHLY REVENUE</p><p style="color:#ffffff;margin:5px 0 0;font-size:24px;font-weight:bold;">PKR ${monthlyRevenue.toLocaleString()}</p></div></td><td width="50%" style="padding:10px;"><div style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);padding:20px;border-radius:10px;text-align:center;"><p style="color:rgba(255,255,255,0.8);margin:0;font-size:12px;">NEW (LAST 10 DAYS)</p><p style="color:#ffffff;margin:5px 0 0;font-size:28px;font-weight:bold;">${newSubscriptions.length}</p></div></td></tr></table></td></tr><tr><td style="padding:0 30px 30px;"><h3 style="color:#374151;margin:0 0 15px;font-size:16px;">📋 Plan Distribution</h3><table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;"><tr style="background-color:#f9fafb;"><th style="padding:12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Plan</th><th style="padding:12px;text-align:center;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Doctors</th><th style="padding:12px;text-align:right;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Monthly Revenue</th></tr>${planRows}</table></td></tr>${recentSection}<tr><td style="padding:0 30px 30px;text-align:center;"><a href="${siteUrl}/admin?tab=subscriptions" style="display:inline-block;background:linear-gradient(135deg,#14b8a6 0%,#0d9488 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:14px;">View Full Dashboard</a></td></tr><tr><td style="background-color:#f9fafb;padding:20px 30px;text-align:center;border-top:1px solid #e5e7eb;"><p style="color:#6b7280;font-size:12px;margin:0;">This is an automated report from ${siteName}. Generated on ${new Date().toLocaleDateString('en-PK')}.</p></td></tr></table></td></tr></table></body></html>`;
 
     const subject = `📊 Subscription Report - ${new Date().toLocaleDateString('en-PK')} | ${siteName}`;
 
@@ -284,19 +164,12 @@ serve(async (req) => {
           },
         });
 
-        // Minify HTML to prevent encoding issues
-        const minifiedHtml = htmlContent
-          .replace(/>\s+</g, '><')
-          .replace(/\n\s*/g, '')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-
         await client.send({
           from: GMAIL_USER,
           to: adminEmail,
           subject: subject,
           content: `Subscription Report - ${new Date().toLocaleDateString('en-PK')}`,
-          html: minifiedHtml,
+          html: htmlContent,
         });
 
         await client.close();
