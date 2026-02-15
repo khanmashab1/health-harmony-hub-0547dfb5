@@ -2,12 +2,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// Main/top-level pages where the back button should NOT appear
+const mainPages = new Set([
+  "/", "/auth", "/booking", "/profile", "/doctor", "/pa", "/admin",
+  "/symptoms", "/reviews", "/become-doctor", "/our-doctors", "/organization",
+  "/online-doctor-appointment-system", "/clinic-management-software",
+  "/hospital-management-software", "/ai-symptom-checker", "/ai-health",
+  "/diet-planner", "/risk-evaluator", "/patient"
+]);
+
 export function BackButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't show on home page or diet planner (has its own back button)
-  if (location.pathname === "/" || location.pathname === "/diet-planner" || location.pathname === "/patient") return null;
+  // Only show on subpages (e.g. /doctor/:id, /admin/reviews, /token/:id, etc.)
+  if (mainPages.has(location.pathname)) return null;
 
   return (
     <Button
