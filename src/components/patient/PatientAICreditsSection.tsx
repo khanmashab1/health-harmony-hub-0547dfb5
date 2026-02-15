@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Sparkles, Crown, Check, Loader2 } from "lucide-react";
+import { Zap, Sparkles, Crown, Check, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface AIPlan {
@@ -219,11 +219,38 @@ export function PatientAICreditsSection() {
       {/* Purchase History */}
       {purchases && purchases.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3">Recent Purchases</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Recent Purchases</h3>
+            {purchases.length > 2 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const headers = ["Date", "Credits", "Amount (Rs.)", "Status"];
+                  const rows = purchases.map(p => [
+                    new Date(p.created_at).toLocaleDateString(),
+                    p.credits_purchased,
+                    p.amount_paid,
+                    p.status,
+                  ]);
+                  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+                  const blob = new Blob([csv], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "ai-credits-purchase-history.csv";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                <Download className="w-4 h-4 mr-1" /> Download Full Report
+              </Button>
+            )}
+          </div>
           <Card>
             <CardContent className="p-0">
               <div className="divide-y">
-                {purchases.map(p => (
+                {purchases.slice(0, 2).map(p => (
                   <div key={p.id} className="flex items-center justify-between p-4">
                     <div>
                       <p className="font-medium">{p.credits_purchased} credits</p>
@@ -242,6 +269,11 @@ export function PatientAICreditsSection() {
               </div>
             </CardContent>
           </Card>
+          {purchases.length > 2 && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Showing 2 of {purchases.length} purchases • Download report for full history
+            </p>
+          )}
         </div>
       )}
     </div>
