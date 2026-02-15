@@ -408,9 +408,14 @@ export default function DietPlanner() {
           {viewMode === "list" && (
             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 md:space-y-6">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">My Diet Plans</h1>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Your saved diet and health plans</p>
+                <div className="min-w-0 flex-1 flex items-center gap-3">
+                  <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden sm:flex h-9 w-9 rounded-full shrink-0" aria-label="Go back">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <div>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">My Diet Plans</h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Your saved diet and health plans</p>
+                  </div>
                 </div>
                 <Button onClick={() => setViewMode("form")} className="gap-1.5 shrink-0 h-9 text-sm px-3">
                   <Plus className="w-4 h-4" />
