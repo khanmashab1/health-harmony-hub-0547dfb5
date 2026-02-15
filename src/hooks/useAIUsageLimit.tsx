@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-type FeatureType = "symptom_checker" | "risk_evaluator";
+type FeatureType = "symptom_checker" | "risk_evaluator" | "diet_planner";
 
 interface AIUsageLimitResult {
   canUse: boolean;

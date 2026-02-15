@@ -32,7 +32,7 @@ const features = [
       { icon: Dumbbell, text: "Exercise Routines" },
       { icon: Moon, text: "Sleep & Lifestyle Tips" },
     ],
-    comingSoon: true,
+    comingSoon: false,
   },
 ];
 
