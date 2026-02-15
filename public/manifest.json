@@ -1,0 +1,26 @@
+{
+  "name": "MediCare+",
+  "short_name": "MediCare+",
+  "description": "Clinic Management Software & Online Doctor Appointment System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-medicare.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-medicare.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
