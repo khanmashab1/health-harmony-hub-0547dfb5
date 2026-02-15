@@ -448,57 +448,53 @@ export default function DietPlanner() {
                 <div className="grid gap-4">
                   {savedPlans.map(sp => (
                     <Card key={sp.id} variant="default" className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shrink-0">
-                            <Salad className="w-5 h-5" />
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shrink-0">
+                            <Salad className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <h3 className="font-semibold text-foreground truncate">
-                                  {sp.profile_data?.goal || "Health Plan"} • {sp.plan_data?.dailyCalories} kcal/day
-                                </h3>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  BMI: {sp.plan_data?.bmi} ({sp.plan_data?.bmiCategory}) • {sp.profile_data?.dietaryPreference}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Created {format(new Date(sp.created_at), "MMM d, yyyy 'at' h:mm a")}
-                                </p>
-                              </div>
-                              <div className="flex gap-2 shrink-0">
-                                <Button variant="outline" size="sm" onClick={() => loadSavedPlan(sp)} className="gap-1.5">
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span className="hidden sm:inline">View</span>
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={deletingId === sp.id}
-                                      className="gap-1.5 text-destructive hover:text-destructive"
-                                    >
-                                      {deletingId === sp.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                                      <span className="hidden sm:inline">Delete</span>
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will permanently delete this diet plan and all its meal tracker data. This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => deletePlan(sp.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
+                            <h3 className="font-semibold text-sm sm:text-base text-foreground leading-tight">
+                              {sp.profile_data?.goal || "Health Plan"} • {sp.plan_data?.dailyCalories} kcal/day
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              BMI: {sp.plan_data?.bmi} ({sp.plan_data?.bmiCategory}) • {sp.profile_data?.dietaryPreference}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Created {format(new Date(sp.created_at), "MMM d, yyyy 'at' h:mm a")}
+                            </p>
+                            <div className="flex gap-2 mt-2">
+                              <Button variant="outline" size="sm" onClick={() => loadSavedPlan(sp)} className="gap-1.5 h-8 text-xs">
+                                <Eye className="w-3.5 h-3.5" />
+                                View
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={deletingId === sp.id}
+                                    className="gap-1.5 h-8 text-xs text-destructive hover:text-destructive"
+                                  >
+                                    {deletingId === sp.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently delete this diet plan and all its meal tracker data. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deletePlan(sp.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </div>
                         </div>
