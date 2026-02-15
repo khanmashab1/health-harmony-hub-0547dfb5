@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Users
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -438,8 +439,18 @@ export default function Booking() {
   if (loading || (doctorIdParam && loadingPreSelectedDoctor)) {
     return (
       <Layout showFooter={false}>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="min-h-screen py-8">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="mb-8">
+              <div className="flex items-center justify-between">
+                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                  <Skeleton key={i} className="w-10 h-10 rounded-full" />
+                ))}
+              </div>
+              <Skeleton className="h-7 w-48 mx-auto mt-4" />
+            </div>
+            <Skeleton className="h-[400px] rounded-xl" />
+          </div>
         </div>
       </Layout>
     );
@@ -641,8 +652,23 @@ export default function Booking() {
                     />
 
                     {loadingDoctors ? (
-                      <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="p-4 rounded-xl border-2 border-border">
+                            <div className="flex items-start gap-4">
+                              <Skeleton className="w-14 h-14 rounded-xl shrink-0" />
+                              <div className="flex-1 space-y-2">
+                                <Skeleton className="h-5 w-3/4" />
+                                <Skeleton className="h-4 w-1/2" />
+                                <div className="flex gap-3">
+                                  <Skeleton className="h-4 w-20" />
+                                  <Skeleton className="h-4 w-20" />
+                                  <Skeleton className="h-4 w-16" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : filteredDoctors && filteredDoctors.length > 0 ? (
                       filteredDoctors.map((doc) => (
