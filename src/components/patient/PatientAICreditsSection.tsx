@@ -252,9 +252,9 @@ export function PatientAICreditsSection() {
                   const headers = ["Date & Time", "Credits", "Amount (Rs.)", "Status"];
                   const rows = purchases.map(p => {
                     const d = new Date(p.created_at);
-                    const dateTime = `${d.toLocaleDateString("en-PK", { year: "numeric", month: "short", day: "numeric" })} ${d.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
+                    const dateTime = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
                     return [
-                      `"${dateTime}"`,
+                      dateTime,
                       p.credits_purchased,
                       p.amount_paid,
                       p.status,
