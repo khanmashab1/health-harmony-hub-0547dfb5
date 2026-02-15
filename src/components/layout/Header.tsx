@@ -63,7 +63,7 @@ export function Header() {
     { to: "/our-doctors", icon: Users, label: t("nav.ourDoctors") },
     { to: "/booking", icon: Calendar, label: t("nav.bookAppointment") },
     { to: "/symptoms", icon: Activity, label: t("nav.symptomsChecker") },
-    { to: "/risk-evaluator", icon: HeartPulse, label: t("nav.aiHealthRiskChecker") },
+    { to: "/ai-health", icon: HeartPulse, label: t("nav.aiHealth") },
   ];
 
   return (
