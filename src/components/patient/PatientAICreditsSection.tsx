@@ -221,7 +221,7 @@ export function PatientAICreditsSection() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold">Recent Purchases</h3>
-            {purchases.length > 2 && (
+            {purchases.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
