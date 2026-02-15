@@ -483,7 +483,7 @@ export default function DietPlanner() {
                                       <span className="hidden sm:inline">Delete</span>
                                     </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent>
+                                  <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
                                       <AlertDialogDescription>
@@ -856,43 +856,49 @@ export default function DietPlanner() {
               </Tabs>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button onClick={() => { setViewMode("form"); setPlan(null); setActivePlanId(null); }} variant="outline" size="lg" className="flex-1">
-                  Generate New Plan
-                </Button>
-                <Button onClick={handleDownloadPDF} variant="outline" size="lg" className="flex-1 gap-2">
-                  <Download className="w-4 h-4" /> Download PDF
-                </Button>
-                <Button onClick={handleShareWhatsApp} variant="outline" size="lg" className="flex-1 gap-2">
-                  <MessageCircle className="w-4 h-4" /> WhatsApp
-                </Button>
-                <Button onClick={handleCopyPlan} variant="outline" size="lg" className="flex-1 gap-2">
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? "Copied!" : "Copy"}
-                </Button>
-                {activePlanId && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="lg" className="flex-1 gap-2 text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" /> Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete this diet plan and all its meal tracker data. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deletePlan(activePlanId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:flex sm:flex-row gap-3">
+                  <Button onClick={() => { setViewMode("form"); setPlan(null); setActivePlanId(null); }} variant="outline" size="lg" className="flex-1">
+                    Generate New Plan
+                  </Button>
+                  <Button onClick={handleDownloadPDF} variant="outline" size="lg" className="flex-1 gap-2">
+                    <Download className="w-4 h-4" /> Download PDF
+                  </Button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button onClick={handleShareWhatsApp} variant="outline" size="lg" className="gap-2">
+                    <MessageCircle className="w-4 h-4" /> <span className="hidden sm:inline">WhatsApp</span><span className="sm:hidden">Share</span>
+                  </Button>
+                  <Button onClick={handleCopyPlan} variant="outline" size="lg" className="gap-2">
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                  {activePlanId ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="lg" className="gap-2 text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete this diet plan and all its meal tracker data. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deletePlan(activePlanId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <div />
+                  )}
+                </div>
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
