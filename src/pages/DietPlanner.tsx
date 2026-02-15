@@ -354,7 +354,7 @@ export default function DietPlanner() {
     return (
       <Layout>
         <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan." canonicalUrl="/diet-planner" />
-        <div className="container mx-auto px-4 py-20 max-w-lg">
+        <div className="container mx-auto px-4 py-8 md:py-20 max-w-lg">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <Card variant="elevated" className="shadow-xl text-center">
               <CardHeader>
@@ -399,11 +399,11 @@ export default function DietPlanner() {
   return (
     <Layout>
       <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan, exercise routine, and lifestyle recommendations." canonicalUrl="/diet-planner" />
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
+      <div className="container mx-auto px-4 py-4 md:py-10 max-w-5xl">
         <AnimatePresence mode="wait">
           {/* ========== LIST VIEW ========== */}
           {viewMode === "list" && (
-            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 md:space-y-6">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">My Diet Plans</h1>
