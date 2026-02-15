@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
 import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
 import { toast } from "sonner";
@@ -86,6 +88,8 @@ const intensityColor: Record<string, string> = {
 };
 
 export default function DietPlanner() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const usageLimit = useAIUsageLimit("diet_planner");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<HealthPlan | null>(null);
@@ -105,14 +109,53 @@ export default function DietPlanner() {
   const [medicalConditions, setMedicalConditions] = useState("");
   const [allergies, setAllergies] = useState("");
 
+  const STORAGE_KEY = "diet_planner_form";
+
+  // Restore form data from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.age) setAge(data.age);
+        if (data.gender) setGender(data.gender);
+        if (data.height) setHeight(data.height);
+        if (data.weight) setWeight(data.weight);
+        if (data.goal) setGoal(data.goal);
+        if (data.dietaryPreference) setDietaryPreference(data.dietaryPreference);
+        if (data.activityLevel) setActivityLevel(data.activityLevel);
+        if (data.medicalConditions) setMedicalConditions(data.medicalConditions);
+        if (data.allergies) setAllergies(data.allergies);
+        // Clear after restoring so it doesn't persist forever
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Save form data to sessionStorage
+  const saveFormToStorage = () => {
+    const formData = { age, gender, height, weight, goal, dietaryPreference, activityLevel, medicalConditions, allergies };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+  };
+
   const bmi = height && weight ? (parseFloat(weight) / ((parseFloat(height) / 100) ** 2)).toFixed(1) : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // If not signed in, save form and redirect to auth
+    if (!user) {
+      saveFormToStorage();
+      toast.info("Please sign in to generate your health plan. Your form data will be preserved!");
+      navigate(`/auth?redirect=${encodeURIComponent("/diet-planner")}`);
+      return;
+    }
+
     const allowed = await usageLimit.checkAndIncrement();
     if (!allowed) {
-      toast.error("Daily limit reached. Sign up or purchase AI credits for more!");
+      toast.error("Daily limit reached. Purchase AI credits for more!");
       return;
     }
 

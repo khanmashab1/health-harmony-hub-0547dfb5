@@ -83,6 +83,12 @@ export default function Auth() {
   useEffect(() => {
     // Only redirect authenticated users if they're NOT in new-password mode
     if (user && profile && mode !== "new-password") {
+      // Honor ?redirect= param if present
+      const redirectParam = searchParams.get("redirect");
+      if (redirectParam) {
+        navigate(decodeURIComponent(redirectParam));
+        return;
+      }
       const redirectMap: Record<string, string> = {
         patient: "/profile",
         doctor: "/doctor",
@@ -91,7 +97,7 @@ export default function Auth() {
       };
       navigate(redirectMap[profile.role] || "/profile");
     }
-  }, [user, profile, navigate, mode]);
+  }, [user, profile, navigate, mode, searchParams]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
