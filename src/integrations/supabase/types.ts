@@ -228,6 +228,36 @@ export type Database = {
           },
         ]
       }
+      diet_plans: {
+        Row: {
+          created_at: string
+          id: string
+          meal_logs: Json | null
+          plan_data: Json
+          profile_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meal_logs?: Json | null
+          plan_data: Json
+          profile_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meal_logs?: Json | null
+          plan_data?: Json
+          profile_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       disease_symptoms: {
         Row: {
           created_at: string
