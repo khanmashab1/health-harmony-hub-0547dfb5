@@ -102,6 +102,8 @@ type ViewMode = "list" | "form" | "plan";
 export default function DietPlanner() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const usageLimit = useAIUsageLimit("diet_planner");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<HealthPlan | null>(null);

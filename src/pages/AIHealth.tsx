@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -37,6 +38,7 @@ const features = [
 ];
 
 export default function AIHealth() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   return (
     <Layout>
       <SEOHead
