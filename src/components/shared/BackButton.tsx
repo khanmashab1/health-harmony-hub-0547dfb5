@@ -6,8 +6,8 @@ export function BackButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't show on home page or diet planner (has its own internal navigation)
-  if (location.pathname === "/" || location.pathname === "/diet-planner") return null;
+  // Don't show on home page
+  if (location.pathname === "/") return null;
 
   return (
     <Button
