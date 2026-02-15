@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.seed-doctors]
 verify_jwt = false
+
+[functions.verify-ai-purchase]
+verify_jwt = false
