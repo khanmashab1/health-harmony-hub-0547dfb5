@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Sparkles, Crown, Check } from "lucide-react";
+import { Zap, Sparkles, Crown, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface AIPlan {
@@ -80,11 +80,15 @@ export function PatientAICreditsSection() {
     enabled: !!user,
   });
 
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+
   const handlePurchase = async (plan: AIPlan) => {
     if (!user) {
       toast.error("Please log in to purchase credits");
       return;
     }
+
+    setLoadingPlanId(plan.id);
 
     if (plan.stripe_price_id) {
       try {
@@ -97,9 +101,10 @@ export function PatientAICreditsSection() {
         }
       } catch (err: any) {
         toast.error(err.message || "Failed to start checkout");
+      } finally {
+        setLoadingPlanId(null);
       }
     } else {
-      // Direct credit addition for free/test plans
       try {
         const { error } = await supabase.rpc("add_ai_credits", {
           p_user_id: user.id,
@@ -107,7 +112,6 @@ export function PatientAICreditsSection() {
         });
         if (error) throw error;
 
-        // Record purchase
         await supabase.from("patient_ai_purchases").insert({
           user_id: user.id,
           plan_id: plan.id,
@@ -117,10 +121,11 @@ export function PatientAICreditsSection() {
         });
 
         toast.success(`${plan.credits} AI credits added!`);
-        // Refresh
         window.location.reload();
       } catch (err: any) {
         toast.error(err.message);
+      } finally {
+        setLoadingPlanId(null);
       }
     }
   };
@@ -171,14 +176,14 @@ export function PatientAICreditsSection() {
         <h3 className="text-lg font-semibold mb-4">AI Credit Plans</h3>
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {plans?.map(plan => (
-            <Card key={plan.id} className={`relative transition-all hover:shadow-lg ${plan.is_popular ? "border-primary ring-2 ring-primary/20 shadow-md" : ""}`}>
+            <Card key={plan.id} className={`relative transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-primary/40 group ${plan.is_popular ? "border-primary ring-2 ring-primary/20 shadow-md" : ""}`}>
               {plan.is_popular && (
                 <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary shadow-sm">
                   <Sparkles className="w-3 h-3 mr-1" /> Most Popular
                 </Badge>
               )}
               <CardContent className="p-6 text-center">
-                <h4 className="font-semibold text-lg mb-1">{plan.name}</h4>
+                <h4 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">{plan.name}</h4>
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
                 <div className="mb-4">
                   <span className="text-3xl font-bold">Rs. {plan.price}</span>
@@ -193,8 +198,17 @@ export function PatientAICreditsSection() {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" /> Health Risk Evaluation</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" /> No daily limits</li>
                 </ul>
-                <Button className="w-full" variant={plan.is_popular ? "default" : "outline"} onClick={() => handlePurchase(plan)}>
-                  <Crown className="w-4 h-4 mr-2" /> Purchase
+                <Button
+                  className="w-full"
+                  variant={plan.is_popular ? "default" : "outline"}
+                  onClick={() => handlePurchase(plan)}
+                  disabled={loadingPlanId !== null}
+                >
+                  {loadingPlanId === plan.id ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                  ) : (
+                    <><Crown className="w-4 h-4 mr-2" /> Purchase</>
+                  )}
                 </Button>
               </CardContent>
             </Card>
