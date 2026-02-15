@@ -30,7 +30,7 @@ import {
   Salad, Loader2, Apple, Dumbbell, Moon, Droplets, Target,
   Flame, Clock, Activity, Heart, Lightbulb, ChevronRight, Utensils,
   Coffee, Sun, Sunset, Download, ClipboardCheck, Trash2, History,
-  LogIn, Plus, Eye, Share2, MessageCircle, Copy, Check
+  LogIn, Plus, Eye, Share2, MessageCircle, Copy, Check, ArrowLeft
 } from "lucide-react";
 
 interface MealItem {
@@ -406,7 +406,11 @@ export default function DietPlanner() {
         <AnimatePresence mode="wait">
           {/* ========== LIST VIEW ========== */}
           {viewMode === "list" && (
-            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 md:space-y-6">
+            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3 md:space-y-6">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/ai-health")} className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">My Diet Plans</h1>
