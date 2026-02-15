@@ -648,9 +648,6 @@ export default function DietPlanner() {
           {/* ========== PLAN VIEW ========== */}
           {viewMode === "plan" && plan && (
             <motion.div key="plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-              <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => { setViewMode("list"); setPlan(null); setActivePlanId(null); }}>
-                <History className="w-4 h-4" /> Back to My Plans
-              </Button>
 
               {/* Summary Header */}
               <Card variant="elevated" className="overflow-hidden">
