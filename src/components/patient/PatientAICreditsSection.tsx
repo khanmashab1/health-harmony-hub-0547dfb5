@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Sparkles, Crown, Check } from "lucide-react";
@@ -19,6 +21,22 @@ interface AIPlan {
 
 export function PatientAICreditsSection() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle purchase success redirect
+  useEffect(() => {
+    if (searchParams.get("purchase") === "success") {
+      toast.success("AI credits purchased successfully!");
+      // Refresh credits data
+      queryClient.invalidateQueries({ queryKey: ["patient-ai-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-ai-purchases"] });
+      // Clean up URL
+      searchParams.delete("purchase");
+      searchParams.delete("plan");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, queryClient]);
 
   const { data: credits } = useQuery({
     queryKey: ["patient-ai-credits", user?.id],
@@ -124,24 +142,24 @@ export function PatientAICreditsSection() {
     <div className="space-y-6">
       {/* Credits Balance */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Your AI Credits</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-4xl font-bold text-primary">{displayCredits}</span>
-                <span className="text-sm text-muted-foreground">{displayLabel}</span>
+              <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                <span className="text-3xl sm:text-4xl font-bold text-primary">{displayCredits}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">{displayLabel}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {displaySubtext}
               </p>
             </div>
-            <div className="p-4 rounded-2xl bg-primary/10">
-              <Zap className="w-8 h-8 text-primary" />
+            <div className="p-3 sm:p-4 rounded-2xl bg-primary/10 flex-shrink-0">
+              <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
           </div>
           {hasPurchasedCredits ? null : (
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-3">
               You get 15 free AI credits daily (5 credits per use = 3 analyses/day). Purchase credits for more.
             </p>
           )}
@@ -151,7 +169,7 @@ export function PatientAICreditsSection() {
       {/* Available Plans */}
       <div>
         <h3 className="text-lg font-semibold mb-4">AI Credit Plans</h3>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           {plans?.map(plan => (
             <Card key={plan.id} className={`relative transition-all hover:shadow-lg ${plan.is_popular ? "border-primary ring-2 ring-primary/20 shadow-md" : ""}`}>
               {plan.is_popular && (
