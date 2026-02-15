@@ -121,9 +121,66 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
     },
   });
 
+  // Send status notification email
+  const sendStatusEmail = async (appointment: any, newStatus: string) => {
+    if (!appointment.patient_email) return;
+    try {
+      const statusMessages: Record<string, { subject: string; heading: string; color: string; message: string }> = {
+        "In Progress": {
+          subject: "Your Turn - Appointment In Progress",
+          heading: "🟢 It's Your Turn!",
+          color: "#16a34a",
+          message: "You are now being seen by the doctor. Please proceed to the consultation room.",
+        },
+        "Cancelled": {
+          subject: "Appointment Cancelled",
+          heading: "❌ Appointment Cancelled",
+          color: "#dc2626",
+          message: "Your appointment has been cancelled by the doctor. Please contact the clinic if you have any questions.",
+        },
+        "No Show": {
+          subject: "Appointment Marked as No Show",
+          heading: "⚠️ Marked as No Show",
+          color: "#d97706",
+          message: "You were marked as a no-show for your appointment. If this was a mistake, please contact the clinic to reschedule.",
+        },
+        "Upcoming": {
+          subject: "Appointment Status Update",
+          heading: "ℹ️ Appointment Updated",
+          color: "#2563eb",
+          message: "Your appointment status has been updated. You are in the waiting queue.",
+        },
+      };
+      const info = statusMessages[newStatus];
+      if (!info) return;
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:40px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:${info.color};padding:28px 40px;text-align:center;"><h1 style="color:#ffffff;margin:0;font-size:22px;">${info.heading}</h1></td></tr><tr><td style="padding:32px 40px;"><p style="color:#374151;font-size:16px;margin:0 0 16px;">Dear ${appointment.patient_full_name || "Patient"},</p><p style="color:#374151;font-size:15px;margin:0 0 20px;">${info.message}</p><table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;"><tr style="background:#f9fafb;"><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Date</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;">${format(new Date(appointment.appointment_date), "MMMM d, yyyy")}</td></tr><tr><td style="font-weight:bold;color:#374151;">Token #</td><td style="color:#374151;">#${appointment.token_number}</td></tr></table><p style="color:#9ca3af;font-size:12px;margin:0;">This is an automated notification from MediCare Plus.</p></td></tr></table></td></tr></table></body></html>`;
+      await supabase.functions.invoke("send-email", {
+        body: { to: appointment.patient_email, subject: info.subject, html, recipientName: appointment.patient_full_name },
+      });
+      // Log the email
+      await supabase.from("email_logs").insert({
+        recipient_email: appointment.patient_email,
+        email_type: `appointment_${newStatus.toLowerCase().replace(" ", "_")}`,
+        subject: info.subject,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        appointment_id: appointment.id,
+      });
+    } catch (err) {
+      console.error("Failed to send status email:", err);
+    }
+  };
+
   // Update appointment status mutation
   const updateStatus = useMutation({
     mutationFn: async ({ appointmentId, status }: { appointmentId: string; status: string }) => {
+      // Get appointment details for email
+      const { data: apt } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("id", appointmentId)
+        .single();
+
       const { error } = await supabase
         .from("appointments")
         .update({ status, updated_at: new Date().toISOString() })
@@ -131,19 +188,14 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
       
       if (error) throw error;
       
+      // Send status notification email
+      if (apt) {
+        sendStatusEmail(apt, status);
+      }
+
       // If completing, also send prescription email
-      if (status === "Completed") {
-        // Get appointment to check if patient has email
-        const { data: apt } = await supabase
-          .from("appointments")
-          .select("patient_email")
-          .eq("id", appointmentId)
-          .single();
-        
-        if (apt?.patient_email) {
-          // Fire and forget - don't await
-          sendPrescriptionEmail.mutate(appointmentId);
-        }
+      if (status === "Completed" && apt?.patient_email) {
+        sendPrescriptionEmail.mutate(appointmentId);
       }
     },
     onSuccess: (_, { status }) => {
@@ -151,7 +203,7 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
       queryClient.invalidateQueries({ queryKey: ["doctor-appointments", doctorId] });
       toast({ 
         title: "Status Updated", 
-        description: `Patient marked as ${status}${status === "Completed" ? " - prescription email sent" : ""}` 
+        description: `Patient marked as ${status} - notification sent` 
       });
     },
     onError: (error: any) => {

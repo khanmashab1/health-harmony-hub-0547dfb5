@@ -433,16 +433,44 @@ export default function PADashboard() {
 
   const cancelAppointment = useMutation({
     mutationFn: async (appointmentId: string) => {
+      // Get appointment details for email
+      const { data: apt } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("id", appointmentId)
+        .single();
+
       const { error } = await supabase
         .from("appointments")
         .update({ status: "Cancelled" })
         .eq("id", appointmentId);
       if (error) throw error;
+
+      // Send cancellation email
+      if (apt?.patient_email) {
+        const doctorName = (assignments?.find(a => a.doctor_user_id === apt.doctor_user_id) as any)?.doctorProfile?.name || "Doctor";
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:40px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:#dc2626;padding:28px 40px;text-align:center;"><h1 style="color:#ffffff;margin:0;font-size:22px;">Appointment Cancelled</h1></td></tr><tr><td style="padding:32px 40px;"><p style="color:#374151;font-size:16px;margin:0 0 16px;">Dear ${apt.patient_full_name || "Patient"},</p><p style="color:#374151;font-size:15px;margin:0 0 20px;">Your appointment with <strong>Dr. ${doctorName}</strong> has been cancelled.</p><table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;"><tr style="background:#f9fafb;"><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Date</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;">${format(new Date(apt.appointment_date), "MMMM d, yyyy")}</td></tr><tr><td style="font-weight:bold;color:#374151;">Token #</td><td style="color:#374151;">#${apt.token_number}</td></tr></table><p style="color:#374151;font-size:14px;margin:0 0 8px;">Please contact the clinic or rebook if needed.</p><p style="color:#9ca3af;font-size:12px;margin:0;">This is an automated notification from MediCare Plus.</p></td></tr></table></td></tr></table></body></html>`;
+        try {
+          await supabase.functions.invoke("send-email", {
+            body: { to: apt.patient_email, subject: `Appointment Cancelled - Dr. ${doctorName}`, html, recipientName: apt.patient_full_name },
+          });
+          await supabase.from("email_logs").insert({
+            recipient_email: apt.patient_email,
+            email_type: "appointment_cancelled",
+            subject: `Appointment Cancelled - Dr. ${doctorName}`,
+            status: "sent",
+            sent_at: new Date().toISOString(),
+            appointment_id: apt.id,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send cancellation email:", emailErr);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pa-appointments"] });
       queryClient.invalidateQueries({ queryKey: ["pa-pending-approvals"] });
-      toast({ title: "Appointment cancelled" });
+      toast({ title: "Appointment cancelled", description: "Patient notified via email" });
     },
   });
 
