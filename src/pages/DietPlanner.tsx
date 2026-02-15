@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -18,12 +18,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
 import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { generateDietPlanPDF } from "@/lib/dietPlanPdfGenerator";
+import { format } from "date-fns";
 import {
   Salad, Loader2, Apple, Dumbbell, Moon, Droplets, Target,
   Flame, Clock, Activity, Heart, Lightbulb, ChevronRight, Utensils,
-  Coffee, Sun, Sunset, Download, ClipboardCheck, NotebookPen
+  Coffee, Sun, Sunset, Download, ClipboardCheck, Trash2, History,
+  LogIn, Plus, Eye
 } from "lucide-react";
 
 interface MealItem {
@@ -64,6 +66,14 @@ interface MealLog {
   notes: string;
 }
 
+interface SavedPlan {
+  id: string;
+  plan_data: HealthPlan;
+  profile_data: { age: string; gender: string; height: string; weight: string; goal: string; dietaryPreference: string; activityLevel: string };
+  meal_logs: Record<string, MealLog>;
+  created_at: string;
+}
+
 const mealIcons: Record<string, typeof Coffee> = {
   breakfast: Coffee,
   morningSnack: Sun,
@@ -87,16 +97,21 @@ const intensityColor: Record<string, string> = {
   Rest: "bg-muted text-muted-foreground",
 };
 
+type ViewMode = "list" | "form" | "plan";
+
 export default function DietPlanner() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const usageLimit = useAIUsageLimit("diet_planner");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<HealthPlan | null>(null);
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showTracker, setShowTracker] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Meal tracker state: key = "mealKey-index"
   const [mealLogs, setMealLogs] = useState<Record<string, MealLog>>({});
 
   const [age, setAge] = useState("");
@@ -111,7 +126,9 @@ export default function DietPlanner() {
 
   const STORAGE_KEY = "diet_planner_form";
 
-  // Restore form data from sessionStorage on mount
+  const bmi = height && weight ? (parseFloat(weight) / ((parseFloat(height) / 100) ** 2)).toFixed(1) : "";
+
+  // Restore form from sessionStorage (for auth redirect flow)
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -126,26 +143,43 @@ export default function DietPlanner() {
         if (data.activityLevel) setActivityLevel(data.activityLevel);
         if (data.medicalConditions) setMedicalConditions(data.medicalConditions);
         if (data.allergies) setAllergies(data.allergies);
-        // Clear after restoring so it doesn't persist forever
         sessionStorage.removeItem(STORAGE_KEY);
+        setViewMode("form");
       }
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, []);
 
-  // Save form data to sessionStorage
-  const saveFormToStorage = () => {
-    const formData = { age, gender, height, weight, goal, dietaryPreference, activityLevel, medicalConditions, allergies };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-  };
+  // Fetch saved plans
+  const fetchSavedPlans = useCallback(async () => {
+    if (!user) return;
+    setLoadingPlans(true);
+    try {
+      const { data, error } = await supabase
+        .from("diet_plans" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-  const bmi = height && weight ? (parseFloat(weight) / ((parseFloat(height) / 100) ** 2)).toFixed(1) : "";
+      if (error) throw error;
+      setSavedPlans((data || []) as unknown as SavedPlan[]);
+    } catch {
+      // silent
+    } finally {
+      setLoadingPlans(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) fetchSavedPlans();
+  }, [user, fetchSavedPlans]);
+
+  const saveFormToStorage = () => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ age, gender, height, weight, goal, dietaryPreference, activityLevel, medicalConditions, allergies }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If not signed in, save form and redirect to auth
     if (!user) {
       saveFormToStorage();
       toast.info("Please sign in to generate your health plan. Your form data will be preserved!");
@@ -163,7 +197,7 @@ export default function DietPlanner() {
     setPlan(null);
     setError(null);
     setMealLogs({});
-    setShowTracker(false);
+    setActivePlanId(null);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("diet-planner", {
@@ -172,7 +206,25 @@ export default function DietPlanner() {
 
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
+
+      // Save to database
+      const profileData = { age, gender, height, weight, goal, dietaryPreference, activityLevel };
+      const { data: savedRow, error: saveError } = await supabase
+        .from("diet_plans" as any)
+        .insert({ user_id: user.id, plan_data: data, profile_data: profileData, meal_logs: {} } as any)
+        .select("id")
+        .single();
+
+      if (saveError) {
+        console.error("Save error:", saveError);
+      } else {
+        setActivePlanId((savedRow as any).id);
+      }
+
       setPlan(data);
+      setViewMode("plan");
+      toast.success("Plan generated and saved!");
+      fetchSavedPlans();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       toast.error("Failed to generate plan. Please try again.");
@@ -180,6 +232,53 @@ export default function DietPlanner() {
       setLoading(false);
     }
   };
+
+  const loadSavedPlan = (saved: SavedPlan) => {
+    setPlan(saved.plan_data);
+    setMealLogs(saved.meal_logs || {});
+    setActivePlanId(saved.id);
+    if (saved.profile_data) {
+      setAge(saved.profile_data.age || "");
+      setGender(saved.profile_data.gender || "");
+      setHeight(saved.profile_data.height || "");
+      setWeight(saved.profile_data.weight || "");
+      setGoal(saved.profile_data.goal || "");
+      setDietaryPreference(saved.profile_data.dietaryPreference || "");
+      setActivityLevel(saved.profile_data.activityLevel || "");
+    }
+    setViewMode("plan");
+  };
+
+  const deletePlan = async (planId: string) => {
+    setDeletingId(planId);
+    try {
+      const { error } = await supabase.from("diet_plans" as any).delete().eq("id", planId);
+      if (error) throw error;
+      toast.success("Plan deleted");
+      setSavedPlans(prev => prev.filter(p => p.id !== planId));
+      if (activePlanId === planId) {
+        setPlan(null);
+        setActivePlanId(null);
+        setViewMode("list");
+      }
+    } catch {
+      toast.error("Failed to delete plan");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Save meal logs to DB when they change
+  useEffect(() => {
+    if (!activePlanId || !user) return;
+    const timeout = setTimeout(async () => {
+      await supabase
+        .from("diet_plans" as any)
+        .update({ meal_logs: mealLogs } as any)
+        .eq("id", activePlanId);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [mealLogs, activePlanId, user]);
 
   const getBmiColor = (cat: string) => {
     if (cat === "Normal") return "text-green-600 dark:text-green-400";
@@ -203,17 +302,11 @@ export default function DietPlanner() {
 
   const getTrackerStats = () => {
     if (!plan) return { total: 0, eaten: 0, calories: 0 };
-    let total = 0;
-    let eaten = 0;
-    let calories = 0;
+    let total = 0, eaten = 0, calories = 0;
     Object.entries(plan.dietPlan).forEach(([mealKey, meals]) => {
       (meals as MealItem[]).forEach((item, i) => {
         total++;
-        const key = `${mealKey}-${i}`;
-        if (mealLogs[key]?.eaten) {
-          eaten++;
-          calories += item.calories;
-        }
+        if (mealLogs[`${mealKey}-${i}`]?.eaten) { eaten++; calories += item.calories; }
       });
     });
     return { total, eaten, calories };
@@ -222,420 +315,508 @@ export default function DietPlanner() {
   const handleDownloadPDF = () => {
     if (!plan) return;
     generateDietPlanPDF(plan, { age, gender, height, weight, goal, dietaryPreference, activityLevel }, mealLogs, mealLabels);
-    toast.success("PDF downloaded successfully!");
+    toast.success("PDF downloaded!");
   };
 
   const stats = plan ? getTrackerStats() : null;
 
-  return (
-    <Layout>
-      <SEOHead
-        title="AI Health & Diet Planner | MediCare+"
-        description="Get a personalized AI-generated diet plan, exercise routine, and lifestyle recommendations."
-        canonicalUrl="/diet-planner"
-      />
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
-        {!plan ? (
+  // Not signed in — show sign-in prompt
+  if (!authLoading && !user) {
+    return (
+      <Layout>
+        <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan." canonicalUrl="/diet-planner" />
+        <div className="container mx-auto px-4 py-20 max-w-lg">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card variant="elevated" className="shadow-xl max-w-2xl mx-auto">
-              <CardHeader className="text-center pb-2">
+            <Card variant="elevated" className="shadow-xl text-center">
+              <CardHeader>
                 <div className="flex justify-center mb-3">
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
                     <Salad className="w-8 h-8" />
                   </div>
                 </div>
-                <CardTitle className="text-2xl md:text-3xl">AI Health & Diet Planner</CardTitle>
-                <CardDescription className="text-base mt-1">
-                  Get a personalized diet, exercise, and lifestyle plan powered by AI.
+                <CardTitle className="text-2xl">AI Health & Diet Planner</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Sign in to generate personalized diet plans, track your meals, and save your progress.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <AIUsageBanner {...usageLimit} />
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Basic Info */}
-                  <fieldset className="space-y-3">
-                    <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Your Profile</legend>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="dp-age">Age</Label>
-                        <Input id="dp-age" type="number" min={10} max={100} required placeholder="e.g. 25" value={age} onChange={e => setAge(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label htmlFor="dp-gender">Gender</Label>
-                        <Select value={gender} onValueChange={setGender} required>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="dp-height">Height (cm)</Label>
-                        <Input id="dp-height" type="number" min={100} max={250} required placeholder="e.g. 170" value={height} onChange={e => setHeight(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label htmlFor="dp-weight">Weight (kg)</Label>
-                        <Input id="dp-weight" type="number" min={20} max={300} required placeholder="e.g. 70" value={weight} onChange={e => setWeight(e.target.value)} />
-                      </div>
-                    </div>
-                    {bmi && (
-                      <p className="text-sm text-muted-foreground">Calculated BMI: <span className="font-semibold text-foreground">{bmi}</span></p>
-                    )}
-                  </fieldset>
-
-                  {/* Goals & Preferences */}
-                  <fieldset className="space-y-3">
-                    <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Goals & Preferences</legend>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Health Goal</Label>
-                        <Select value={goal} onValueChange={setGoal} required>
-                          <SelectTrigger><SelectValue placeholder="Select goal" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Weight Loss">Weight Loss</SelectItem>
-                            <SelectItem value="Weight Gain">Weight Gain</SelectItem>
-                            <SelectItem value="Muscle Building">Muscle Building</SelectItem>
-                            <SelectItem value="Maintain Weight">Maintain Weight</SelectItem>
-                            <SelectItem value="Improve Energy">Improve Energy</SelectItem>
-                            <SelectItem value="Better Sleep">Better Sleep</SelectItem>
-                            <SelectItem value="Overall Health">Overall Health</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Dietary Preference</Label>
-                        <Select value={dietaryPreference} onValueChange={setDietaryPreference} required>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="No Restriction">No Restriction</SelectItem>
-                            <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-                            <SelectItem value="Vegan">Vegan</SelectItem>
-                            <SelectItem value="Halal">Halal</SelectItem>
-                            <SelectItem value="Keto">Keto</SelectItem>
-                            <SelectItem value="Low Carb">Low Carb</SelectItem>
-                            <SelectItem value="High Protein">High Protein</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Label>Activity Level</Label>
-                        <Select value={activityLevel} onValueChange={setActivityLevel} required>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Sedentary">Sedentary (little/no exercise)</SelectItem>
-                            <SelectItem value="Lightly Active">Lightly Active (1-3 days/week)</SelectItem>
-                            <SelectItem value="Moderately Active">Moderately Active (3-5 days/week)</SelectItem>
-                            <SelectItem value="Very Active">Very Active (6-7 days/week)</SelectItem>
-                            <SelectItem value="Athlete">Athlete (intense training)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </fieldset>
-
-                  {/* Optional */}
-                  <fieldset className="space-y-3">
-                    <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Optional Details</legend>
-                    <div>
-                      <Label>Medical Conditions</Label>
-                      <Textarea placeholder="e.g. Diabetes, Hypertension, Thyroid..." value={medicalConditions} onChange={e => setMedicalConditions(e.target.value)} rows={2} />
-                    </div>
-                    <div>
-                      <Label>Food Allergies</Label>
-                      <Textarea placeholder="e.g. Nuts, Gluten, Dairy..." value={allergies} onChange={e => setAllergies(e.target.value)} rows={2} />
-                    </div>
-                  </fieldset>
-
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button type="submit" size="lg" className="w-full" disabled={loading || !gender || !goal || !dietaryPreference || !activityLevel}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating Your Plan...
-                      </>
-                    ) : (
-                      <>
-                        <Salad className="w-5 h-5" />
-                        Generate My Health Plan
-                      </>
-                    )}
-                  </Button>
-                </form>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-muted-foreground">
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-muted/50">
+                    <Apple className="w-5 h-5 text-primary" />
+                    <span>AI Diet Plans</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-muted/50">
+                    <ClipboardCheck className="w-5 h-5 text-primary" />
+                    <span>Meal Tracker</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-muted/50">
+                    <History className="w-5 h-5 text-primary" />
+                    <span>Save & Revisit</span>
+                  </div>
+                </div>
+                <Button size="lg" className="w-full gap-2" onClick={() => navigate(`/auth?redirect=${encodeURIComponent("/diet-planner")}`)}>
+                  <LogIn className="w-5 h-5" />
+                  Sign In to Get Started
+                </Button>
+                <p className="text-xs text-muted-foreground">Don't have an account? You can sign up on the next page.</p>
               </CardContent>
             </Card>
           </motion.div>
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            {/* Summary Header */}
-            <Card variant="elevated" className="overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 md:p-8 text-white">
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Personalized Health Plan</h1>
-                <p className="text-white/90 text-sm md:text-base">{plan.summary}</p>
-              </div>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 rounded-xl bg-muted/50">
-                    <Activity className="w-5 h-5 mx-auto mb-1 text-primary" />
-                    <p className="text-xs text-muted-foreground">BMI</p>
-                    <p className={`text-lg font-bold ${getBmiColor(plan.bmiCategory)}`}>{plan.bmi}</p>
-                    <p className="text-xs text-muted-foreground">{plan.bmiCategory}</p>
-                  </div>
-                  <div className="text-center p-3 rounded-xl bg-muted/50">
-                    <Flame className="w-5 h-5 mx-auto mb-1 text-orange-500" />
-                    <p className="text-xs text-muted-foreground">Daily Calories</p>
-                    <p className="text-lg font-bold text-foreground">{plan.dailyCalories}</p>
-                    <p className="text-xs text-muted-foreground">kcal/day</p>
-                  </div>
-                  <div className="text-center p-3 rounded-xl bg-muted/50">
-                    <Droplets className="w-5 h-5 mx-auto mb-1 text-blue-500" />
-                    <p className="text-xs text-muted-foreground">Water</p>
-                    <p className="text-lg font-bold text-foreground">{plan.waterIntake}</p>
-                    <p className="text-xs text-muted-foreground">daily</p>
-                  </div>
-                  <div className="text-center p-3 rounded-xl bg-muted/50">
-                    <Moon className="w-5 h-5 mx-auto mb-1 text-indigo-500" />
-                    <p className="text-xs text-muted-foreground">Sleep</p>
-                    <p className="text-sm font-bold text-foreground">{plan.sleepRecommendation.slice(0, 20)}</p>
-                    <p className="text-xs text-muted-foreground">recommended</p>
-                  </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan, exercise routine, and lifestyle recommendations." canonicalUrl="/diet-planner" />
+      <div className="container mx-auto px-4 py-10 max-w-5xl">
+        <AnimatePresence mode="wait">
+          {/* ========== LIST VIEW ========== */}
+          {viewMode === "list" && (
+            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">My Diet Plans</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Your saved diet and health plans</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Button onClick={() => setViewMode("form")} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Plan
+                </Button>
+              </div>
 
-            {/* Tabbed Content */}
-            <Tabs defaultValue="diet" className="w-full">
-              <TabsList className="w-full grid grid-cols-4">
-                <TabsTrigger value="diet" className="gap-1.5"><Apple className="w-4 h-4" /><span className="hidden sm:inline">Diet</span></TabsTrigger>
-                <TabsTrigger value="tracker" className="gap-1.5"><ClipboardCheck className="w-4 h-4" /><span className="hidden sm:inline">Tracker</span></TabsTrigger>
-                <TabsTrigger value="exercise" className="gap-1.5"><Dumbbell className="w-4 h-4" /><span className="hidden sm:inline">Exercise</span></TabsTrigger>
-                <TabsTrigger value="lifestyle" className="gap-1.5"><Lightbulb className="w-4 h-4" /><span className="hidden sm:inline">Lifestyle</span></TabsTrigger>
-              </TabsList>
-
-              {/* Diet Tab */}
-              <TabsContent value="diet" className="space-y-4 mt-4">
-                {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
-                  const Icon = mealIcons[mealKey] || Utensils;
-                  const totalCals = (meals as MealItem[]).reduce((s, m) => s + m.calories, 0);
-                  return (
-                    <Card key={mealKey} variant="default">
+              {loadingPlans ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : savedPlans.length === 0 ? (
+                <Card variant="elevated" className="text-center py-12">
+                  <CardContent>
+                    <Salad className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h2 className="text-lg font-semibold text-foreground mb-2">No Plans Yet</h2>
+                    <p className="text-sm text-muted-foreground mb-4">Generate your first AI-powered health and diet plan!</p>
+                    <Button onClick={() => setViewMode("form")} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Create Your First Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {savedPlans.map(sp => (
+                    <Card key={sp.id} variant="default" className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 rounded-xl bg-primary/10">
-                            <Icon className="w-5 h-5 text-primary" />
+                        <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shrink-0">
+                            <Salad className="w-5 h-5" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">{mealLabels[mealKey]}</h3>
-                            <p className="text-xs text-muted-foreground">{totalCals} kcal</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {(meals as MealItem[]).map((item, i) => (
-                            <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/40">
-                              <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="font-medium text-sm text-foreground">{item.meal}</span>
-                                  <Badge variant="secondary" className="shrink-0 text-xs">{item.calories} kcal</Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-0.5">{item.details}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h3 className="font-semibold text-foreground truncate">
+                                  {sp.profile_data?.goal || "Health Plan"} • {sp.plan_data?.dailyCalories} kcal/day
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  BMI: {sp.plan_data?.bmi} ({sp.plan_data?.bmiCategory}) • {sp.profile_data?.dietaryPreference}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Created {format(new Date(sp.created_at), "MMM d, yyyy 'at' h:mm a")}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 shrink-0">
+                                <Button variant="outline" size="sm" onClick={() => loadSavedPlan(sp)} className="gap-1.5">
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">View</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deletePlan(sp.id)}
+                                  disabled={deletingId === sp.id}
+                                  className="gap-1.5 text-destructive hover:text-destructive"
+                                >
+                                  {deletingId === sp.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                  <span className="hidden sm:inline">Delete</span>
+                                </Button>
                               </div>
                             </div>
-                          ))}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
-                  );
-                })}
-              </TabsContent>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
 
-              {/* Meal Tracker Tab */}
-              <TabsContent value="tracker" className="space-y-4 mt-4">
-                {/* Tracker Summary */}
-                {stats && (
-                  <Card variant="elevated" className="border-primary/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-                          <ClipboardCheck className="w-5 h-5" />
+          {/* ========== FORM VIEW ========== */}
+          {viewMode === "form" && (
+            <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              {savedPlans.length > 0 && (
+                <Button variant="ghost" size="sm" className="mb-4 gap-1.5" onClick={() => setViewMode("list")}>
+                  <History className="w-4 h-4" /> Back to My Plans
+                </Button>
+              )}
+              <Card variant="elevated" className="shadow-xl max-w-2xl mx-auto">
+                <CardHeader className="text-center pb-2">
+                  <div className="flex justify-center mb-3">
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                      <Salad className="w-8 h-8" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-2xl md:text-3xl">AI Health & Diet Planner</CardTitle>
+                  <CardDescription className="text-base mt-1">
+                    Get a personalized diet, exercise, and lifestyle plan powered by AI.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AIUsageBanner {...usageLimit} />
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <fieldset className="space-y-3">
+                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Your Profile</legend>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="dp-age">Age</Label>
+                          <Input id="dp-age" type="number" min={10} max={100} required placeholder="e.g. 25" value={age} onChange={e => setAge(e.target.value)} />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-foreground">Today's Progress</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {stats.eaten} of {stats.total} meals logged • {stats.calories} kcal consumed
-                          </p>
+                        <div>
+                          <Label htmlFor="dp-gender">Gender</Label>
+                          <Select value={gender} onValueChange={setGender} required>
+                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <Badge variant={stats.eaten === stats.total ? "default" : "secondary"} className="text-sm">
-                          {stats.total > 0 ? Math.round((stats.eaten / stats.total) * 100) : 0}%
-                        </Badge>
+                        <div>
+                          <Label htmlFor="dp-height">Height (cm)</Label>
+                          <Input id="dp-height" type="number" min={100} max={250} required placeholder="e.g. 170" value={height} onChange={e => setHeight(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label htmlFor="dp-weight">Weight (kg)</Label>
+                          <Input id="dp-weight" type="number" min={20} max={300} required placeholder="e.g. 70" value={weight} onChange={e => setWeight(e.target.value)} />
+                        </div>
                       </div>
-                      <Progress value={stats.total > 0 ? (stats.eaten / stats.total) * 100 : 0} className="h-2.5" />
-                    </CardContent>
-                  </Card>
-                )}
+                      {bmi && (
+                        <p className="text-sm text-muted-foreground">Calculated BMI: <span className="font-semibold text-foreground">{bmi}</span></p>
+                      )}
+                    </fieldset>
 
-                {/* Meal-by-meal tracker */}
-                {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
-                  const Icon = mealIcons[mealKey] || Utensils;
-                  return (
-                    <Card key={mealKey} variant="default">
+                    <fieldset className="space-y-3">
+                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Goals & Preferences</legend>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Health Goal</Label>
+                          <Select value={goal} onValueChange={setGoal} required>
+                            <SelectTrigger><SelectValue placeholder="Select goal" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Weight Loss">Weight Loss</SelectItem>
+                              <SelectItem value="Weight Gain">Weight Gain</SelectItem>
+                              <SelectItem value="Muscle Building">Muscle Building</SelectItem>
+                              <SelectItem value="Maintain Weight">Maintain Weight</SelectItem>
+                              <SelectItem value="Improve Energy">Improve Energy</SelectItem>
+                              <SelectItem value="Better Sleep">Better Sleep</SelectItem>
+                              <SelectItem value="Overall Health">Overall Health</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Dietary Preference</Label>
+                          <Select value={dietaryPreference} onValueChange={setDietaryPreference} required>
+                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="No Restriction">No Restriction</SelectItem>
+                              <SelectItem value="Vegetarian">Vegetarian</SelectItem>
+                              <SelectItem value="Vegan">Vegan</SelectItem>
+                              <SelectItem value="Halal">Halal</SelectItem>
+                              <SelectItem value="Keto">Keto</SelectItem>
+                              <SelectItem value="Low Carb">Low Carb</SelectItem>
+                              <SelectItem value="High Protein">High Protein</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <Label>Activity Level</Label>
+                          <Select value={activityLevel} onValueChange={setActivityLevel} required>
+                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Sedentary">Sedentary (little/no exercise)</SelectItem>
+                              <SelectItem value="Lightly Active">Lightly Active (1-3 days/week)</SelectItem>
+                              <SelectItem value="Moderately Active">Moderately Active (3-5 days/week)</SelectItem>
+                              <SelectItem value="Very Active">Very Active (6-7 days/week)</SelectItem>
+                              <SelectItem value="Athlete">Athlete (intense training)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </fieldset>
+
+                    <fieldset className="space-y-3">
+                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Optional Details</legend>
+                      <div>
+                        <Label>Medical Conditions</Label>
+                        <Textarea placeholder="e.g. Diabetes, Hypertension, Thyroid..." value={medicalConditions} onChange={e => setMedicalConditions(e.target.value)} rows={2} />
+                      </div>
+                      <div>
+                        <Label>Food Allergies</Label>
+                        <Textarea placeholder="e.g. Nuts, Gluten, Dairy..." value={allergies} onChange={e => setAllergies(e.target.value)} rows={2} />
+                      </div>
+                    </fieldset>
+
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Button type="submit" size="lg" className="w-full" disabled={loading || !gender || !goal || !dietaryPreference || !activityLevel}>
+                      {loading ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /> Generating Your Plan...</>
+                      ) : (
+                        <><Salad className="w-5 h-5" /> Generate My Health Plan</>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ========== PLAN VIEW ========== */}
+          {viewMode === "plan" && plan && (
+            <motion.div key="plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+              <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => { setViewMode("list"); setPlan(null); setActivePlanId(null); }}>
+                <History className="w-4 h-4" /> Back to My Plans
+              </Button>
+
+              {/* Summary Header */}
+              <Card variant="elevated" className="overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 md:p-8 text-white">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Personalized Health Plan</h1>
+                  <p className="text-white/90 text-sm md:text-base">{plan.summary}</p>
+                </div>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 rounded-xl bg-muted/50">
+                      <Activity className="w-5 h-5 mx-auto mb-1 text-primary" />
+                      <p className="text-xs text-muted-foreground">BMI</p>
+                      <p className={`text-lg font-bold ${getBmiColor(plan.bmiCategory)}`}>{plan.bmi}</p>
+                      <p className="text-xs text-muted-foreground">{plan.bmiCategory}</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-muted/50">
+                      <Flame className="w-5 h-5 mx-auto mb-1 text-orange-500" />
+                      <p className="text-xs text-muted-foreground">Daily Calories</p>
+                      <p className="text-lg font-bold text-foreground">{plan.dailyCalories}</p>
+                      <p className="text-xs text-muted-foreground">kcal/day</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-muted/50">
+                      <Droplets className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                      <p className="text-xs text-muted-foreground">Water</p>
+                      <p className="text-lg font-bold text-foreground">{plan.waterIntake}</p>
+                      <p className="text-xs text-muted-foreground">daily</p>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-muted/50">
+                      <Moon className="w-5 h-5 mx-auto mb-1 text-indigo-500" />
+                      <p className="text-xs text-muted-foreground">Sleep</p>
+                      <p className="text-sm font-bold text-foreground">{plan.sleepRecommendation.slice(0, 20)}</p>
+                      <p className="text-xs text-muted-foreground">recommended</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tabs */}
+              <Tabs defaultValue="diet" className="w-full">
+                <TabsList className="w-full grid grid-cols-4">
+                  <TabsTrigger value="diet" className="gap-1.5"><Apple className="w-4 h-4" /><span className="hidden sm:inline">Diet</span></TabsTrigger>
+                  <TabsTrigger value="tracker" className="gap-1.5"><ClipboardCheck className="w-4 h-4" /><span className="hidden sm:inline">Tracker</span></TabsTrigger>
+                  <TabsTrigger value="exercise" className="gap-1.5"><Dumbbell className="w-4 h-4" /><span className="hidden sm:inline">Exercise</span></TabsTrigger>
+                  <TabsTrigger value="lifestyle" className="gap-1.5"><Lightbulb className="w-4 h-4" /><span className="hidden sm:inline">Lifestyle</span></TabsTrigger>
+                </TabsList>
+
+                {/* Diet Tab */}
+                <TabsContent value="diet" className="space-y-4 mt-4">
+                  {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
+                    const Icon = mealIcons[mealKey] || Utensils;
+                    const totalCals = (meals as MealItem[]).reduce((s, m) => s + m.calories, 0);
+                    return (
+                      <Card key={mealKey} variant="default">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 rounded-xl bg-primary/10"><Icon className="w-5 h-5 text-primary" /></div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-foreground">{mealLabels[mealKey]}</h3>
+                              <p className="text-xs text-muted-foreground">{totalCals} kcal</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {(meals as MealItem[]).map((item, i) => (
+                              <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/40">
+                                <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium text-sm text-foreground">{item.meal}</span>
+                                    <Badge variant="secondary" className="shrink-0 text-xs">{item.calories} kcal</Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{item.details}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </TabsContent>
+
+                {/* Tracker Tab */}
+                <TabsContent value="tracker" className="space-y-4 mt-4">
+                  {stats && (
+                    <Card variant="elevated" className="border-primary/20">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 rounded-xl bg-primary/10">
-                            <Icon className="w-5 h-5 text-primary" />
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                            <ClipboardCheck className="w-5 h-5" />
                           </div>
-                          <h3 className="font-semibold text-foreground">{mealLabels[mealKey]}</h3>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground">Today's Progress</h3>
+                            <p className="text-xs text-muted-foreground">{stats.eaten} of {stats.total} meals logged • {stats.calories} kcal consumed</p>
+                          </div>
+                          <Badge variant={stats.eaten === stats.total ? "default" : "secondary"} className="text-sm">
+                            {stats.total > 0 ? Math.round((stats.eaten / stats.total) * 100) : 0}%
+                          </Badge>
                         </div>
-                        <div className="space-y-3">
-                          {(meals as MealItem[]).map((item, i) => {
-                            const key = `${mealKey}-${i}`;
-                            const log = mealLogs[key];
-                            const isEaten = log?.eaten || false;
-                            return (
-                              <div key={i} className={`p-3 rounded-lg border transition-colors ${isEaten ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : "bg-muted/30 border-border"}`}>
-                                <div className="flex items-start gap-3">
-                                  <Checkbox
-                                    checked={isEaten}
-                                    onCheckedChange={() => toggleMealEaten(key)}
-                                    className="mt-0.5"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`font-medium text-sm ${isEaten ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                                        {item.meal}
-                                      </span>
-                                      <Badge variant={isEaten ? "default" : "secondary"} className="shrink-0 text-xs">
-                                        {item.calories} kcal
-                                      </Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-0.5">{item.details}</p>
-                                    {/* Notes input */}
-                                    <div className="mt-2">
-                                      <Input
-                                        placeholder="What did you actually eat? (optional)"
-                                        value={log?.notes || ""}
-                                        onChange={(e) => setMealNote(key, e.target.value)}
-                                        className="h-8 text-xs"
-                                      />
+                        <Progress value={stats.total > 0 ? (stats.eaten / stats.total) * 100 : 0} className="h-2.5" />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {Object.entries(plan.dietPlan).map(([mealKey, meals]) => {
+                    const Icon = mealIcons[mealKey] || Utensils;
+                    return (
+                      <Card key={mealKey} variant="default">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 rounded-xl bg-primary/10"><Icon className="w-5 h-5 text-primary" /></div>
+                            <h3 className="font-semibold text-foreground">{mealLabels[mealKey]}</h3>
+                          </div>
+                          <div className="space-y-3">
+                            {(meals as MealItem[]).map((item, i) => {
+                              const key = `${mealKey}-${i}`;
+                              const log = mealLogs[key];
+                              const isEaten = log?.eaten || false;
+                              return (
+                                <div key={i} className={`p-3 rounded-lg border transition-colors ${isEaten ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : "bg-muted/30 border-border"}`}>
+                                  <div className="flex items-start gap-3">
+                                    <Checkbox checked={isEaten} onCheckedChange={() => toggleMealEaten(key)} className="mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className={`font-medium text-sm ${isEaten ? "line-through text-muted-foreground" : "text-foreground"}`}>{item.meal}</span>
+                                        <Badge variant={isEaten ? "default" : "secondary"} className="shrink-0 text-xs">{item.calories} kcal</Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-0.5">{item.details}</p>
+                                      <div className="mt-2">
+                                        <Input placeholder="What did you actually eat? (optional)" value={log?.notes || ""} onChange={(e) => setMealNote(key, e.target.value)} className="h-8 text-xs" />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </TabsContent>
+
+                {/* Exercise Tab */}
+                <TabsContent value="exercise" className="space-y-3 mt-4">
+                  {plan.exercisePlan.map((ex, i) => (
+                    <Card key={i} variant="default">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-xl bg-primary/10 shrink-0"><Dumbbell className="w-5 h-5 text-primary" /></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <h3 className="font-semibold text-foreground">{ex.day}</h3>
+                              <Badge className={`text-xs ${intensityColor[ex.intensity] || "bg-muted text-muted-foreground"}`}>{ex.intensity}</Badge>
+                            </div>
+                            <p className="font-medium text-sm text-foreground">{ex.workout}</p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{ex.duration}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1.5">{ex.details}</p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
-                  );
-                })}
-              </TabsContent>
+                  ))}
+                </TabsContent>
 
-              {/* Exercise Tab */}
-              <TabsContent value="exercise" className="space-y-3 mt-4">
-                {plan.exercisePlan.map((ex, i) => (
-                  <Card key={i} variant="default">
+                {/* Lifestyle Tab */}
+                <TabsContent value="lifestyle" className="space-y-4 mt-4">
+                  <Card variant="default">
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10 shrink-0">
-                          <Dumbbell className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="font-semibold text-foreground">{ex.day}</h3>
-                            <Badge className={`text-xs ${intensityColor[ex.intensity] || "bg-muted text-muted-foreground"}`}>
-                              {ex.intensity}
-                            </Badge>
+                      <div className="flex items-center gap-2 mb-3"><Target className="w-5 h-5 text-primary" /><h3 className="font-semibold text-foreground">Weekly Goals</h3></div>
+                      <div className="space-y-2">
+                        {plan.weeklyGoals.map((g, i) => (
+                          <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5">
+                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                            <p className="text-sm text-foreground">{g}</p>
                           </div>
-                          <p className="font-medium text-sm text-foreground">{ex.workout}</p>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{ex.duration}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1.5">{ex.details}</p>
-                        </div>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </TabsContent>
+                  <Card variant="default">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-3"><Lightbulb className="w-5 h-5 text-yellow-500" /><h3 className="font-semibold text-foreground">Lifestyle Tips</h3></div>
+                      <div className="space-y-2">
+                        {plan.lifestyleTips.map((tip, i) => (
+                          <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/40">
+                            <Heart className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                            <p className="text-sm text-foreground">{tip}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card variant="default">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2"><Moon className="w-5 h-5 text-indigo-500" /><h3 className="font-semibold text-foreground">Sleep Recommendation</h3></div>
+                      <p className="text-sm text-muted-foreground">{plan.sleepRecommendation}</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
 
-              {/* Lifestyle Tab */}
-              <TabsContent value="lifestyle" className="space-y-4 mt-4">
-                {/* Weekly Goals */}
-                <Card variant="default">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Target className="w-5 h-5 text-primary" />
-                      <h3 className="font-semibold text-foreground">Weekly Goals</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {plan.weeklyGoals.map((g, i) => (
-                        <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5">
-                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
-                          <p className="text-sm text-foreground">{g}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={() => { setViewMode("form"); setPlan(null); setActivePlanId(null); }} variant="outline" size="lg" className="flex-1">
+                  Generate New Plan
+                </Button>
+                <Button onClick={handleDownloadPDF} variant="outline" size="lg" className="flex-1 gap-2">
+                  <Download className="w-4 h-4" /> Download PDF
+                </Button>
+                {activePlanId && (
+                  <Button variant="outline" size="lg" className="flex-1 gap-2 text-destructive hover:text-destructive" onClick={() => deletePlan(activePlanId)}>
+                    <Trash2 className="w-4 h-4" /> Delete Plan
+                  </Button>
+                )}
+              </div>
 
-                {/* Lifestyle Tips */}
-                <Card variant="default">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Lightbulb className="w-5 h-5 text-yellow-500" />
-                      <h3 className="font-semibold text-foreground">Lifestyle Tips</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {plan.lifestyleTips.map((tip, i) => (
-                        <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/40">
-                          <Heart className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <p className="text-sm text-foreground">{tip}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Sleep */}
-                <Card variant="default">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Moon className="w-5 h-5 text-indigo-500" />
-                      <h3 className="font-semibold text-foreground">Sleep Recommendation</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{plan.sleepRecommendation}</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button onClick={() => setPlan(null)} variant="outline" size="lg" className="flex-1">
-                Generate New Plan
-              </Button>
-              <Button onClick={handleDownloadPDF} variant="outline" size="lg" className="flex-1 gap-2">
-                <Download className="w-4 h-4" />
-                Download PDF
-              </Button>
-              <Button asChild size="lg" className="flex-1">
-                <a href="/booking">Book a Nutritionist</a>
-              </Button>
-            </div>
-
-            {/* Disclaimer */}
-            <p className="text-center text-xs text-muted-foreground">
-              ⚕️ This AI-generated plan is for informational purposes only and does not replace professional medical or nutritional advice. Always consult a qualified healthcare professional.
-            </p>
-          </motion.div>
-        )}
+              <p className="text-center text-xs text-muted-foreground">
+                ⚕️ This AI-generated plan is for informational purposes only and does not replace professional medical or nutritional advice.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </Layout>
   );
