@@ -132,6 +132,38 @@ serve(async (req) => {
 
     logStep("Credits fulfilled successfully", { credits: plan.credits, planName: plan.name });
 
+    // Send invoice email to user
+    try {
+      const userEmail = user.email || user.user_metadata?.email;
+      const userName = user.user_metadata?.name || user.user_metadata?.full_name || userEmail?.split("@")[0] || "Patient";
+      if (userEmail) {
+        const purchaseDate = new Date();
+        const formattedDate = purchaseDate.toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" });
+        const formattedTime = purchaseDate.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true });
+        const invoiceHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:40px 0;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><tr><td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;text-align:center;"><h1 style="color:#ffffff;margin:0;font-size:24px;">MediCare Plus</h1><p style="color:#e0e7ff;margin:8px 0 0;font-size:14px;">AI Credits Purchase Invoice</p></td></tr><tr><td style="padding:32px 40px;"><p style="color:#374151;font-size:16px;margin:0 0 20px;">Dear ${userName},</p><p style="color:#374151;font-size:15px;margin:0 0 24px;">Thank you for your purchase! Here are your invoice details:</p><table width="100%" cellpadding="12" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;"><tr style="background:#f9fafb;"><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Plan</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;">${plan.name}</td></tr><tr><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Credits</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;">${plan.credits} AI Credits</td></tr><tr style="background:#f9fafb;"><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Amount Paid</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;font-weight:bold;color:#6366f1;">Rs. ${plan.price}</td></tr><tr><td style="border-bottom:1px solid #e5e7eb;font-weight:bold;color:#374151;">Date</td><td style="border-bottom:1px solid #e5e7eb;color:#374151;">${formattedDate}</td></tr><tr style="background:#f9fafb;"><td style="font-weight:bold;color:#374151;">Time</td><td style="color:#374151;">${formattedTime}</td></tr></table><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:24px;"><p style="color:#166534;margin:0;font-size:14px;">&#10003; ${plan.credits} AI credits have been added to your account and are ready to use.</p></div><p style="color:#6b7280;font-size:13px;margin:0;">If you have any questions, please contact our support team.</p></td></tr><tr><td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;"><p style="color:#9ca3af;font-size:12px;margin:0;">This is an automated invoice from MediCare Plus. Please do not reply to this email.</p></td></tr></table></td></tr></table></body></html>`;
+
+        const emailResponse = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              to: userEmail,
+              subject: `Invoice: ${plan.credits} AI Credits - MediCare Plus`,
+              html: invoiceHtml,
+              recipientName: userName,
+            }),
+          }
+        );
+        logStep("Invoice email sent", { status: emailResponse.status, to: userEmail });
+      }
+    } catch (emailErr) {
+      logStep("Invoice email failed (non-blocking)", { error: String(emailErr) });
+    }
+
     return new Response(JSON.stringify({ success: true, credits_added: plan.credits }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

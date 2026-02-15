@@ -249,19 +249,23 @@ export function PatientAICreditsSection() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const headers = ["Date", "Credits", "Amount (Rs.)", "Status"];
-                  const rows = purchases.map(p => [
-                    new Date(p.created_at).toLocaleDateString(),
-                    p.credits_purchased,
-                    p.amount_paid,
-                    p.status,
-                  ]);
+                  const headers = ["Date & Time", "Credits", "Amount (Rs.)", "Status"];
+                  const rows = purchases.map(p => {
+                    const d = new Date(p.created_at);
+                    const dateTime = `${d.toLocaleDateString("en-PK", { year: "numeric", month: "short", day: "numeric" })} ${d.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
+                    return [
+                      `"${dateTime}"`,
+                      p.credits_purchased,
+                      p.amount_paid,
+                      p.status,
+                    ];
+                  });
                   const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
                   const blob = new Blob([csv], { type: "text/csv" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = "ai-credits-purchase-history.csv";
+                  a.download = `ai-credits-history-${new Date().toISOString().slice(0,10)}.csv`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
