@@ -1507,6 +1507,10 @@ export type Database = {
           specialty: string
         }[]
       }
+      get_prescription_verification: {
+        Args: { p_appointment_id: string }
+        Returns: Json
+      }
       get_top_patients_by_appointments: {
         Args: never
         Returns: {
