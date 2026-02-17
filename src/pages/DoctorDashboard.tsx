@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks } from "date-fns";
 import {
@@ -42,7 +42,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { MedicineEntry } from "@/components/doctor/MedicineEntry";
 import { DoctorSettingsPanel } from "@/components/doctor/DoctorSettingsPanel";
@@ -63,6 +63,7 @@ export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useLanguage();
@@ -72,7 +73,10 @@ export default function DoctorDashboard() {
   const [blockReason, setBlockReason] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [chartView, setChartView] = useState<"weekly" | "monthly">("weekly");
-  const [activeTab, setActiveTab] = useState("queue");
+  const activeTab = searchParams.get("tab") || "queue";
+  const setActiveTab = useCallback((tab: string) => {
+    setSearchParams({ tab }, { replace: true });
+  }, [setSearchParams]);
   const [appointmentFilter, setAppointmentFilter] = useState<"all" | "upcoming" | "completed">("all");
 
   // Fetch doctor info with plan
