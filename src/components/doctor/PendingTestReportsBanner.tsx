@@ -38,7 +38,10 @@ export function PendingTestReportsBanner({ doctorUserId, onNavigate }: Props) {
       <Card
         variant="glass"
         className="border-white/50 cursor-pointer hover:shadow-lg transition-all"
-        onClick={onNavigate}
+        onClick={() => {
+          onNavigate();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       >
         <CardContent className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
