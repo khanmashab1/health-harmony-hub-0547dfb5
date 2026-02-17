@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Users, BarChart3, Palette, Headphones, Lock, Check, ArrowUpRight, ExternalLink, Building2 } from "lucide-react";
+import { Crown, Users, BarChart3, Palette, Headphones, Lock, Check, ArrowUpRight, ExternalLink, Building2, CalendarClock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -52,7 +52,9 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
   const [selectedPlanTier, setSelectedPlanTier] = useState<"professional" | "enterprise" | null>(null);
   const [plans, setPlans] = useState<Array<{ id: string; name: string; stripe_price_id: string | null }>>([]);
 
-  // Fetch available plans
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+
+  // Fetch available plans and subscription status
   useEffect(() => {
     const fetchPlans = async () => {
       const { data } = await supabase
@@ -64,8 +66,17 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
         setPlans(data);
       }
     };
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-doctor-subscription");
+        if (data?.subscription_end) {
+          setSubscriptionEnd(data.subscription_end);
+        }
+      } catch {}
+    };
     fetchPlans();
-  }, []);
+    if (userId) fetchSubscriptionStatus();
+  }, [userId]);
 
   const maxPatients = features.maxPatientsPerDay === Infinity ? "Unlimited" : features.maxPatientsPerDay;
   const patientPercentage = features.maxPatientsPerDay === Infinity 
@@ -166,9 +177,15 @@ export function PlanRestrictionsCard({ userId, currentPatientCount, onUpgradeCli
               </div>
               <div>
                 <CardTitle className="text-lg">{planInfo?.name || "Basic"} Plan</CardTitle>
-                <CardDescription>
+              <CardDescription>
                   {isFreePlan ? "Free tier" : `PKR ${planInfo?.price?.toLocaleString()} / ${planInfo?.billing_period}`}
                 </CardDescription>
+                {subscriptionEnd && !isFreePlan && (
+                  <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
+                    <CalendarClock className="w-3 h-3" />
+                    Expires: {new Date(subscriptionEnd).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                  </div>
+                )}
               </div>
             </div>
             <Badge 
