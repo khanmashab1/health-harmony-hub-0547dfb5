@@ -21,6 +21,7 @@ import {
   Crown,
   Lock,
   Building2,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -437,6 +438,11 @@ export default function DoctorDashboard() {
                     <span className="sm:hidden">Org</span>
                   </TabsTrigger>
                 )}
+                <TabsTrigger value="test-reports" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <FlaskConical className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Test Reports</span>
+                  <span className="sm:hidden">Tests</span>
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />
                   Settings
@@ -838,6 +844,11 @@ export default function DoctorDashboard() {
                   {user && <OrganizationPanel userId={user.id} userEmail={user.email} userName={profile?.name || undefined} />}
                 </TabsContent>
               )}
+
+              {/* Test Reports Tab */}
+              <TabsContent value="test-reports">
+                {user && <PendingTestReportsPanel doctorUserId={user.id} showAll />}
+              </TabsContent>
 
               {/* Settings */}
               <TabsContent value="settings">
