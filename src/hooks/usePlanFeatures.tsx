@@ -85,24 +85,56 @@ export function usePlanFeatures(userId: string | undefined): UsePlanFeaturesResu
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  // Function to sync subscription status from Stripe
+  // Function to sync subscription status from Stripe with retry logic
   const refreshSubscription = async () => {
     if (!userId) return;
     
+    const MAX_RETRIES = 3;
+    let lastError: unknown = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { data, error } = await supabase.functions.invoke("check-doctor-subscription");
+        if (error) throw error;
+        
+        // Success - invalidate queries to refetch
+        if (data?.subscribed !== undefined) {
+          queryClient.invalidateQueries({ queryKey: ["doctor-plan-info", userId] });
+          queryClient.invalidateQueries({ queryKey: ["doctor-info", userId] });
+        }
+        return; // Success, exit retry loop
+      } catch (err) {
+        lastError = err;
+        console.error(`Subscription check attempt ${attempt}/${MAX_RETRIES} failed:`, err);
+        
+        if (attempt < MAX_RETRIES) {
+          // Show retry notification
+          const { toast } = await import("sonner");
+          toast.warning(`Subscription verification failed (attempt ${attempt}/${MAX_RETRIES}). Retrying...`);
+          // Wait before retrying (exponential backoff)
+          await new Promise(r => setTimeout(r, attempt * 2000));
+        }
+      }
+    }
+
+    // All retries exhausted - downgrade plan
+    console.error("All subscription check attempts failed, downgrading plan:", lastError);
+    const { toast } = await import("sonner");
+    toast.error("Subscription verification failed after 3 attempts. Your plan has been reset to Basic.", {
+      duration: 8000,
+    });
+
+    // Remove selected plan from doctor record
     try {
-      const { data, error } = await supabase.functions.invoke("check-doctor-subscription");
-      if (error) {
-        console.error("Error checking subscription:", error);
-        return;
-      }
+      await supabase
+        .from("doctors")
+        .update({ selected_plan_id: null })
+        .eq("user_id", userId);
       
-      // If subscription status changed, invalidate the query to refetch
-      if (data?.subscribed !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ["doctor-plan-info", userId] });
-        queryClient.invalidateQueries({ queryKey: ["doctor-info", userId] });
-      }
-    } catch (err) {
-      console.error("Failed to refresh subscription:", err);
+      queryClient.invalidateQueries({ queryKey: ["doctor-plan-info", userId] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-info", userId] });
+    } catch (downgradeErr) {
+      console.error("Failed to downgrade plan:", downgradeErr);
     }
   };
 
