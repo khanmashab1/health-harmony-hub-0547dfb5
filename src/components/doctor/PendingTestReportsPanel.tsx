@@ -8,7 +8,7 @@ import {
   Loader2,
   CheckCircle,
   ArrowLeft,
-  ClipboardList,
+  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -215,19 +215,6 @@ export function PendingTestReportsPanel({ doctorUserId, showAll = false }: Pendi
                 Add Remarks
               </Button>
             )}
-            {currentReport?.appointments && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  navigate(`/lab-tests/${currentReport.appointment_id}`)
-                }
-                className="gap-1.5"
-              >
-                <ClipboardList className="w-4 h-4" />
-                View Prescription
-              </Button>
-            )}
           </div>
 
           {/* Review form below preview */}
@@ -349,18 +336,6 @@ export function PendingTestReportsPanel({ doctorUserId, showAll = false }: Pendi
                         )}
                         <span className="hidden sm:inline">View & Review</span>
                         <span className="sm:hidden">View</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/lab-tests/${report.appointment_id}`)
-                        }
-                        className="gap-1 text-xs"
-                        title="View Prescription"
-                      >
-                        <ClipboardList className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Rx</span>
                       </Button>
                     </div>
                   </div>
