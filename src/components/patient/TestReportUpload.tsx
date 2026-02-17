@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Upload, FileText, X, Image, Loader2, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,12 +28,24 @@ interface TestReportUploadProps {
   labTests?: string | null;
 }
 
+function parseLabTests(labTests?: string | null): string[] {
+  if (!labTests) return [];
+  // Split by commas, semicolons, newlines, or " and "
+  return labTests
+    .split(/[,;\n]|(?:\band\b)/i)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+}
+
 export function TestReportUpload({ appointmentId, userId, labTests }: TestReportUploadProps) {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notes, setNotes] = useState("");
+  const [selectedTest, setSelectedTest] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const testOptions = useMemo(() => parseLabTests(labTests), [labTests]);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["test-reports", appointmentId],
@@ -46,10 +65,15 @@ export function TestReportUpload({ appointmentId, userId, labTests }: TestReport
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (testOptions.length > 0 && !selectedTest) {
+      toast({ title: "Select Test", description: "Please select which test you are uploading.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
         const filePath = `${userId}/${appointmentId}/${Date.now()}-${file.name}`;
 
         const { error: uploadError } = await supabase.storage
@@ -67,6 +91,7 @@ export function TestReportUpload({ appointmentId, userId, labTests }: TestReport
             file_name: file.name,
             file_type: file.type,
             notes: notes || null,
+            test_name: selectedTest || null,
           });
 
         if (dbError) throw dbError;
@@ -75,7 +100,7 @@ export function TestReportUpload({ appointmentId, userId, labTests }: TestReport
       toast({ title: "Test Report Uploaded", description: "Your report has been uploaded successfully." });
       queryClient.invalidateQueries({ queryKey: ["test-reports", appointmentId] });
       setNotes("");
-      // Reset input
+      setSelectedTest("");
       e.target.value = "";
     } catch (error: any) {
       toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
@@ -129,6 +154,23 @@ export function TestReportUpload({ appointmentId, userId, labTests }: TestReport
 
         {/* Upload Area */}
         <div className="space-y-3">
+          {/* Test Name Dropdown */}
+          {testOptions.length > 0 ? (
+            <Select value={selectedTest} onValueChange={setSelectedTest}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select test being uploaded *" />
+              </SelectTrigger>
+              <SelectContent>
+                {testOptions.map((test) => (
+                  <SelectItem key={test} value={test}>
+                    {test}
+                  </SelectItem>
+                ))}
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : null}
+
           <Input
             placeholder="Add notes (optional)"
             value={notes}
@@ -166,7 +208,13 @@ export function TestReportUpload({ appointmentId, userId, labTests }: TestReport
                 {getFileIcon(report.file_type)}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{report.file_name}</p>
+                  {report.test_name && (
+                    <Badge variant="secondary" className="text-[10px] h-4 mt-0.5">{report.test_name}</Badge>
+                  )}
                   {report.notes && <p className="text-[10px] text-muted-foreground truncate">{report.notes}</p>}
+                  {report.reviewed_at && (
+                    <p className="text-[10px] text-green-600 dark:text-green-400">✓ Reviewed by doctor</p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"

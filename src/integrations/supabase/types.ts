@@ -1372,6 +1372,10 @@ export type Database = {
           file_type: string | null
           id: string
           notes: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          test_name: string | null
           uploaded_by: string
         }
         Insert: {
@@ -1382,6 +1386,10 @@ export type Database = {
           file_type?: string | null
           id?: string
           notes?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          test_name?: string | null
           uploaded_by: string
         }
         Update: {
@@ -1392,6 +1400,10 @@ export type Database = {
           file_type?: string | null
           id?: string
           notes?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          test_name?: string | null
           uploaded_by?: string
         }
         Relationships: [
