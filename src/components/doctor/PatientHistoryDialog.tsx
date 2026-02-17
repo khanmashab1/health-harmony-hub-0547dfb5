@@ -35,6 +35,7 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
       let query = supabase
         .from("appointments")
         .select("*")
+        .eq("doctor_user_id", doctorUserId)
         .eq("status", "Completed")
         .not("diagnosis", "is", null)
         .order("appointment_date", { ascending: false });
@@ -74,6 +75,7 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
             <TestReportsViewer
               patientName={patientName}
               patientUserId={patientUserId}
+              doctorUserId={doctorUserId}
               mode="all"
             />
           </div>
@@ -146,6 +148,7 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
                             <TestReportsViewer
                               patientName={patientName}
                               patientUserId={patientUserId}
+                              doctorUserId={doctorUserId}
                               currentAppointmentId={record.id}
                               mode="single"
                             />

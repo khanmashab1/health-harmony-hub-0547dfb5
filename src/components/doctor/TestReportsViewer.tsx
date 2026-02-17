@@ -21,11 +21,12 @@ import { useToast } from "@/hooks/use-toast";
 interface TestReportsViewerProps {
   patientName: string;
   patientUserId?: string | null;
+  doctorUserId?: string;
   currentAppointmentId?: string;
   mode?: "single" | "all";
 }
 
-export function TestReportsViewer({ patientName, patientUserId, currentAppointmentId, mode = "all" }: TestReportsViewerProps) {
+export function TestReportsViewer({ patientName, patientUserId, doctorUserId, currentAppointmentId, mode = "all" }: TestReportsViewerProps) {
   const [open, setOpen] = useState(false);
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -34,20 +35,27 @@ export function TestReportsViewer({ patientName, patientUserId, currentAppointme
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const queryKey = ["doctor-test-reports", mode === "single" ? currentAppointmentId : patientUserId, mode];
+  const queryKey = ["doctor-test-reports", mode === "single" ? currentAppointmentId : patientUserId, doctorUserId, mode];
 
   const { data: reports, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       let query = supabase
         .from("test_reports")
-        .select("*, appointments!inner(appointment_date, patient_full_name, token_number, lab_tests)")
+        .select("*, appointments!inner(appointment_date, patient_full_name, token_number, lab_tests, doctor_user_id)")
         .order("created_at", { ascending: false });
 
       if (mode === "single" && currentAppointmentId) {
         query = query.eq("appointment_id", currentAppointmentId);
-      } else if (patientUserId) {
-        query = query.eq("appointments.patient_user_id", patientUserId);
+      } else {
+        // Filter by patient
+        if (patientUserId) {
+          query = query.eq("appointments.patient_user_id", patientUserId);
+        }
+        // Filter by doctor to only show reports for this doctor's appointments
+        if (doctorUserId) {
+          query = query.eq("appointments.doctor_user_id", doctorUserId);
+        }
       }
 
       const { data, error } = await query;
