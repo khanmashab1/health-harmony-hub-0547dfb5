@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { FlaskConical, FileText, Image, ExternalLink, Eye, Loader2 } from "lucide-react";
+import { FlaskConical, FileText, Image, ExternalLink, Eye, Loader2, CheckCircle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -13,25 +14,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TestReportsViewerProps {
   patientName: string;
   patientUserId?: string | null;
   currentAppointmentId?: string;
-  mode?: "single" | "all"; // single = per appointment, all = review all
+  mode?: "single" | "all";
 }
 
 export function TestReportsViewer({ patientName, patientUserId, currentAppointmentId, mode = "all" }: TestReportsViewerProps) {
   const [open, setOpen] = useState(false);
-  const [viewingUrl, setViewingUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch test reports - either for one appointment or all for patient
+  const queryKey = ["doctor-test-reports", mode === "single" ? currentAppointmentId : patientUserId, mode];
+
   const { data: reports, isLoading } = useQuery({
-    queryKey: ["doctor-test-reports", mode === "single" ? currentAppointmentId : patientUserId, mode],
+    queryKey,
     queryFn: async () => {
       let query = supabase
         .from("test_reports")
@@ -56,16 +62,41 @@ export function TestReportsViewer({ patientName, patientUserId, currentAppointme
     try {
       const { data, error } = await supabase.storage
         .from("test-reports")
-        .createSignedUrl(filePath, 300); // 5 min
-
+        .createSignedUrl(filePath, 300);
       if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
-      }
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
     } catch (err) {
       console.error("Error viewing file:", err);
     } finally {
       setLoadingUrl(null);
+    }
+  };
+
+  const handleMarkReviewed = async (reportId: string) => {
+    setSavingReview(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("test_reports")
+        .update({
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user.id,
+          review_notes: reviewNotes || null,
+        })
+        .eq("id", reportId);
+
+      if (error) throw error;
+
+      toast({ title: "Report Reviewed", description: "Test report marked as reviewed." });
+      queryClient.invalidateQueries({ queryKey });
+      setReviewingId(null);
+      setReviewNotes("");
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingReview(false);
     }
   };
 
@@ -74,13 +105,100 @@ export function TestReportsViewer({ patientName, patientUserId, currentAppointme
     return <FileText className="w-4 h-4 text-amber-500" />;
   };
 
-  // Group reports by appointment
   const groupedByAppointment = reports?.reduce((acc: Record<string, any[]>, report: any) => {
     const key = report.appointment_id;
     if (!acc[key]) acc[key] = [];
     acc[key].push(report);
     return acc;
   }, {} as Record<string, any[]>) || {};
+
+  const renderReportItem = (report: any, compact = false) => (
+    <div key={report.id} className="space-y-1">
+      <div className={`flex items-center gap-2.5 ${compact ? "p-2 rounded-lg hover:bg-muted/30" : "p-3 rounded-xl border border-border/50 bg-card hover:bg-accent/30"} transition-all`}>
+        {getFileIcon(report.file_type)}
+        <div className="flex-1 min-w-0">
+          <p className={`${compact ? "text-xs" : "text-sm"} font-medium truncate`}>{report.file_name}</p>
+          {report.test_name && (
+            <Badge variant="secondary" className="text-[10px] h-4 mt-0.5">{report.test_name}</Badge>
+          )}
+          {report.notes && <p className="text-[10px] text-muted-foreground truncate">{report.notes}</p>}
+          {!compact && (
+            <p className="text-[10px] text-muted-foreground">
+              {format(new Date(report.created_at), "MMM d, yyyy h:mm a")}
+            </p>
+          )}
+          {report.reviewed_at && (
+            <p className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 mt-0.5">
+              <CheckCircle className="w-3 h-3" />
+              Reviewed {format(new Date(report.reviewed_at), "MMM d, h:mm a")}
+              {report.review_notes && ` — ${report.review_notes}`}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {!report.reviewed_at && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => {
+                setReviewingId(reviewingId === report.id ? null : report.id);
+                setReviewNotes("");
+              }}
+              title="Mark as reviewed"
+              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size={compact ? "icon-sm" : "sm"}
+            onClick={() => viewFile(report.file_path)}
+            disabled={loadingUrl === report.file_path}
+          >
+            {loadingUrl === report.file_path ? (
+              <Loader2 className={`${compact ? "w-3.5 h-3.5" : "w-4 h-4"} animate-spin`} />
+            ) : compact ? (
+              <Eye className="w-3.5 h-3.5" />
+            ) : (
+              <ExternalLink className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Review annotation form */}
+      {reviewingId === report.id && (
+        <div className="ml-6 p-2.5 rounded-lg border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20 space-y-2">
+          <Textarea
+            placeholder="Add review notes (optional)..."
+            value={reviewNotes}
+            onChange={(e) => setReviewNotes(e.target.value)}
+            className="min-h-[60px] text-xs"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => handleMarkReviewed(report.id)}
+              disabled={savingReview}
+              className="gap-1 h-7 text-xs"
+            >
+              {savingReview ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+              Mark Reviewed
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setReviewingId(null)}
+              className="h-7 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -111,36 +229,10 @@ export function TestReportsViewer({ patientName, patientUserId, currentAppointme
             </div>
           ) : reports && reports.length > 0 ? (
             mode === "single" ? (
-              // Single appointment view
               <div className="space-y-2">
-                {reports.map((report: any) => (
-                  <div key={report.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-accent/30 transition-all">
-                    {getFileIcon(report.file_type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{report.file_name}</p>
-                      {report.notes && <p className="text-xs text-muted-foreground truncate">{report.notes}</p>}
-                      <p className="text-[10px] text-muted-foreground">
-                        {format(new Date(report.created_at), "MMM d, yyyy h:mm a")}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => viewFile(report.file_path)}
-                      disabled={loadingUrl === report.file_path}
-                      className="shrink-0"
-                    >
-                      {loadingUrl === report.file_path ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ExternalLink className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                ))}
+                {reports.map((report: any) => renderReportItem(report))}
               </div>
             ) : (
-              // All appointments grouped view
               <div className="space-y-4">
                 {Object.entries(groupedByAppointment).map(([aptId, aptReports]: [string, any[]]) => {
                   const apt = aptReports[0]?.appointments;
@@ -165,27 +257,7 @@ export function TestReportsViewer({ patientName, patientUserId, currentAppointme
                         </div>
                       )}
                       <div className="p-2 space-y-1">
-                        {aptReports.map((report: any) => (
-                          <div key={report.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
-                            {getFileIcon(report.file_type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium truncate">{report.file_name}</p>
-                              {report.notes && <p className="text-[10px] text-muted-foreground truncate">{report.notes}</p>}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => viewFile(report.file_path)}
-                              disabled={loadingUrl === report.file_path}
-                            >
-                              {loadingUrl === report.file_path ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Eye className="w-3.5 h-3.5" />
-                              )}
-                            </Button>
-                          </div>
-                        ))}
+                        {aptReports.map((report: any) => renderReportItem(report, true))}
                       </div>
                     </div>
                   );
