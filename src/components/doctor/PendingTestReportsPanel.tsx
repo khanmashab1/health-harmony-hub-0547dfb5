@@ -220,7 +220,7 @@ export function PendingTestReportsPanel({ doctorUserId, showAll = false }: Pendi
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  navigate(`/prescription/${currentReport.appointment_id}`)
+                  navigate(`/lab-tests/${currentReport.appointment_id}`)
                 }
                 className="gap-1.5"
               >
@@ -354,7 +354,7 @@ export function PendingTestReportsPanel({ doctorUserId, showAll = false }: Pendi
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          navigate(`/prescription/${report.appointment_id}`)
+                          navigate(`/lab-tests/${report.appointment_id}`)
                         }
                         className="gap-1 text-xs"
                         title="View Prescription"
