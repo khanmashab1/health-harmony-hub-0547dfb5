@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { FlaskConical, FileText, Image, ExternalLink, Eye, Loader2, CheckCircle, MessageSquare } from "lucide-react";
+import { FlaskConical, FileText, Image, ExternalLink, Eye, Loader2, CheckCircle, MessageSquare, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +29,9 @@ interface TestReportsViewerProps {
 export function TestReportsViewer({ patientName, patientUserId, doctorUserId, currentAppointmentId, mode = "all" }: TestReportsViewerProps) {
   const [open, setOpen] = useState(false);
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [savingReview, setSavingReview] = useState(false);
@@ -65,14 +68,18 @@ export function TestReportsViewer({ patientName, patientUserId, doctorUserId, cu
     enabled: open,
   });
 
-  const viewFile = async (filePath: string) => {
+  const viewFile = async (filePath: string, fileType?: string | null, fileName?: string) => {
     setLoadingUrl(filePath);
     try {
       const { data, error } = await supabase.storage
         .from("test-reports")
         .createSignedUrl(filePath, 300);
       if (error) throw error;
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+      if (data?.signedUrl) {
+        setPreviewUrl(data.signedUrl);
+        setPreviewType(fileType || null);
+        setPreviewName(fileName || "File Preview");
+      }
     } catch (err) {
       console.error("Error viewing file:", err);
     } finally {
@@ -161,7 +168,7 @@ export function TestReportsViewer({ patientName, patientUserId, doctorUserId, cu
           <Button
             variant="ghost"
             size={compact ? "icon-sm" : "sm"}
-            onClick={() => viewFile(report.file_path)}
+            onClick={() => viewFile(report.file_path, report.file_type, report.file_name)}
             disabled={loadingUrl === report.file_path}
           >
             {loadingUrl === report.file_path ? (
@@ -209,7 +216,7 @@ export function TestReportsViewer({ patientName, patientUserId, doctorUserId, cu
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setPreviewUrl(null); setPreviewType(null); setPreviewName(""); } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <FlaskConical className="w-4 h-4" />
@@ -218,69 +225,105 @@ export function TestReportsViewer({ patientName, patientUserId, doctorUserId, cu
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[85vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="w-5 h-5 text-primary" />
-            {mode === "single" ? "Test Reports" : "All Test Reports"}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === "single"
-              ? `Test reports for this appointment`
-              : `All uploaded test reports for ${patientName}`}
-          </DialogDescription>
-        </DialogHeader>
+        {previewUrl ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => { setPreviewUrl(null); setPreviewType(null); setPreviewName(""); }}
+                  className="shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <span className="truncate">{previewName}</span>
+              </DialogTitle>
+              <DialogDescription>Viewing uploaded test report</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 min-h-0 max-h-[65vh] rounded-lg overflow-hidden border bg-muted/30">
+              {previewType?.startsWith("image/") ? (
+                <img
+                  src={previewUrl}
+                  alt={previewName}
+                  className="w-full h-full object-contain max-h-[65vh]"
+                />
+              ) : (
+                <iframe
+                  src={previewUrl}
+                  title={previewName}
+                  className="w-full h-[65vh] border-0"
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5 text-primary" />
+                {mode === "single" ? "Test Reports" : "All Test Reports"}
+              </DialogTitle>
+              <DialogDescription>
+                {mode === "single"
+                  ? `Test reports for this appointment`
+                  : `All uploaded test reports for ${patientName}`}
+              </DialogDescription>
+            </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
-            </div>
-          ) : reports && reports.length > 0 ? (
-            mode === "single" ? (
-              <div className="space-y-2">
-                {reports.map((report: any) => renderReportItem(report))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(groupedByAppointment).map(([aptId, aptReports]: [string, any[]]) => {
-                  const apt = aptReports[0]?.appointments;
-                  return (
-                    <div key={aptId} className="rounded-xl border border-border/50 overflow-hidden">
-                      <div className="px-4 py-2.5 bg-muted/50 border-b border-border/30 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">
-                            {apt ? format(new Date(apt.appointment_date), "MMM d, yyyy") : "Unknown Date"}
-                          </span>
-                          {apt?.token_number && (
-                            <Badge variant="secondary" className="text-xs">Token #{apt.token_number}</Badge>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+                </div>
+              ) : reports && reports.length > 0 ? (
+                mode === "single" ? (
+                  <div className="space-y-2">
+                    {reports.map((report: any) => renderReportItem(report))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(groupedByAppointment).map(([aptId, aptReports]: [string, any[]]) => {
+                      const apt = aptReports[0]?.appointments;
+                      return (
+                        <div key={aptId} className="rounded-xl border border-border/50 overflow-hidden">
+                          <div className="px-4 py-2.5 bg-muted/50 border-b border-border/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold">
+                                {apt ? format(new Date(apt.appointment_date), "MMM d, yyyy") : "Unknown Date"}
+                              </span>
+                              {apt?.token_number && (
+                                <Badge variant="secondary" className="text-xs">Token #{apt.token_number}</Badge>
+                              )}
+                            </div>
+                            <Badge variant="outline" className="text-xs">{aptReports.length} file(s)</Badge>
+                          </div>
+                          {apt?.lab_tests && (
+                            <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-950/10 border-b border-border/20">
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                                <span className="font-medium">Suggested:</span> {apt.lab_tests}
+                              </p>
+                            </div>
                           )}
+                          <div className="p-2 space-y-1">
+                            {aptReports.map((report: any) => renderReportItem(report, true))}
+                          </div>
                         </div>
-                        <Badge variant="outline" className="text-xs">{aptReports.length} file(s)</Badge>
-                      </div>
-                      {apt?.lab_tests && (
-                        <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-950/10 border-b border-border/20">
-                          <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                            <span className="font-medium">Suggested:</span> {apt.lab_tests}
-                          </p>
-                        </div>
-                      )}
-                      <div className="p-2 space-y-1">
-                        {aptReports.map((report: any) => renderReportItem(report, true))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3">
-                <FlaskConical className="w-7 h-7 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">No test reports uploaded yet</p>
-            </div>
-          )}
-        </ScrollArea>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3">
+                    <FlaskConical className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground">No test reports uploaded yet</p>
+                </div>
+              )}
+            </ScrollArea>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
