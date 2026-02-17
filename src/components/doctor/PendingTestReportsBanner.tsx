@@ -56,10 +56,7 @@ export function PendingTestReportsBanner({ doctorUserId, onNavigate }: Props) {
               <p className="text-xs text-muted-foreground">Reports awaiting your review</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="gap-1 shrink-0">
-            <span className="hidden sm:inline">Review Now</span>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
         </CardContent>
       </Card>
     </motion.div>
