@@ -375,46 +375,46 @@ export function QueueManagementPanel({ doctorId }: QueueManagementPanelProps) {
   return (
     <div className="space-y-6">
       {/* Queue Status Bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <Card variant="glass" className="border-green-500/20 bg-green-500/5 dark:bg-green-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <Play className="w-6 h-6 text-green-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-left sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-500/20 flex items-center justify-center shrink-0">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-xl sm:text-2xl font-bold text-green-500">
                   {currentlyServing ? `#${currentlyServing.token_number}` : "—"}
                 </p>
-                <p className="text-xs text-muted-foreground">Now Serving</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Now Serving</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card variant="glass" className="border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-left sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-500">{waitingQueue.length}</p>
-                <p className="text-xs text-muted-foreground">Waiting</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-500">{waitingQueue.length}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Waiting</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card variant="glass" className="border-primary/20 bg-primary/5 dark:bg-primary/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-left sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-primary">{completedToday.length}</p>
-                <p className="text-xs text-muted-foreground">Completed</p>
+                <p className="text-xl sm:text-2xl font-bold text-primary">{completedToday.length}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Completed</p>
               </div>
             </div>
           </CardContent>
