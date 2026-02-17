@@ -57,6 +57,7 @@ import { PatientHistoryDialog } from "@/components/doctor/PatientHistoryDialog";
 import { DoctorDelayToggle } from "@/components/doctor/DoctorDelayToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { PendingTestReportsPanel } from "@/components/doctor/PendingTestReportsPanel";
+import { PendingTestReportsBanner } from "@/components/doctor/PendingTestReportsBanner";
 
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
@@ -362,17 +363,8 @@ export default function DoctorDashboard() {
             )}
           </motion.div>
 
-          {/* Pending Test Reports */}
-          {user && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.13 }}
-              className="mb-4"
-            >
-              <PendingTestReportsPanel doctorUserId={user.id} />
-            </motion.div>
-          )}
+          {/* Pending Test Reports Notification */}
+          <PendingTestReportsBanner doctorUserId={user?.id} onNavigate={() => setActiveTab("test-reports")} />
 
           {/* Plan Restrictions Overview */}
           <motion.div
