@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { format, differenceInYears } from "date-fns";
 import { Printer, ArrowLeft, Stethoscope, FlaskConical, User, Phone, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 export default function LabTestsPrint() {
   const { appointmentId } = useParams();
   const { siteName } = useSiteSettings();
+  const navigate = useNavigate();
 
   const { data: appointment, isLoading } = useQuery({
     queryKey: ["lab-tests", appointmentId],
@@ -93,12 +94,10 @@ export default function LabTestsPrint() {
     <div className="min-h-screen bg-background print:bg-white">
       {/* Action Buttons - Hidden on print */}
       <div className="fixed top-4 left-4 right-4 flex justify-between z-50 no-print">
-        <Link to="/doctor">
-          <Button variant="outline" size="sm" className="bg-card shadow-md border-primary text-primary hover:bg-primary/5">
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-card shadow-md border-primary text-primary hover:bg-primary/5">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-        </Link>
         <Button onClick={handlePrint} size="sm" className="shadow-md">
           <Printer className="w-4 h-4 mr-2" />
           Print
