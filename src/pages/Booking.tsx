@@ -788,64 +788,39 @@ export default function Booking() {
                       <p className="text-sm text-muted-foreground">Select the patient for this booking</p>
                     </div>
                     
-                    {/* Patient Selection Cards */}
-                    <div className="space-y-3">
-                      {/* Self option */}
-                      <button
-                        onClick={() => {
-                          setSelectedPatientType("self");
-                          setPatientName(profile?.name || "");
-                          setPatientPhone(profile?.phone || "");
-                        }}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                          selectedPatientType === "self"
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <User className="w-6 h-6 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-semibold">{profile?.name || "Myself"}</p>
-                            <p className="text-sm text-muted-foreground">Self (Primary Account)</p>
-                          </div>
-                          {selectedPatientType === "self" && (
-                            <CheckCircle2 className="w-5 h-5 text-primary" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Managed Patients */}
-                      {managedPatients && managedPatients.map((patient) => (
-                        <button
-                          key={patient.id}
-                          onClick={() => {
-                            setSelectedPatientType(patient.id);
-                            setPatientName(patient.patient_name);
+                    {/* Patient Selection Dropdown */}
+                    <div className="space-y-2">
+                      <Label>Select Patient *</Label>
+                      <Select
+                        value={selectedPatientType}
+                        onValueChange={(value) => {
+                          setSelectedPatientType(value);
+                          if (value === "self") {
+                            setPatientName(profile?.name || "");
                             setPatientPhone(profile?.phone || "");
-                          }}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                            selectedPatientType === patient.id
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                              <Users className="w-6 h-6 text-blue-500" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-semibold">{patient.patient_name}</p>
-                              <p className="text-sm text-muted-foreground">{patient.relationship}</p>
-                            </div>
-                            {selectedPatientType === patient.id && (
-                              <CheckCircle2 className="w-5 h-5 text-primary" />
-                            )}
-                          </div>
-                        </button>
-                      ))}
+                          } else {
+                            const patient = managedPatients?.find((p) => p.id === value);
+                            if (patient) {
+                              setPatientName(patient.patient_name);
+                              setPatientPhone(profile?.phone || "");
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Choose a patient" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="self">
+                            {profile?.name || "Myself"} — Self (Primary Account)
+                          </SelectItem>
+                          {managedPatients && managedPatients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              {patient.patient_name} — {patient.relationship}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Patient Details Form */}
