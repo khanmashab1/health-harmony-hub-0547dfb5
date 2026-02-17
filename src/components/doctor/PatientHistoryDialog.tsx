@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { MedicinesList, parseMedicines } from "@/components/shared/MedicinesList";
+import { TestReportsViewer } from "@/components/doctor/TestReportsViewer";
 
 interface PatientHistoryDialogProps {
   patientName: string;
@@ -69,6 +70,13 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
           <DialogDescription>
             All completed prescriptions for {patientName}
           </DialogDescription>
+          <div className="mt-2">
+            <TestReportsViewer
+              patientName={patientName}
+              patientUserId={patientUserId}
+              mode="all"
+            />
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
@@ -130,11 +138,17 @@ export function PatientHistoryDialog({ patientName, patientUserId, doctorUserId,
 
                         {/* Lab Tests */}
                         {record.lab_tests && (
-                          <div className="flex items-start gap-2 text-sm">
-                            <FlaskConical className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                            <span className="text-muted-foreground text-xs truncate">
-                              Lab: {record.lab_tests.substring(0, 80)}{record.lab_tests.length > 80 ? "..." : ""}
+                          <div className="flex items-center gap-2 text-sm">
+                            <FlaskConical className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="text-muted-foreground text-xs truncate flex-1">
+                              Lab: {record.lab_tests.substring(0, 60)}{record.lab_tests.length > 60 ? "..." : ""}
                             </span>
+                            <TestReportsViewer
+                              patientName={patientName}
+                              patientUserId={patientUserId}
+                              currentAppointmentId={record.id}
+                              mode="single"
+                            />
                           </div>
                         )}
 

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format, isToday, isFuture, isPast, parseISO } from "date-fns";
 import { 
   Calendar, ChevronRight, Star, Radio, Clock, 
-  CheckCircle2, XCircle, CalendarClock, Search, Users, X, AlertTriangle, RotateCcw
+  CheckCircle2, XCircle, CalendarClock, Search, Users, X, AlertTriangle, RotateCcw, FlaskConical
 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiveQueuePosition } from "./LiveQueuePosition";
+import { TestReportUpload } from "./TestReportUpload";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
@@ -39,6 +40,7 @@ interface Appointment {
   reason: string | null;
   patient_full_name: string | null;
   patient_user_id: string | null;
+  lab_tests?: string | null;
 }
 
 interface ManagedPatient {
@@ -415,7 +417,15 @@ export function AppointmentsSection({
                       >
                         <RotateCcw className="w-4 h-4" />
                         <span className="hidden sm:inline ml-1">{t("appointments.rebook")}</span>
-                      </Button>
+                       </Button>
+                      {/* Upload test reports - show if lab tests were suggested */}
+                      {apt.lab_tests && apt.patient_user_id && (
+                        <TestReportUpload
+                          appointmentId={apt.id}
+                          userId={apt.patient_user_id}
+                          labTests={apt.lab_tests}
+                        />
+                      )}
                     </>
                   )}
                   <Link to={apt.status === "Completed" ? `/prescription/${apt.id}` : `/token/${apt.id}`}>
