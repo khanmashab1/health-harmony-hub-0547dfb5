@@ -1363,6 +1363,47 @@ export type Database = {
           },
         ]
       }
+      test_reports: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_type: string | null
+          id: string
+          notes: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_reports_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
