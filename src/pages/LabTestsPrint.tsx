@@ -94,7 +94,13 @@ export default function LabTestsPrint() {
     <div className="min-h-screen bg-background print:bg-white">
       {/* Action Buttons - Hidden on print */}
       <div className="fixed top-4 left-4 right-4 flex justify-between z-50 no-print">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-card shadow-md border-primary text-primary hover:bg-primary/5">
+        <Button variant="outline" size="sm" onClick={() => {
+          if (window.history.length > 1) {
+            navigate(-1);
+          } else {
+            navigate("/doctor?tab=test-reports");
+          }
+        }} className="bg-card shadow-md border-primary text-primary hover:bg-primary/5">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
