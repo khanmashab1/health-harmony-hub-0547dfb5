@@ -23,9 +23,10 @@ import { useNavigate } from "react-router-dom";
 
 interface PendingTestReportsPanelProps {
   doctorUserId: string;
+  showAll?: boolean;
 }
 
-export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPanelProps) {
+export function PendingTestReportsPanel({ doctorUserId, showAll = false }: PendingTestReportsPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -38,20 +39,24 @@ export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPane
   const [previewName, setPreviewName] = useState("");
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null);
 
-  const queryKey = ["pending-test-reports", doctorUserId];
+  const queryKey = ["pending-test-reports", doctorUserId, showAll];
 
   const { data: reports, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_reports")
         .select(
           "*, appointments!inner(appointment_date, patient_full_name, patient_phone, token_number, lab_tests, doctor_user_id, id, status, diagnosis, medicines)"
         )
         .eq("appointments.doctor_user_id", doctorUserId)
-        .is("reviewed_at", null)
         .order("created_at", { ascending: false });
 
+      if (!showAll) {
+        query = query.is("reviewed_at", null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -116,7 +121,7 @@ export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPane
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FlaskConical className="w-5 h-5 text-primary" />
-            Pending Test Reports
+            {showAll ? "Test Reports" : "Pending Test Reports"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -128,7 +133,29 @@ export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPane
     );
   }
 
-  if (!reports || reports.length === 0) return null;
+  if (!reports || reports.length === 0) {
+    if (showAll) {
+      return (
+        <Card variant="glass" className="border-white/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-primary" />
+              Test Reports
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <FlaskConical className="w-7 h-7 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No test reports uploaded yet</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    return null;
+  }
 
   // If previewing a file
   if (previewUrl) {
@@ -246,13 +273,13 @@ export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPane
       <CardHeader className="border-b border-border/30 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10">
         <CardTitle className="flex items-center gap-2">
           <FlaskConical className="w-5 h-5 text-primary" />
-          Pending Test Reports
-          <Badge variant="destructive" className="ml-1 text-xs">
+          {showAll ? "All Test Reports" : "Pending Test Reports"}
+          <Badge variant={showAll ? "secondary" : "destructive"} className="ml-1 text-xs">
             {reports.length}
           </Badge>
         </CardTitle>
         <CardDescription>
-          Test reports awaiting your review and remarks
+          {showAll ? "All test reports from your patients" : "Test reports awaiting your review and remarks"}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
@@ -292,6 +319,13 @@ export function PendingTestReportsPanel({ doctorUserId }: PendingTestReportsPane
                         {report.notes && (
                           <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                             Patient note: {report.notes}
+                          </p>
+                        )}
+                        {report.reviewed_at && (
+                          <p className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 mt-0.5">
+                            <CheckCircle className="w-3 h-3" />
+                            Reviewed {format(new Date(report.reviewed_at), "MMM d, h:mm a")}
+                            {report.review_notes && ` — ${report.review_notes}`}
                           </p>
                         )}
                       </div>
