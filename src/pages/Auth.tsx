@@ -394,6 +394,8 @@ export default function Auth() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-700 dark:text-green-400">
                     {t("auth.accountCreated")} {t("auth.verifyEmail")}
+                    <br />
+                    <span className="text-sm font-medium">If you don't see the email, please check your Spam/Junk folder.</span>
                   </AlertDescription>
                 </Alert>
               )}
