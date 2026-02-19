@@ -101,8 +101,9 @@ export default function OurDoctors() {
 
   const getImageUrl = (imagePath: string | null) => {
     if (!imagePath) return null;
-    if (imagePath.startsWith("http")) return imagePath;
-    return supabase.storage.from("avatars").getPublicUrl(imagePath).data.publicUrl;
+    const resolved = imagePath.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz');
+    if (resolved.startsWith("http")) return resolved;
+    return supabase.storage.from("avatars").getPublicUrl(resolved).data.publicUrl;
   };
 
   return (

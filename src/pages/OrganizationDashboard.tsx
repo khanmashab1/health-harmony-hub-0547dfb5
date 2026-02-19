@@ -337,7 +337,7 @@ export default function OrganizationDashboard() {
                           >
                             <div className="flex items-center gap-4">
                               <Avatar className="h-12 w-12 border-2 border-border">
-                                <AvatarImage src={doctor.image_path || doctor.profile?.avatar_path} />
+                                <AvatarImage src={(doctor.image_path || doctor.profile?.avatar_path)?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz')} />
                                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                                   {doctor.profile?.name?.charAt(0) || "D"}
                                 </AvatarFallback>

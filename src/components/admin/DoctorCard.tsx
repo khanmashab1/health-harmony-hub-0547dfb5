@@ -67,10 +67,11 @@ export function DoctorCard({ doctor, onEdit, onDelete, isDeleting }: DoctorCardP
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
             {(() => {
-              const imageUrl = doctor.image_path
-                ? doctor.image_path.startsWith("http")
-                  ? doctor.image_path
-                  : supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
+              const resolved = doctor.image_path?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz') || null;
+              const imageUrl = resolved
+                ? resolved.startsWith("http")
+                  ? resolved
+                  : supabase.storage.from("avatars").getPublicUrl(resolved).data.publicUrl
                 : null;
               return (
                 <Avatar className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0">

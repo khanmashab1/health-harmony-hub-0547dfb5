@@ -59,8 +59,9 @@ interface Doctor {
 
 function getDoctorImageUrl(imagePath: string | null | undefined): string | undefined {
   if (!imagePath) return undefined;
-  if (imagePath.startsWith("http")) return imagePath;
-  return supabase.storage.from("avatars").getPublicUrl(imagePath).data.publicUrl;
+  const resolved = imagePath.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz');
+  if (resolved.startsWith("http")) return resolved;
+  return supabase.storage.from("avatars").getPublicUrl(resolved).data.publicUrl;
 }
 
 const steps = [
