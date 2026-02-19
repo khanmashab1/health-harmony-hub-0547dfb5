@@ -1,3 +1,6 @@
+// Implements a geo-blocking filter to restrict website access for users in Israel (IL).
+// Validates traffic via IP filtering and external Geo-IP APIs to enforce regional compliance.
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
