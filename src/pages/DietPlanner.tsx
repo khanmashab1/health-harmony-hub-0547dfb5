@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { SEOHead } from "@/components/seo/SEOHead";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -356,7 +356,24 @@ export default function DietPlanner() {
   if (!authLoading && !user) {
     return (
       <Layout>
-        <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan." canonicalUrl="/diet-planner" />
+        <SEOHead
+          title="AI Diet Planner — Free Personalized Meal Plans"
+          description="Generate a free AI-powered personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes 7-day meal plans, calorie tracking, PDF export, and WhatsApp sharing."
+          keywords="AI diet planner, free diet plan generator, personalized meal plan, diet planner online free, AI meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner AI, calorie counter, keto diet plan, PCOS diet plan"
+          canonicalUrl="/diet-planner"
+          jsonLd={[
+            seoSchemas.medicalService({
+              name: "AI Diet Planner Tool",
+              description: "Free AI-powered personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
+              url: "/diet-planner",
+            }),
+            seoSchemas.breadcrumb([
+              { name: "Home", url: "/" },
+              { name: "AI Health Tools", url: "/ai-health" },
+              { name: "AI Diet Planner", url: "/diet-planner" },
+            ]),
+          ]}
+        />
         <div className="container mx-auto px-4 py-8 md:py-20 max-w-lg">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <Card variant="elevated" className="shadow-xl text-center">
@@ -401,7 +418,24 @@ export default function DietPlanner() {
 
   return (
     <Layout>
-      <SEOHead title="AI Health & Diet Planner | MediCare+" description="Get a personalized AI-generated diet plan, exercise routine, and lifestyle recommendations." canonicalUrl="/diet-planner" />
+      <SEOHead
+        title="AI Diet Planner — Free Personalized Meal Plans"
+        description="Generate a free AI-powered personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes 7-day meal plans, calorie tracking, PDF export, and WhatsApp sharing."
+        keywords="AI diet planner, free diet plan generator, personalized meal plan, diet planner online free, AI meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner AI, calorie counter, keto diet plan, PCOS diet plan"
+        canonicalUrl="/diet-planner"
+        jsonLd={[
+          seoSchemas.medicalService({
+            name: "AI Diet Planner Tool",
+            description: "Free AI-powered personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
+            url: "/diet-planner",
+          }),
+          seoSchemas.breadcrumb([
+            { name: "Home", url: "/" },
+            { name: "AI Health Tools", url: "/ai-health" },
+            { name: "AI Diet Planner", url: "/diet-planner" },
+          ]),
+        ]}
+      />
       <div className="container mx-auto px-4 py-4 md:py-10 max-w-5xl">
         <AnimatePresence mode="wait">
           {/* ========== LIST VIEW ========== */}
