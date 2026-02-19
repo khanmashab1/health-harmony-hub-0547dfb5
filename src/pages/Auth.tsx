@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Stethoscope, Mail, Lock, User, ArrowLeft, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff, Circle, CheckCircle } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -447,31 +447,57 @@ export default function Auth() {
                     <FormField
                       control={signupForm.control}
                       name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("auth.password")}</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                              <Input 
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="••••••••" 
-                                className="pl-10 pr-10 h-12" 
-                                autoComplete="new-password"
-                                value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const val = field.value || "";
+                        const checks = [
+                          { label: "At least 8 characters", met: val.length >= 8 },
+                          { label: "One uppercase letter (A-Z)", met: /[A-Z]/.test(val) },
+                          { label: "One lowercase letter (a-z)", met: /[a-z]/.test(val) },
+                          { label: "One number (0-9)", met: /[0-9]/.test(val) },
+                          { label: "One special character (!@#$%^&*)", met: /[^A-Za-z0-9]/.test(val) },
+                        ];
+                        return (
+                          <FormItem>
+                            <FormLabel>{t("auth.password")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                <Input 
+                                  type={showPassword ? "text" : "password"} 
+                                  placeholder="••••••••" 
+                                  className="pl-10 pr-10 h-12" 
+                                  autoComplete="new-password"
+                                  value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </FormControl>
+                            {val.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {checks.map((check) => (
+                                  <div key={check.label} className="flex items-center gap-2 text-xs">
+                                    {check.met ? (
+                                      <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                                    ) : (
+                                      <Circle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                    )}
+                                    <span className={check.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                                      {check.label}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     <FormField
                       control={signupForm.control}
