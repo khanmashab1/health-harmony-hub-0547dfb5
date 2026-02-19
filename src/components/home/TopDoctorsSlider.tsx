@@ -162,7 +162,7 @@ export function TopDoctorsSlider() {
                 >
                   <Avatar className="w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 lg:w-52 lg:h-52 border-4 md:border-6 border-white shadow-2xl">
                     <AvatarImage 
-                      src={currentDoctor.image_path || undefined} 
+                      src={currentDoctor.image_path?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz') || undefined} 
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-2xl md:text-4xl lg:text-5xl font-bold text-primary">

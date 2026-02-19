@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Resolves a doctor image path, fixing any mismatched Supabase project URLs.
+ */
+export function resolveDoctorImage(imagePath: string | null | undefined): string | undefined {
+  if (!imagePath) return undefined;
+  // Fix URLs pointing to wrong Supabase instance
+  return imagePath.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz');
+}
+
 interface MedicineEntry {
   name?: string;
   dosage?: string;

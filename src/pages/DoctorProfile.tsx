@@ -113,9 +113,12 @@ export default function DoctorProfile() {
     : doctor.rating || 4.0;
 
   const imageUrl = doctor.image_path
-    ? doctor.image_path.startsWith("http")
-      ? doctor.image_path
-      : supabase.storage.from("avatars").getPublicUrl(doctor.image_path).data.publicUrl
+    ? (() => {
+        const resolved = doctor.image_path.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz');
+        return resolved.startsWith("http")
+          ? resolved
+          : supabase.storage.from("avatars").getPublicUrl(resolved).data.publicUrl;
+      })()
     : null;
 
   return (

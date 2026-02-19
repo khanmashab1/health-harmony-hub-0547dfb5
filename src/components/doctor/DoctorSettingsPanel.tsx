@@ -178,7 +178,7 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
-                <AvatarImage src={doctorInfo?.image_path || undefined} />
+                <AvatarImage src={doctorInfo?.image_path?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz') || undefined} />
                 <AvatarFallback className="bg-gradient-to-br from-brand-100 to-brand-200 text-2xl font-bold text-brand-600">
                   {profileName?.charAt(0)?.toUpperCase() || "D"}
                 </AvatarFallback>

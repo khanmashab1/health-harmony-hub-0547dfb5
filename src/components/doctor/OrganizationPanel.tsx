@@ -417,7 +417,7 @@ export function OrganizationPanel({ userId, userEmail, userName }: OrganizationP
                   >
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12">
-                        <AvatarImage src={doctor.image_path || undefined} />
+                        <AvatarImage src={doctor.image_path?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz') || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary">
                           {doctor.profile?.name?.[0] || "D"}
                         </AvatarFallback>

@@ -298,7 +298,7 @@ export default function DoctorDashboard() {
           >
             <div className="flex items-center gap-4">
               <Avatar className="w-14 h-14 rounded-2xl shadow-lg shadow-brand-500/25 border-2 border-brand-500/30">
-                <AvatarImage src={doctorInfo?.image_path || undefined} className="object-cover" />
+                <AvatarImage src={doctorInfo?.image_path?.replace('zfibmvdqnagcajgehqni', 'zikbiesawrowlkhvrbmz') || undefined} className="object-cover" />
                 <AvatarFallback className="rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600">
                   <Stethoscope className="w-7 h-7 text-white" />
                 </AvatarFallback>
