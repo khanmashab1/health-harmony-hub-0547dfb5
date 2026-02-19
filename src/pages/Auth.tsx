@@ -91,14 +91,24 @@ export default function Auth() {
     if (type === "recovery" && accessToken) {
       setMode("new-password");
     } else if (type === "signup" && accessToken) {
-      // Email verification link clicked — sign out the auto-session
-      // so user lands on login form with a success message
-      supabase.auth.signOut().then(() => {
-        setEmailVerified(true);
-        setMode("login");
-        // Clean hash from URL
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      });
+      // Email verification link clicked — set the session with the token first,
+      // then sign out so user lands on login form with a success message
+      const refreshToken = hashParams.get("refresh_token");
+      if (refreshToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(() => {
+          return supabase.auth.signOut();
+        }).then(() => {
+          setEmailVerified(true);
+          setMode("login");
+          window.history.replaceState(null, "", window.location.pathname + "?mode=login");
+        });
+      } else {
+        supabase.auth.signOut().then(() => {
+          setEmailVerified(true);
+          setMode("login");
+          window.history.replaceState(null, "", window.location.pathname + "?mode=login");
+        });
+      }
     }
   }, []);
 
@@ -415,7 +425,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                              <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" readOnly={false} {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -435,6 +445,8 @@ export default function Auth() {
                                 type={showPassword ? "text" : "password"} 
                                 placeholder="••••••••" 
                                 className="pl-10 pr-10 h-12" 
+                                autoComplete="new-password"
+                                readOnly={false}
                                 {...field} 
                               />
                               <button
@@ -613,7 +625,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                              <Input placeholder="you@example.com" className="pl-10 h-12" {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" readOnly={false} {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -642,6 +654,8 @@ export default function Auth() {
                                 type={showPassword ? "text" : "password"} 
                                 placeholder="••••••••" 
                                 className="pl-10 pr-10 h-12" 
+                                autoComplete="current-password"
+                                readOnly={false}
                                 {...field} 
                               />
                               <button
