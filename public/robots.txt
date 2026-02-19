@@ -16,6 +16,9 @@ Allow: /online-doctor-appointment-system
 Allow: /clinic-management-software
 Allow: /hospital-management-software
 Allow: /ai-symptom-checker
+Allow: /ai-diet-planner
+Allow: /diet-planner
+Allow: /ai-health
 Allow: /our-doctors
 Allow: /booking
 Allow: /symptoms

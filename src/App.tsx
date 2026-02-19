@@ -36,6 +36,7 @@ import AISymptomChecker from "./pages/seo/AISymptomChecker";
 import RiskEvaluator from "./pages/RiskEvaluator";
 import AIHealth from "./pages/AIHealth";
 import DietPlanner from "./pages/DietPlanner";
+import AIDietPlanner from "./pages/seo/AIDietPlanner";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
@@ -90,6 +91,7 @@ const App = () => (
                   <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
                   <Route path="/ai-health" element={<AIHealth />} />
                   <Route path="/diet-planner" element={<DietPlanner />} />
+                  <Route path="/ai-diet-planner" element={<AIDietPlanner />} />
                   <Route path="/risk-evaluator" element={<RiskEvaluator />} />
                   <Route path="/token/:appointmentId" element={<TokenPrint />} />
                   <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
