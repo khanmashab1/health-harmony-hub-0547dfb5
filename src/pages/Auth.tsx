@@ -64,6 +64,7 @@ export default function Auth() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loginError, setLoginError] = useState(false);
   const { signIn, signUp, user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -151,40 +152,40 @@ export default function Auth() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
+  const clearSessionAndRetry = async () => {
+    localStorage.removeItem("sb-zikbiesawrowlkhvrbmz-auth-token");
+    sessionStorage.clear();
+    await supabase.auth.signOut();
+    setLoginError(false);
+    loginForm.reset();
+    toast({ title: "Session cleared", description: "You can now try logging in again." });
+  };
+
   const onLogin = async (data: LoginFormData) => {
     setIsLoading(true);
+    setLoginError(false);
     const { error } = await signIn(data.email, data.password);
     setIsLoading(false);
 
     if (error) {
+      setLoginError(true);
       let message = error.message;
-      // Check if email not verified
       if (message.includes("Email not confirmed")) {
-         // Auto-resend verification email
-          try {
-            const productionUrl = "https://medicareplus.app";
-            await supabase.auth.resend({
-             type: 'signup',
-             email: data.email,
-             options: {
-               emailRedirectTo: `${productionUrl}/auth`,
-             },
-           });
-           message = "Your email is not verified. We've sent a new verification link to your inbox.";
-         } catch (resendError) {
-           message = "Please verify your email before logging in. Check your inbox for the verification link.";
-         }
+        try {
+          await supabase.auth.resend({
+            type: 'signup',
+            email: data.email,
+            options: { emailRedirectTo: "https://medicareplus.app/auth" },
+          });
+          message = "Your email is not verified. We've sent a new verification link to your inbox.";
+        } catch (resendError) {
+          message = "Please verify your email before logging in. Check your inbox for the verification link.";
+        }
       }
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: message,
-      });
+      toast({ variant: "destructive", title: "Login failed", description: message });
     } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
+      setLoginError(false);
+      toast({ title: "Welcome back!", description: "You have successfully logged in." });
     }
   };
 
@@ -425,7 +426,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" readOnly={false} {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -446,8 +447,7 @@ export default function Auth() {
                                 placeholder="••••••••" 
                                 className="pl-10 pr-10 h-12" 
                                 autoComplete="new-password"
-                                readOnly={false}
-                                {...field} 
+                                value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name}
                               />
                               <button
                                 type="button"
@@ -625,7 +625,7 @@ export default function Auth() {
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" readOnly={false} {...field} />
+                              <Input placeholder="you@example.com" className="pl-10 h-12" autoComplete="email" value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -655,8 +655,7 @@ export default function Auth() {
                                 placeholder="••••••••" 
                                 className="pl-10 pr-10 h-12" 
                                 autoComplete="current-password"
-                                readOnly={false}
-                                {...field} 
+                                value={field.value} onChange={field.onChange} onBlur={field.onBlur} name={field.name}
                               />
                               <button
                                 type="button"
@@ -681,6 +680,16 @@ export default function Auth() {
                         t("auth.signIn")
                       )}
                     </Button>
+                    {loginError && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full h-10 text-sm mt-2" 
+                        onClick={clearSessionAndRetry}
+                      >
+                        Clear Session & Try Again
+                      </Button>
+                    )}
                   </form>
                 </Form>
               )}
