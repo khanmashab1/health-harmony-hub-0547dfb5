@@ -69,6 +69,18 @@ export default function Auth() {
   const { t } = useLanguage();
   const { logoUrl, siteName } = useSiteSettings();
 
+  // Helper to switch modes and reset all form state
+  const switchMode = (newMode: AuthMode) => {
+    setIsLoading(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    loginForm.reset();
+    signupForm.reset();
+    resetForm.reset();
+    newPasswordForm.reset();
+    setMode(newMode);
+  };
+
   // Check for password recovery token in URL hash
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -174,7 +186,7 @@ export default function Auth() {
     } else {
       // Show success message and switch to login mode
       setSignupSuccess(true);
-      setMode("login");
+      switchMode("login");
     }
   };
 
@@ -194,7 +206,7 @@ export default function Auth() {
         title: "Check your email",
         description: "If this email exists, a password reset link has been sent.",
       });
-      setMode("login");
+      switchMode("login");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -226,7 +238,7 @@ export default function Auth() {
       // Clear the hash from URL
       window.history.replaceState(null, "", window.location.pathname);
       
-      setMode("login");
+      switchMode("login");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -596,7 +608,7 @@ export default function Auth() {
                             <FormLabel>{t("auth.password")}</FormLabel>
                             <button
                               type="button"
-                              onClick={() => setMode("reset")}
+                              onClick={() => switchMode("reset")}
                               className="text-xs text-primary hover:underline font-medium"
                             >
                               {t("auth.forgotPassword")}
@@ -643,7 +655,7 @@ export default function Auth() {
                   <p className="text-muted-foreground">
                     {t("auth.haveAccount")}{" "}
                     <button
-                      onClick={() => setMode("login")}
+                      onClick={() => switchMode("login")}
                       className="text-primary hover:underline font-medium"
                     >
                       {t("auth.signIn")}
@@ -653,7 +665,7 @@ export default function Auth() {
                   <p className="text-muted-foreground">
                     {t("auth.haveAccount")}{" "}
                     <button
-                      onClick={() => setMode("login")}
+                      onClick={() => switchMode("login")}
                       className="text-primary hover:underline font-medium"
                     >
                       {t("auth.signIn")}
@@ -663,7 +675,7 @@ export default function Auth() {
                   <p className="text-muted-foreground">
                     {t("auth.noAccount")}{" "}
                     <button
-                      onClick={() => setMode("signup")}
+                      onClick={() => switchMode("signup")}
                       className="text-primary hover:underline font-medium"
                     >
                       {t("auth.signUp")}

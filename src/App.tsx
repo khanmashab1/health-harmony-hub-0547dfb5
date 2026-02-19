@@ -61,42 +61,42 @@ const App = () => (
       <LanguageProvider>
         <TooltipProvider>
           <BrowserRouter>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <PasswordChangeWrapper>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
-                <Route path="/profile" element={<PatientDashboard />} />
-                <Route path="/doctor" element={<DoctorDashboard />} />
-                <Route path="/pa" element={<PADashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
-                <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
-                <Route path="/admin/reviews" element={<AdminReviews />} />
-                <Route path="/symptoms" element={<SymptomsChecker />} />
-                <Route path="/reviews" element={<Reviews />} />
-                <Route path="/become-doctor" element={<BecomeDoctor />} />
-                <Route path="/our-doctors" element={<OurDoctors />} />
-                <Route path="/organization" element={<OrganizationDashboard />} />
-                <Route path="/online-doctor-appointment-system" element={<OnlineDoctorAppointmentSystem />} />
-                <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
-                <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
-                <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
-                <Route path="/ai-health" element={<AIHealth />} />
-                <Route path="/diet-planner" element={<DietPlanner />} />
-                <Route path="/risk-evaluator" element={<RiskEvaluator />} />
-                <Route path="/token/:appointmentId" element={<TokenPrint />} />
-                <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
-                <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
-                <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
-                <Route path="/print/history" element={<MedicalHistoryPrint />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </PasswordChangeWrapper>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <PasswordChangeWrapper>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/booking" element={<Booking />} />
+                  <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
+                  <Route path="/profile" element={<PatientDashboard />} />
+                  <Route path="/doctor" element={<DoctorDashboard />} />
+                  <Route path="/pa" element={<PADashboard />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
+                  <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+                  <Route path="/admin/reviews" element={<AdminReviews />} />
+                  <Route path="/symptoms" element={<SymptomsChecker />} />
+                  <Route path="/reviews" element={<Reviews />} />
+                  <Route path="/become-doctor" element={<BecomeDoctor />} />
+                  <Route path="/our-doctors" element={<OurDoctors />} />
+                  <Route path="/organization" element={<OrganizationDashboard />} />
+                  <Route path="/online-doctor-appointment-system" element={<OnlineDoctorAppointmentSystem />} />
+                  <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
+                  <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
+                  <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
+                  <Route path="/ai-health" element={<AIHealth />} />
+                  <Route path="/diet-planner" element={<DietPlanner />} />
+                  <Route path="/risk-evaluator" element={<RiskEvaluator />} />
+                  <Route path="/token/:appointmentId" element={<TokenPrint />} />
+                  <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
+                  <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
+                  <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
+                  <Route path="/print/history" element={<MedicalHistoryPrint />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </PasswordChangeWrapper>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
