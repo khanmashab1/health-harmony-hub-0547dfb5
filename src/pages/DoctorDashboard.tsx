@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, subWeeks } from "date-fns";
 import {
@@ -59,7 +59,7 @@ import { DoctorDelayToggle } from "@/components/doctor/DoctorDelayToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { PendingTestReportsPanel } from "@/components/doctor/PendingTestReportsPanel";
 import { PendingTestReportsBanner } from "@/components/doctor/PendingTestReportsBanner";
-
+import { useAutoSave } from "@/hooks/useAutoSave";
 export default function DoctorDashboard() {
   const { user, profile, loading } = useRequireAuth(["doctor"]);
   const { signOut } = useAuth();
@@ -913,6 +913,28 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
 
   const isCompleted = appointment.status === "Completed";
 
+  // Auto-save clinical notes to prevent data loss on session timeout
+  const { clearSaved, getSaved } = useAutoSave(
+    `appointment-${appointment.id}`,
+    () => ({ diagnosis, medicines, labTests, comments, followUpDate, vitals }),
+    undefined, // We restore manually below
+    15000 // Save every 15 seconds
+  );
+
+  // Restore auto-saved data on mount (only if not completed)
+  useEffect(() => {
+    if (isCompleted) return;
+    const saved = getSaved();
+    if (saved) {
+      if (saved.diagnosis) setDiagnosis(saved.diagnosis);
+      if (saved.medicines) setMedicines(saved.medicines);
+      if (saved.labTests) setLabTests(saved.labTests);
+      if (saved.comments) setComments(saved.comments);
+      if (saved.followUpDate) setFollowUpDate(saved.followUpDate);
+      if (saved.vitals) setVitals(saved.vitals);
+    }
+  }, [appointment.id]);
+
   const handleSave = () => {
     onUpdate({
       vitals_bp: vitals.bp,
@@ -925,6 +947,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       doctor_comments: comments,
       follow_up_date: followUpDate || null,
     });
+    clearSaved();
   };
 
   const handleComplete = () => {
@@ -940,6 +963,7 @@ function AppointmentDetail({ appointment, onUpdate, isLoading }: { appointment: 
       follow_up_date: followUpDate || null,
       status: "Completed",
     });
+    clearSaved();
   };
 
   return (
