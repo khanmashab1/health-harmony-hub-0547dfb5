@@ -166,10 +166,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = "patient") => {
     // Use the production URL for email verification redirect
-    // This ensures users are redirected to the Medicare production website
     const redirectUrl = "https://medicareplus.app/auth";
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -180,6 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
+
+    // When email confirmation is enabled, Supabase returns a fake user with
+    // empty identities instead of an error if the email already exists.
+    if (!error && data?.user && data.user.identities?.length === 0) {
+      return { error: new Error("This email is already registered. Please sign in instead.") };
+    }
+
     return { error };
   };
 
