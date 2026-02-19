@@ -222,8 +222,8 @@ export function PatientAICreditsSection() {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" /> No daily limits</li>
                 </ul>
                 <Button
-                  className="w-full"
-                  variant={plan.is_popular ? "default" : "outline"}
+                  className="w-full rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                  variant="outline"
                   onClick={() => handlePurchase(plan)}
                   disabled={loadingPlanId !== null}
                 >
