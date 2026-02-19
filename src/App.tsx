@@ -37,7 +37,9 @@ import RiskEvaluator from "./pages/RiskEvaluator";
 import AIHealth from "./pages/AIHealth";
 import DietPlanner from "./pages/DietPlanner";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1 } },
+});
 
 function PasswordChangeWrapper({ children }: { children: React.ReactNode }) {
   const { requiresPasswordChange, setRequiresPasswordChange, user } = useAuth();
