@@ -1,4 +1,5 @@
 import { useState } from "react";
+import newLogo from "@/assets/medicare-logo-new.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -72,13 +73,11 @@ export function Header() {
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-1.5 group py-2">
-            {logoUrl && (
-              <img 
-                src={logoUrl} 
-                alt={`${siteName} Logo`} 
-                className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform dark:mix-blend-screen rounded-md"
-              />
-            )}
+            <img 
+              src={newLogo} 
+              alt={`${siteName} Logo`} 
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform rounded-md"
+            />
             <div className="flex flex-col leading-none">
               <span className="text-lg sm:text-xl tracking-tight whitespace-nowrap italic" style={{ fontFamily: "'Alegreya', serif" }}>
                 <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
