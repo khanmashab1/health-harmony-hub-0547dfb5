@@ -83,7 +83,7 @@ export function Header() {
               <span className="text-lg sm:text-xl tracking-tight whitespace-nowrap italic" style={{ fontFamily: "'Alegreya', serif" }}>
                 <span className="text-blue-600 dark:text-blue-400">{siteName?.replace(/\+/g, '').trim()}</span>
                 {siteName?.includes('+') && (
-                  <span className="text-teal-500 dark:text-teal-400 font-extrabold ml-0.5">
+                  <span className="text-teal-500 dark:text-white font-extrabold ml-0.5">
                     {siteName.match(/\++/)?.[0] || ''}
                   </span>
                 )}
