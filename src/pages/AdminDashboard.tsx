@@ -268,13 +268,14 @@ export default function AdminDashboard() {
     mutationFn: async (userId: string) => {
      // Hard delete via edge function (deletes all related data + auth user)
      const { data, error } = await supabase.functions.invoke("delete-user", {
-       body: { userId },
-     });
-     if (error) throw error;
-     if (data?.error) throw new Error(data.error);
+        body: { userId },
+      });
+      if (error) throw error;
+      // Treat "User not found" as success — DB data was cleaned up even if auth record was already missing
+      if (data?.error && !data.error.includes("User not found")) throw new Error(data.error);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
+       queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
      queryClient.invalidateQueries({ queryKey: ["admin-pas"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
@@ -288,14 +289,15 @@ export default function AdminDashboard() {
  // Hard delete user mutation (uses edge function)
  const deleteUser = useMutation({
    mutationFn: async (userId: string) => {
-     const { data, error } = await supabase.functions.invoke("delete-user", {
-       body: { userId },
-     });
-     if (error) throw error;
-     if (data?.error) throw new Error(data.error);
-   },
-   onSuccess: () => {
-     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { userId },
+      });
+      if (error) throw error;
+      // Treat "User not found" as success — DB data was cleaned up even if auth record was already missing
+      if (data?.error && !data.error.includes("User not found")) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
      queryClient.invalidateQueries({ queryKey: ["admin-doctors"] });
      queryClient.invalidateQueries({ queryKey: ["admin-pas"] });
      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
