@@ -181,6 +181,22 @@ export function DoctorApplicationForm({ onSuccess }: DoctorApplicationFormProps)
 
       if (error) throw error;
 
+      // Notify admin about new application
+      try {
+        const adminEmailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;"><div style="background:linear-gradient(135deg,#0d9488,#0284c7);padding:30px;text-align:center;border-radius:10px 10px 0 0;"><h1 style="color:#fff;margin:0;">📋 New Doctor Application</h1></div><div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 10px 10px;"><h2 style="color:#0d9488;">A new doctor has applied to join MediCare+</h2><div style="background:#fff;padding:20px;border-radius:8px;border-left:4px solid #0d9488;margin:20px 0;"><p style="margin:8px 0;"><strong>Name:</strong> ${values.fullName}</p><p style="margin:8px 0;"><strong>Email:</strong> ${values.email}</p><p style="margin:8px 0;"><strong>Specialty:</strong> ${values.specialty}</p><p style="margin:8px 0;"><strong>Degree:</strong> ${values.degree}</p><p style="margin:8px 0;"><strong>Experience:</strong> ${values.experienceYears} years</p><p style="margin:8px 0;"><strong>City:</strong> ${values.city || "N/A"}</p></div><div style="text-align:center;margin:30px 0;"><a href="https://medicare-nine-wine.vercel.app/admin" style="display:inline-block;background:linear-gradient(135deg,#0d9488,#0284c7);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;">Review Application</a></div><p style="color:#6b7280;font-size:14px;text-align:center;">Please log in to the admin dashboard to review and approve/reject this application.</p></div></body></html>`;
+
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: "khanmashab1@gmail.com",
+            subject: `📋 New Doctor Application: ${values.fullName} (${values.specialty})`,
+            html: adminEmailHtml,
+            recipientName: "Admin",
+          },
+        });
+      } catch (emailErr) {
+        console.error("Failed to send admin notification email:", emailErr);
+      }
+
       setSubmitted(true);
       toast.success("Application submitted successfully!");
     } catch (error: any) {
