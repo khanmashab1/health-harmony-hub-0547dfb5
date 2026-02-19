@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PasswordChangeDialog } from "@/components/auth/PasswordChangeDialog";
 import { SessionTimeoutWarning } from "@/components/session/SessionTimeoutWarning";
+import { GeoBlock } from "@/components/GeoBlock";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Booking from "./pages/Booking";
@@ -64,6 +65,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <LanguageProvider>
         <TooltipProvider>
+          <GeoBlock>
           <BrowserRouter>
             <AuthProvider>
               <Toaster />
@@ -105,6 +107,7 @@ const App = () => (
               </PasswordChangeWrapper>
             </AuthProvider>
           </BrowserRouter>
+          </GeoBlock>
         </TooltipProvider>
       </LanguageProvider>
     </ThemeProvider>
