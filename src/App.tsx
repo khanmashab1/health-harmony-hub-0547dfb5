@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PasswordChangeDialog } from "@/components/auth/PasswordChangeDialog";
+import { SessionTimeoutWarning } from "@/components/session/SessionTimeoutWarning";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Booking from "./pages/Booking";
@@ -67,6 +68,7 @@ const App = () => (
             <AuthProvider>
               <Toaster />
               <Sonner />
+              <SessionTimeoutWarning />
               <PasswordChangeWrapper>
                 <Routes>
                   <Route path="/" element={<Index />} />
