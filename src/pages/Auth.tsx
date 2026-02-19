@@ -170,7 +170,9 @@ export default function Auth() {
     if (error) {
       setLoginError(true);
       let message = error.message;
-      if (message.includes("Email not confirmed")) {
+      if (message.includes("Invalid login credentials") || message.includes("invalid_grant") || message.includes("Invalid API")) {
+        message = "Email or password is incorrect. Please check your credentials and try again.";
+      } else if (message.includes("Email not confirmed")) {
         try {
           await supabase.auth.resend({
             type: 'signup',
