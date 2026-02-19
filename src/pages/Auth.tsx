@@ -61,6 +61,7 @@ export default function Auth() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signIn, signUp, user, profile } = useAuth();
@@ -81,7 +82,7 @@ export default function Auth() {
     setMode(newMode);
   };
 
-  // Check for password recovery token in URL hash
+  // Handle email confirmation and password recovery tokens from URL hash
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get("type");
@@ -89,6 +90,15 @@ export default function Auth() {
     
     if (type === "recovery" && accessToken) {
       setMode("new-password");
+    } else if (type === "signup" && accessToken) {
+      // Email verification link clicked — sign out the auto-session
+      // so user lands on login form with a success message
+      supabase.auth.signOut().then(() => {
+        setEmailVerified(true);
+        setMode("login");
+        // Clean hash from URL
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      });
     }
   }, []);
 
@@ -141,9 +151,9 @@ export default function Auth() {
       // Check if email not verified
       if (message.includes("Email not confirmed")) {
          // Auto-resend verification email
-         try {
-           const productionUrl = "https://medicare-nine-wine.vercel.app";
-           await supabase.auth.resend({
+          try {
+            const productionUrl = "https://medicareplus.app";
+            await supabase.auth.resend({
              type: 'signup',
              email: data.email,
              options: {
@@ -357,6 +367,16 @@ export default function Auth() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
+              {/* Email Verified Success Alert */}
+              {emailVerified && mode === "login" && (
+                <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-700 dark:text-green-400">
+                    Email verified! Please sign in.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Signup Success Alert */}
               {signupSuccess && mode === "login" && (
                 <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
