@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { ShieldX } from "lucide-react";
 
 const BLOCKED_COUNTRIES = ["IL"];
@@ -11,15 +10,38 @@ export function GeoBlock({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const check = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("check-geo");
-        if (!error && data?.country && BLOCKED_COUNTRIES.includes(data.country)) {
-          setBlocked(true);
+        // Primary: ipapi.co
+        const res = await fetch("https://ipapi.co/json/", {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.country_code && BLOCKED_COUNTRIES.includes(data.country_code)) {
+            setBlocked(true);
+            setChecking(false);
+            return;
+          }
         }
       } catch {
-        // On failure, allow access
-      } finally {
-        setChecking(false);
+        // try fallback
+        try {
+          const res2 = await fetch("https://ip2c.org/self", {
+            signal: AbortSignal.timeout(5000),
+          });
+          if (res2.ok) {
+            const text = await res2.text();
+            const parts = text.split(";");
+            if (parts[0] === "1" && BLOCKED_COUNTRIES.includes(parts[1])) {
+              setBlocked(true);
+              setChecking(false);
+              return;
+            }
+          }
+        } catch {
+          // On all failures, allow access
+        }
       }
+      setChecking(false);
     };
     check();
   }, []);
@@ -44,3 +66,4 @@ export function GeoBlock({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
