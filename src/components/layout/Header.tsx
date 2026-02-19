@@ -76,7 +76,7 @@ export function Header() {
               <img 
                 src={logoUrl} 
                 alt={`${siteName} Logo`} 
-                className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform"
+                className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform dark:mix-blend-screen rounded-md"
               />
             )}
             <div className="flex flex-col leading-none">
