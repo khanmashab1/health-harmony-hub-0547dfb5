@@ -45,7 +45,7 @@ export function useSiteSettings() {
     if (resolvedTheme === "dark" && settings?.logo_url_dark) {
       return settings.logo_url_dark;
     }
-    return settings?.logo_url || null;
+    return settings?.logo_url || "/logo-medicare.png";
   };
 
   return {
