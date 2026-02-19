@@ -310,9 +310,10 @@ export default function Auth() {
       {/* Right Panel - Forms */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <motion.div
+          key={mode}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="w-full max-w-md"
         >
           <Link
