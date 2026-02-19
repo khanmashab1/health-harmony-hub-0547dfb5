@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -296,9 +297,12 @@ export default function DoctorDashboard() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
           >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
-                <Stethoscope className="w-7 h-7 text-white" />
-              </div>
+              <Avatar className="w-14 h-14 rounded-2xl shadow-lg shadow-brand-500/25 border-2 border-brand-500/30">
+                <AvatarImage src={doctorInfo?.image_path || undefined} className="object-cover" />
+                <AvatarFallback className="rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600">
+                  <Stethoscope className="w-7 h-7 text-white" />
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                   Dr. {profile?.name}
