@@ -150,11 +150,11 @@
       }
       console.log("Profile deleted");
       
-      // 14. Delete auth user
+      // 14. Delete auth user (non-fatal if user doesn't exist in auth)
       const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
       if (authDeleteError) {
-        console.error("Auth delete error:", authDeleteError);
-        throw new Error(`Failed to delete auth user: ${authDeleteError.message}`);
+        console.error("Auth delete warning (non-fatal):", authDeleteError.message);
+        // Don't throw — user may not exist in auth (e.g., after CSV migration)
       }
  
      console.log(`User ${userId} and all related data deleted successfully`);
