@@ -167,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string, role: UserRole = "patient") => {
     // Use the production URL for email verification redirect
     // This ensures users are redirected to the Medicare production website
-    const productionUrl = "https://medicare-nine-wine.vercel.app";
+    const productionUrl = "https://medicareplus.app";
     const redirectUrl = `${productionUrl}/auth`;
     
     const { error } = await supabase.auth.signUp({
