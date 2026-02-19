@@ -20,7 +20,7 @@ Allow: /ai-diet-planner
 Allow: /diet-planner
 Allow: /ai-health
 Allow: /our-doctors
-Allow: /booking
+Disallow: /booking
 Allow: /symptoms
 Allow: /reviews
 Allow: /become-doctor
