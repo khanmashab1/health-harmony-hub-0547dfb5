@@ -1,11 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-// MANUAL OVERRIDE: Hardcoding your specific project to prevent Lovable from reverting
+// FORCE OVERRIDE: Using your specific project credentials
 const SUPABASE_URL = "https://zikbiesawrowlkhvrbmz.supabase.co";
-
-// REPLACE THE STRING BELOW with your actual Anon Key from the Supabase Dashboard
-const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_ACTUAL_ey_ANON_KEY_HERE";
+const SUPABASE_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inppa2JpZXNhd3Jvd2xraHZyYm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzY4MjMsImV4cCI6MjA4Njk1MjgyM30.h6d5Tk2kKY6r7oOEDdAZWVcS28MJWZBvCohLjOJkYmc";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
