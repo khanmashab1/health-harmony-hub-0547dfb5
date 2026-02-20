@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.diet-planner]
 verify_jwt = false
 
+[functions.generate-diet-plan]
+verify_jwt = false
+
 [functions.health-risk-proxy]
 verify_jwt = false
 

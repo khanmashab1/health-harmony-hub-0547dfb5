@@ -15,8 +15,6 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
-import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { generateDietPlanPDF } from "@/lib/dietPlanPdfGenerator";
@@ -64,6 +62,7 @@ interface HealthPlan {
   lifestyleTips: string[];
   sleepRecommendation: string;
   weeklyGoals: string[];
+  planId?: string;
 }
 
 interface MealLog {
@@ -77,6 +76,7 @@ interface SavedPlan {
   profile_data: { age: string; gender: string; height: string; weight: string; goal: string; dietaryPreference: string; activityLevel: string };
   meal_logs: Record<string, MealLog>;
   created_at: string;
+  calorie_target: number | null;
 }
 
 const mealOrder = ["breakfast", "morningSnack", "lunch", "eveningSnack", "dinner"];
@@ -111,7 +111,6 @@ export default function DietPlanner() {
   const navigate = useNavigate();
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
-  const usageLimit = useAIUsageLimit("diet_planner");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<HealthPlan | null>(null);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -129,9 +128,7 @@ export default function DietPlanner() {
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
-  const [dietaryPreference, setDietaryPreference] = useState("");
   const [activityLevel, setActivityLevel] = useState("");
-  const [medicalConditions, setMedicalConditions] = useState("");
   const [allergies, setAllergies] = useState("");
 
   const STORAGE_KEY = "diet_planner_form";
@@ -149,9 +146,7 @@ export default function DietPlanner() {
         if (data.height) setHeight(data.height);
         if (data.weight) setWeight(data.weight);
         if (data.goal) setGoal(data.goal);
-        if (data.dietaryPreference) setDietaryPreference(data.dietaryPreference);
         if (data.activityLevel) setActivityLevel(data.activityLevel);
-        if (data.medicalConditions) setMedicalConditions(data.medicalConditions);
         if (data.allergies) setAllergies(data.allergies);
         sessionStorage.removeItem(STORAGE_KEY);
         setViewMode("form");
@@ -184,7 +179,7 @@ export default function DietPlanner() {
   }, [user, fetchSavedPlans]);
 
   const saveFormToStorage = () => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ age, gender, height, weight, goal, dietaryPreference, activityLevel, medicalConditions, allergies }));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ age, gender, height, weight, goal, activityLevel, allergies }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,12 +192,6 @@ export default function DietPlanner() {
       return;
     }
 
-    const allowed = await usageLimit.checkAndIncrement();
-    if (!allowed) {
-      toast.error("Daily limit reached. Purchase AI credits for more!");
-      return;
-    }
-
     setLoading(true);
     setPlan(null);
     setError(null);
@@ -210,30 +199,27 @@ export default function DietPlanner() {
     setActivePlanId(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("diet-planner", {
-        body: { age: parseInt(age), gender, height: parseFloat(height), weight: parseFloat(weight), goal, dietaryPreference, activityLevel, medicalConditions, allergies },
+      const { data, error: fnError } = await supabase.functions.invoke("generate-diet-plan", {
+        body: {
+          age: parseInt(age),
+          gender,
+          height: parseFloat(height),
+          weight: parseFloat(weight),
+          goal,
+          activityLevel,
+          allergies,
+        },
       });
 
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
 
-      // Save to database
-      const profileData = { age, gender, height, weight, goal, dietaryPreference, activityLevel };
-      const { data: savedRow, error: saveError } = await supabase
-        .from("diet_plans" as any)
-        .insert({ user_id: user.id, plan_data: data, profile_data: profileData, meal_logs: {} } as any)
-        .select("id")
-        .single();
-
-      if (saveError) {
-        console.error("Save error:", saveError);
-      } else {
-        setActivePlanId((savedRow as any).id);
-      }
+      const planId = data.planId;
+      if (planId) setActivePlanId(planId);
 
       setPlan(data);
       setViewMode("plan");
-      toast.success("Plan generated and saved!");
+      toast.success("Diet plan generated and saved!");
       fetchSavedPlans();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -253,7 +239,6 @@ export default function DietPlanner() {
       setHeight(saved.profile_data.height || "");
       setWeight(saved.profile_data.weight || "");
       setGoal(saved.profile_data.goal || "");
-      setDietaryPreference(saved.profile_data.dietaryPreference || "");
       setActivityLevel(saved.profile_data.activityLevel || "");
     }
     setViewMode("plan");
@@ -325,13 +310,13 @@ export default function DietPlanner() {
 
   const handleDownloadPDF = () => {
     if (!plan) return;
-    generateDietPlanPDF(plan, { age, gender, height, weight, goal, dietaryPreference, activityLevel }, mealLogs, mealLabels);
+    generateDietPlanPDF(plan, { age, gender, height, weight, goal, dietaryPreference: "N/A", activityLevel }, mealLogs, mealLabels);
     toast.success("PDF downloaded!");
   };
 
   const getShareText = () => {
     if (!plan) return "";
-    return `🥗 My AI Health Plan\n\n📊 BMI: ${plan.bmi} (${plan.bmiCategory})\n🔥 Daily Calories: ${plan.dailyCalories} kcal\n💧 Water: ${plan.waterIntake}\n🎯 Goal: ${goal}\n\n✅ Weekly Goals:\n${plan.weeklyGoals.map((g, i) => `${i + 1}. ${g}`).join("\n")}\n\nGenerated by MediCare+ AI Health Planner`;
+    return `🥗 My Health & Diet Plan\n\n📊 BMI: ${plan.bmi} (${plan.bmiCategory})\n🔥 Daily Calories: ${plan.dailyCalories} kcal\n💧 Water: ${plan.waterIntake}\n🎯 Goal: ${goal}\n\n✅ Weekly Goals:\n${plan.weeklyGoals.map((g, i) => `${i + 1}. ${g}`).join("\n")}\n\nGenerated by MediCare+ Diet Planner`;
   };
 
   const handleShareWhatsApp = () => {
@@ -357,20 +342,20 @@ export default function DietPlanner() {
     return (
       <Layout>
         <SEOHead
-          title="AI Diet Planner — Free Personalized Meal Plans"
-          description="Generate a free AI-powered personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes 7-day meal plans, calorie tracking, PDF export, and WhatsApp sharing."
-          keywords="AI diet planner, free diet plan generator, personalized meal plan, diet planner online free, AI meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner AI, calorie counter, keto diet plan, PCOS diet plan"
+          title="Diet Planner — Free Personalized Meal Plans"
+          description="Generate a free personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes meal plans, calorie tracking, PDF export, and WhatsApp sharing."
+          keywords="diet planner, free diet plan generator, personalized meal plan, diet planner online free, meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner, calorie counter"
           canonicalUrl="/diet-planner"
           jsonLd={[
             seoSchemas.medicalService({
-              name: "AI Diet Planner Tool",
-              description: "Free AI-powered personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
+              name: "Diet Planner Tool",
+              description: "Free personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
               url: "/diet-planner",
             }),
             seoSchemas.breadcrumb([
               { name: "Home", url: "/" },
               { name: "AI Health Tools", url: "/ai-health" },
-              { name: "AI Diet Planner", url: "/diet-planner" },
+              { name: "Diet Planner", url: "/diet-planner" },
             ]),
           ]}
         />
@@ -383,7 +368,7 @@ export default function DietPlanner() {
                     <Salad className="w-8 h-8" />
                   </div>
                 </div>
-                <CardTitle className="text-2xl">AI Health & Diet Planner</CardTitle>
+                <CardTitle className="text-2xl">Health & Diet Planner</CardTitle>
                 <CardDescription className="text-base mt-2">
                   Sign in to generate personalized diet plans, track your meals, and save your progress.
                 </CardDescription>
@@ -392,7 +377,7 @@ export default function DietPlanner() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-muted-foreground">
                   <div className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-muted/50">
                     <Apple className="w-5 h-5 text-primary" />
-                    <span>AI Diet Plans</span>
+                    <span>Diet Plans</span>
                   </div>
                   <div className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-muted/50">
                     <ClipboardCheck className="w-5 h-5 text-primary" />
@@ -419,20 +404,20 @@ export default function DietPlanner() {
   return (
     <Layout>
       <SEOHead
-        title="AI Diet Planner — Free Personalized Meal Plans"
-        description="Generate a free AI-powered personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes 7-day meal plans, calorie tracking, PDF export, and WhatsApp sharing."
-        keywords="AI diet planner, free diet plan generator, personalized meal plan, diet planner online free, AI meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner AI, calorie counter, keto diet plan, PCOS diet plan"
+        title="Diet Planner — Free Personalized Meal Plans"
+        description="Generate a free personalized diet plan based on your health goals, age, weight, and dietary preferences. Includes meal plans, calorie tracking, PDF export, and WhatsApp sharing."
+        keywords="diet planner, free diet plan generator, personalized meal plan, diet planner online free, meal planner, healthy diet plan Pakistan, weight loss meal plan, diabetes diet plan, diet chart generator, nutrition planner, calorie counter"
         canonicalUrl="/diet-planner"
         jsonLd={[
           seoSchemas.medicalService({
-            name: "AI Diet Planner Tool",
-            description: "Free AI-powered personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
+            name: "Diet Planner Tool",
+            description: "Free personalized diet and meal planning tool that creates customized nutrition plans based on health goals, dietary preferences, and medical conditions.",
             url: "/diet-planner",
           }),
           seoSchemas.breadcrumb([
             { name: "Home", url: "/" },
             { name: "AI Health Tools", url: "/ai-health" },
-            { name: "AI Diet Planner", url: "/diet-planner" },
+            { name: "Diet Planner", url: "/diet-planner" },
           ]),
         ]}
       />
@@ -478,7 +463,7 @@ export default function DietPlanner() {
                   <CardContent>
                     <Salad className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h2 className="text-lg font-semibold text-foreground mb-2">No Plans Yet</h2>
-                    <p className="text-sm text-muted-foreground mb-4">Generate your first AI-powered health and diet plan!</p>
+                    <p className="text-sm text-muted-foreground mb-4">Generate your first personalized health and diet plan!</p>
                     <Button onClick={() => setViewMode("form")} className="gap-2">
                       <Plus className="w-4 h-4" />
                       Create Your First Plan
@@ -496,10 +481,10 @@ export default function DietPlanner() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm sm:text-base text-foreground leading-tight">
-                              {sp.profile_data?.goal || "Health Plan"} • {sp.plan_data?.dailyCalories} kcal/day
+                              {sp.profile_data?.goal || "Health Plan"} • {sp.calorie_target || sp.plan_data?.dailyCalories} kcal/day
                             </h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              BMI: {sp.plan_data?.bmi} ({sp.plan_data?.bmiCategory}) • {sp.profile_data?.dietaryPreference}
+                              BMI: {sp.plan_data?.bmi} ({sp.plan_data?.bmiCategory})
                             </p>
                             <p className="text-xs text-muted-foreground">
                               Created {format(new Date(sp.created_at), "MMM d, yyyy 'at' h:mm a")}
@@ -562,13 +547,12 @@ export default function DietPlanner() {
                       <Salad className="w-8 h-8" />
                     </div>
                   </div>
-                  <CardTitle className="text-2xl md:text-3xl">AI Health & Diet Planner</CardTitle>
+                  <CardTitle className="text-2xl md:text-3xl">Health & Diet Planner</CardTitle>
                   <CardDescription className="text-base mt-1">
-                    Get a personalized diet, exercise, and lifestyle plan powered by AI.
+                    Get a personalized diet, exercise, and lifestyle plan based on scientific formulas.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <AIUsageBanner {...usageLimit} />
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <fieldset className="space-y-3">
                       <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Your Profile</legend>
@@ -584,7 +568,6 @@ export default function DietPlanner() {
                             <SelectContent>
                               <SelectItem value="Male">Male</SelectItem>
                               <SelectItem value="Female">Female</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -603,7 +586,7 @@ export default function DietPlanner() {
                     </fieldset>
 
                     <fieldset className="space-y-3">
-                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Goals & Preferences</legend>
+                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Goals & Activity</legend>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <Label>Health Goal</Label>
@@ -614,37 +597,17 @@ export default function DietPlanner() {
                               <SelectItem value="Weight Gain">Weight Gain</SelectItem>
                               <SelectItem value="Muscle Building">Muscle Building</SelectItem>
                               <SelectItem value="Maintain Weight">Maintain Weight</SelectItem>
-                              <SelectItem value="Improve Energy">Improve Energy</SelectItem>
-                              <SelectItem value="Better Sleep">Better Sleep</SelectItem>
-                              <SelectItem value="Overall Health">Overall Health</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div>
-                          <Label>Dietary Preference</Label>
-                          <Select value={dietaryPreference} onValueChange={setDietaryPreference} required>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="No Restriction">No Restriction</SelectItem>
-                              <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-                              <SelectItem value="Vegan">Vegan</SelectItem>
-                              <SelectItem value="Halal">Halal</SelectItem>
-                              <SelectItem value="Keto">Keto</SelectItem>
-                              <SelectItem value="Low Carb">Low Carb</SelectItem>
-                              <SelectItem value="High Protein">High Protein</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="sm:col-span-2">
                           <Label>Activity Level</Label>
                           <Select value={activityLevel} onValueChange={setActivityLevel} required>
                             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Sedentary">Sedentary (little/no exercise)</SelectItem>
-                              <SelectItem value="Lightly Active">Lightly Active (1-3 days/week)</SelectItem>
-                              <SelectItem value="Moderately Active">Moderately Active (3-5 days/week)</SelectItem>
-                              <SelectItem value="Very Active">Very Active (6-7 days/week)</SelectItem>
-                              <SelectItem value="Athlete">Athlete (intense training)</SelectItem>
+                              <SelectItem value="Moderate">Moderate (3-5 days/week)</SelectItem>
+                              <SelectItem value="Active">Active (6-7 days/week)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -652,14 +615,11 @@ export default function DietPlanner() {
                     </fieldset>
 
                     <fieldset className="space-y-3">
-                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Optional Details</legend>
-                      <div>
-                        <Label>Medical Conditions</Label>
-                        <Textarea placeholder="e.g. Diabetes, Hypertension, Thyroid..." value={medicalConditions} onChange={e => setMedicalConditions(e.target.value)} rows={2} />
-                      </div>
+                      <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Allergies (Optional)</legend>
                       <div>
                         <Label>Food Allergies</Label>
-                        <Textarea placeholder="e.g. Nuts, Gluten, Dairy..." value={allergies} onChange={e => setAllergies(e.target.value)} rows={2} />
+                        <Textarea placeholder="e.g. Nuts, Gluten, Dairy (comma separated)" value={allergies} onChange={e => setAllergies(e.target.value)} rows={2} />
+                        <p className="text-xs text-muted-foreground mt-1">Foods with these tags will be excluded from your plan.</p>
                       </div>
                     </fieldset>
 
@@ -670,11 +630,11 @@ export default function DietPlanner() {
                       </Alert>
                     )}
 
-                    <Button type="submit" size="lg" className="w-full" disabled={loading || !gender || !goal || !dietaryPreference || !activityLevel}>
+                    <Button type="submit" size="lg" className="w-full" disabled={loading || !gender || !goal || !activityLevel}>
                       {loading ? (
                         <><Loader2 className="w-5 h-5 animate-spin" /> Generating Your Plan...</>
                       ) : (
-                        <><Salad className="w-5 h-5" /> Generate My Health Plan</>
+                        <><Salad className="w-5 h-5" /> Generate My Diet Plan</>
                       )}
                     </Button>
                   </form>
@@ -693,7 +653,7 @@ export default function DietPlanner() {
               {/* Summary Header */}
               <Card variant="elevated" className="overflow-hidden">
                 <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 md:p-8 text-white">
-                  <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Personalized Health Plan</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Personalized Diet Plan</h1>
                   <p className="text-white/90 text-sm md:text-base">{plan.summary}</p>
                 </div>
                 <CardContent className="p-6">
@@ -719,7 +679,7 @@ export default function DietPlanner() {
                     <div className="text-center p-3 rounded-xl bg-muted/50">
                       <Moon className="w-5 h-5 mx-auto mb-1 text-indigo-500" />
                       <p className="text-xs text-muted-foreground">Sleep</p>
-                      <p className="text-sm font-bold text-foreground">{plan.sleepRecommendation.slice(0, 20)}</p>
+                      <p className="text-sm font-bold text-foreground">{plan.sleepRecommendation}</p>
                       <p className="text-xs text-muted-foreground">recommended</p>
                     </div>
                   </div>
@@ -739,6 +699,7 @@ export default function DietPlanner() {
                 <TabsContent value="diet" className="space-y-4 mt-4">
                   {mealOrder.map((mealKey) => {
                     const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
+                    if ((meals as MealItem[]).length === 0) return null;
                     const Icon = mealIcons[mealKey] || Utensils;
                     const totalCals = (meals as MealItem[]).reduce((s, m) => s + m.calories, 0);
                     return (
@@ -795,6 +756,7 @@ export default function DietPlanner() {
 
                   {mealOrder.map((mealKey) => {
                     const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
+                    if ((meals as MealItem[]).length === 0) return null;
                     const Icon = mealIcons[mealKey] || Utensils;
                     return (
                       <Card key={mealKey} variant="default">
@@ -941,7 +903,7 @@ export default function DietPlanner() {
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
-                ⚕️ This AI-generated plan is for informational purposes only and does not replace professional medical or nutritional advice.
+                ⚕️ This plan is generated using the Mifflin-St Jeor formula and is for informational purposes only. It does not replace professional medical or nutritional advice.
               </p>
             </motion.div>
           )}
