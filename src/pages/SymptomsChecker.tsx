@@ -119,15 +119,25 @@ export default function SymptomsChecker() {
         }
       });
 
-      if (error) throw error;
-      if (data.error) { toast.error(data.error); return; }
+      if (error) {
+        // Extract meaningful message from edge function errors
+        const msg = (error as any)?.context?.error || error.message || "Failed to analyze symptoms.";
+        toast.error(msg.includes("temporarily unavailable")
+          ? "The AI analysis service is temporarily unavailable. Please try again in a few minutes."
+          : msg);
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
 
       setAnalysis(data);
       setStep(3);
       toast.success("Analysis complete!");
     } catch (error: any) {
       console.error("Error analyzing symptoms:", error);
-      toast.error(error.message || "Failed to analyze symptoms. Please try again.");
+      toast.error("The AI analysis service is temporarily unavailable. Please try again in a few minutes.");
     } finally {
       setIsAnalyzing(false);
     }
