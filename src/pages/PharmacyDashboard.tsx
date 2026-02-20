@@ -591,15 +591,35 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
   );
 }
 
-// ─── Sales Panel ────────────────────────────────────────────
+// ─── Sales Panel (POS Style) ────────────────────────────────
 function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [saleForm, setSaleForm] = useState({ patient_name: "", patient_phone: "", payment_method: "Cash", notes: "", discount: 0 });
-  const [saleItems, setSaleItems] = useState<{ medicine_name: string; quantity: number; unit_price: number }[]>([{ medicine_name: "", quantity: 1, unit_price: 0 }]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cart, setCart] = useState<{ id: string; medicine_name: string; quantity: number; unit_price: number; stock: number }[]>([]);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [discount, setDiscount] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const { data: sales, isLoading } = useQuery({
+  // Fetch inventory for product search
+  const { data: inventory } = useQuery({
+    queryKey: ["pharmacy-inventory-pos", pharmacyId, searchTerm],
+    queryFn: async () => {
+      let query = supabase.from("pharmacy_inventory").select("*").eq("pharmacy_id", pharmacyId).eq("is_active", true);
+      if (searchTerm.trim()) {
+        query = query.or(`medicine_name.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%`);
+      }
+      const { data, error } = await query.order("medicine_name").limit(20);
+      if (error) throw error;
+      return data;
+    },
+    enabled: searchTerm.trim().length > 0,
+  });
+
+  // Sales history
+  const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["pharmacy-sales", pharmacyId],
     queryFn: async () => {
       const { data, error } = await supabase.from("pharmacy_sales").select("*").eq("pharmacy_id", pharmacyId).order("created_at", { ascending: false }).limit(50);
@@ -608,176 +628,349 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
     },
   });
 
+  const addToCart = (item: any) => {
+    const existing = cart.find(c => c.id === item.id);
+    if (existing) {
+      if (existing.quantity >= item.quantity_in_stock) {
+        toast({ variant: "destructive", title: "Out of stock", description: `Only ${item.quantity_in_stock} available` });
+        return;
+      }
+      setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c));
+    } else {
+      setCart([...cart, { id: item.id, medicine_name: item.medicine_name, quantity: 1, unit_price: item.selling_price, stock: item.quantity_in_stock }]);
+    }
+    setSearchTerm("");
+  };
+
+  const updateCartQty = (id: string, qty: number) => {
+    if (qty <= 0) {
+      setCart(cart.filter(c => c.id !== id));
+    } else {
+      const item = cart.find(c => c.id === id);
+      if (item && qty > item.stock) {
+        toast({ variant: "destructive", title: "Exceeds stock", description: `Only ${item.stock} available` });
+        return;
+      }
+      setCart(cart.map(c => c.id === id ? { ...c, quantity: qty } : c));
+    }
+  };
+
+  const removeFromCart = (id: string) => setCart(cart.filter(c => c.id !== id));
+
+  const subtotal = cart.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
+  const total = Math.max(0, subtotal - discount);
+  const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+
   const createSale = useMutation({
     mutationFn: async () => {
-      const validItems = saleItems.filter(i => i.medicine_name.trim());
-      const totalAmount = validItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
-      const netAmount = totalAmount - (saleForm.discount || 0);
+      if (cart.length === 0) throw new Error("Cart is empty");
 
       const { data: sale, error: saleError } = await supabase.from("pharmacy_sales").insert({
         pharmacy_id: pharmacyId,
-        patient_name: saleForm.patient_name || null,
-        patient_phone: saleForm.patient_phone || null,
-        total_amount: totalAmount,
-        discount: saleForm.discount || 0,
-        net_amount: netAmount,
-        payment_method: saleForm.payment_method,
+        patient_name: customerName || null,
+        patient_phone: customerPhone || null,
+        total_amount: subtotal,
+        discount: discount || 0,
+        net_amount: total,
+        payment_method: paymentMethod,
         payment_status: "Paid",
-        notes: saleForm.notes || null,
         sold_by: (await supabase.auth.getUser()).data.user?.id,
       }).select().single();
       if (saleError) throw saleError;
 
-      if (validItems.length > 0) {
-        const items = validItems.map(i => ({
-          sale_id: sale.id,
-          medicine_name: i.medicine_name,
-          quantity: i.quantity,
-          unit_price: i.unit_price,
-          total_price: i.quantity * i.unit_price,
-        }));
-        const { error: itemsError } = await supabase.from("pharmacy_sale_items").insert(items);
-        if (itemsError) throw itemsError;
+      const items = cart.map(i => ({
+        sale_id: sale.id,
+        medicine_name: i.medicine_name,
+        quantity: i.quantity,
+        unit_price: i.unit_price,
+        total_price: i.quantity * i.unit_price,
+      }));
+      const { error: itemsError } = await supabase.from("pharmacy_sale_items").insert(items);
+      if (itemsError) throw itemsError;
+
+      // Deduct stock
+      for (const item of cart) {
+        await supabase.from("pharmacy_inventory").update({
+          quantity_in_stock: item.stock - item.quantity,
+        }).eq("id", item.id);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pharmacy-sales"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-stats"] });
-      toast({ title: "Sale recorded" });
-      setIsDialogOpen(false);
-      setSaleForm({ patient_name: "", patient_phone: "", payment_method: "Cash", notes: "", discount: 0 });
-      setSaleItems([{ medicine_name: "", quantity: 1, unit_price: 0 }]);
+      queryClient.invalidateQueries({ queryKey: ["pharmacy-inventory"] });
+      toast({ title: "✅ Sale completed!", description: `₨${total.toLocaleString()} — ${itemCount} item(s)` });
+      setCart([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setDiscount(0);
+      setSearchTerm("");
     },
-    onError: (err: any) => toast({ variant: "destructive", title: "Error", description: err.message }),
+    onError: (err: any) => toast({ variant: "destructive", title: "Sale failed", description: err.message }),
   });
 
-  const addItem = () => setSaleItems([...saleItems, { medicine_name: "", quantity: 1, unit_price: 0 }]);
-  const removeItem = (index: number) => setSaleItems(saleItems.filter((_, i) => i !== index));
-  const updateItem = (index: number, field: string, value: any) => {
-    const updated = [...saleItems];
-    (updated[index] as any)[field] = value;
-    setSaleItems(updated);
-  };
-
   return (
-    <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
-      <CardHeader className="border-b border-border/30 bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* POS Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <ShoppingCart className="w-6 h-6 text-primary" />
+          </div>
           <div>
-            <CardTitle className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-purple-600" />Sales</CardTitle>
-            <CardDescription>Record and track medicine sales</CardDescription>
+            <h2 className="text-xl font-bold">Point of Sale</h2>
+            <p className="text-sm text-muted-foreground">Search medicines, add to cart & checkout</p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-4 h-4 mr-2" />New Sale
-          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        {isLoading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
-        ) : sales && sales.length > 0 ? (
-          <div className="rounded-lg border border-border/50 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Date</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Net</TableHead>
-                  <TableHead>Payment</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sales.map(sale => (
-                  <TableRow key={sale.id} className="hover:bg-muted/30">
-                    <TableCell className="text-sm">{format(new Date(sale.created_at), "dd MMM yyyy, HH:mm")}</TableCell>
-                    <TableCell>{sale.patient_name || "Walk-in"}</TableCell>
-                    <TableCell>₨{Number(sale.total_amount).toLocaleString()}</TableCell>
-                    <TableCell>₨{Number(sale.discount || 0).toLocaleString()}</TableCell>
-                    <TableCell className="font-medium">₨{Number(sale.net_amount).toLocaleString()}</TableCell>
-                    <TableCell><Badge variant="outline">{sale.payment_method}</Badge></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No sales recorded yet</p>
-          </div>
-        )}
-      </CardContent>
+        <Button variant={showHistory ? "default" : "outline"} onClick={() => setShowHistory(!showHistory)} className="gap-2">
+          <FileText className="w-4 h-4" />
+          {showHistory ? "Back to POS" : "Sales History"}
+        </Button>
+      </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>New Sale</DialogTitle>
-            <DialogDescription>Record a medicine sale</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Patient Name</Label>
-                <Input value={saleForm.patient_name} onChange={e => setSaleForm({...saleForm, patient_name: e.target.value})} />
+      {showHistory ? (
+        /* ─── Sales History View ─── */
+        <Card variant="glass" className="border-border/50 dark:border-border/30">
+          <CardContent className="p-4">
+            {salesLoading ? (
+              <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+            ) : sales && sales.length > 0 ? (
+              <div className="rounded-lg border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Date</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Discount</TableHead>
+                      <TableHead className="text-right">Net</TableHead>
+                      <TableHead>Payment</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sales.map(sale => (
+                      <TableRow key={sale.id} className="hover:bg-muted/30">
+                        <TableCell className="text-sm">{format(new Date(sale.created_at), "dd MMM, HH:mm")}</TableCell>
+                        <TableCell>{sale.patient_name || <span className="text-muted-foreground">Walk-in</span>}</TableCell>
+                        <TableCell className="text-right">₨{Number(sale.total_amount).toLocaleString()}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">₨{Number(sale.discount || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-semibold">₨{Number(sale.net_amount).toLocaleString()}</TableCell>
+                        <TableCell><Badge variant="outline">{sale.payment_method}</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={saleForm.patient_phone} onChange={e => setSaleForm({...saleForm, patient_phone: e.target.value})} />
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">No sales recorded yet</p>
               </div>
-            </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        /* ─── POS Interface ─── */
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* Left: Search & Add Items (3 cols) */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Search Bar */}
+            <Card variant="glass" className="border-border/50 dark:border-border/30">
+              <CardContent className="p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search medicine by name or generic name..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-11 h-12 text-base"
+                    autoFocus
+                  />
+                </div>
 
-            <div>
-              <Label className="mb-2 block">Items</Label>
-              <div className="space-y-2">
-                {saleItems.map((item, index) => (
-                  <div key={index} className="flex gap-2 items-end">
-                    <Input placeholder="Medicine name" value={item.medicine_name} onChange={e => updateItem(index, "medicine_name", e.target.value)} className="flex-1" />
-                    <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(index, "quantity", parseInt(e.target.value) || 1)} className="w-16" />
-                    <Input type="number" placeholder="Price" value={item.unit_price} onChange={e => updateItem(index, "unit_price", parseFloat(e.target.value) || 0)} className="w-24" />
-                    {saleItems.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => removeItem(index)}><X className="w-4 h-4" /></Button>
+                {/* Search Results */}
+                {searchTerm.trim() && (
+                  <div className="mt-3 max-h-64 overflow-y-auto space-y-1">
+                    {inventory && inventory.length > 0 ? inventory.map(item => (
+                      <button
+                        key={item.id}
+                        onClick={() => addToCart(item)}
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all text-left group"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium group-hover:text-primary transition-colors">{item.medicine_name}</p>
+                          <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
+                            {item.generic_name && <span>{item.generic_name}</span>}
+                            {item.strength && <span>• {item.strength}</span>}
+                            {item.form && <span>• {item.form}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-3">
+                          <p className="font-bold text-primary">₨{Number(item.selling_price).toLocaleString()}</p>
+                          <p className={`text-xs ${item.quantity_in_stock <= (item.reorder_level || 10) ? "text-destructive" : "text-muted-foreground"}`}>
+                            Stock: {item.quantity_in_stock}
+                          </p>
+                        </div>
+                      </button>
+                    )) : (
+                      <p className="text-center text-muted-foreground py-4 text-sm">No medicines found</p>
                     )}
                   </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={addItem}><Plus className="w-3 h-3 mr-1" />Add Item</Button>
-              </div>
-            </div>
+                )}
+              </CardContent>
+            </Card>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Discount (₨)</Label>
-                <Input type="number" value={saleForm.discount} onChange={e => setSaleForm({...saleForm, discount: parseFloat(e.target.value) || 0})} />
-              </div>
-              <div className="space-y-2">
-                <Label>Payment Method</Label>
-                <Select value={saleForm.payment_method} onValueChange={v => setSaleForm({...saleForm, payment_method: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Card">Card</SelectItem>
-                    <SelectItem value="JazzCash">JazzCash</SelectItem>
-                    <SelectItem value="Easypaisa">Easypaisa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium">Total: ₨{saleItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0).toLocaleString()}</p>
-              <p className="text-lg font-bold text-emerald-600">Net: ₨{(saleItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0) - (saleForm.discount || 0)).toLocaleString()}</p>
-            </div>
+            {/* Cart Items */}
+            <Card variant="glass" className="border-border/50 dark:border-border/30">
+              <CardHeader className="pb-3 border-b border-border/30">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Cart
+                    {cart.length > 0 && <Badge variant="secondary" className="ml-1">{itemCount}</Badge>}
+                  </span>
+                  {cart.length > 0 && (
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive text-xs h-7" onClick={() => setCart([])}>
+                      Clear All
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {cart.length === 0 ? (
+                  <div className="text-center py-12 px-4">
+                    <Package className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                    <p className="text-muted-foreground text-sm">Search and add medicines to start a sale</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/30">
+                    {cart.map((item, idx) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.medicine_name}</p>
+                          <p className="text-xs text-muted-foreground">₨{Number(item.unit_price).toLocaleString()} each</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 rounded-full"
+                            onClick={() => updateCartQty(item.id, item.quantity - 1)}
+                          >
+                            <span className="text-base leading-none">−</span>
+                          </Button>
+                          <span className="w-8 text-center font-semibold text-sm">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 rounded-full"
+                            onClick={() => updateCartQty(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <p className="font-semibold text-sm w-20 text-right">₨{(item.quantity * item.unit_price).toLocaleString()}</p>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0" onClick={() => removeFromCart(item.id)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => createSale.mutate()} disabled={createSale.isPending} className="bg-purple-600 hover:bg-purple-700">
-              {createSale.isPending ? "Saving..." : "Record Sale"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+
+          {/* Right: Order Summary (2 cols) */}
+          <div className="lg:col-span-2">
+            <Card variant="glass" className="border-border/50 dark:border-border/30 sticky top-24">
+              <CardHeader className="pb-3 border-b border-border/30">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Order Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {/* Customer Info */}
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Customer Name</Label>
+                    <Input placeholder="Walk-in customer" value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Phone</Label>
+                    <Input placeholder="Optional" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="h-9" />
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Payment Method</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["Cash", "Card", "JazzCash", "Easypaisa"].map(method => (
+                      <Button
+                        key={method}
+                        variant={paymentMethod === method ? "default" : "outline"}
+                        size="sm"
+                        className={`h-9 text-xs ${paymentMethod === method ? "" : ""}`}
+                        onClick={() => setPaymentMethod(method)}
+                      >
+                        {method}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Discount */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Discount (₨)</Label>
+                  <Input type="number" value={discount || ""} onChange={e => setDiscount(parseFloat(e.target.value) || 0)} className="h-9" placeholder="0" />
+                </div>
+
+                {/* Totals */}
+                <div className="rounded-xl bg-muted/50 p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal ({itemCount} items)</span>
+                    <span>₨{subtotal.toLocaleString()}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm text-destructive">
+                      <span>Discount</span>
+                      <span>-₨{discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-border/50 pt-2 mt-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-semibold">Total</span>
+                      <span className="text-2xl font-bold text-primary">₨{total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checkout Button */}
+                <Button
+                  className="w-full h-12 text-base font-semibold gap-2"
+                  disabled={cart.length === 0 || createSale.isPending}
+                  onClick={() => createSale.mutate()}
+                >
+                  {createSale.isPending ? (
+                    <>Processing...</>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Complete Sale — ₨{total.toLocaleString()}
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
