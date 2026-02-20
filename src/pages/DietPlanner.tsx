@@ -121,6 +121,10 @@ export default function DietPlanner() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(() => {
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return dayNames[new Date().getDay()];
+  });
 
   const [mealLogs, setMealLogs] = useState<Record<string, MealLog>>({});
 
@@ -278,31 +282,49 @@ export default function DietPlanner() {
   };
 
   const toggleMealEaten = (key: string) => {
+    const dayKey = `${selectedDay}:${key}`;
     setMealLogs(prev => ({
       ...prev,
-      [key]: { ...prev[key], eaten: !prev[key]?.eaten, notes: prev[key]?.notes || "" }
+      [dayKey]: { ...prev[dayKey], eaten: !prev[dayKey]?.eaten, notes: prev[dayKey]?.notes || "" }
     }));
   };
 
   const setMealNote = (key: string, notes: string) => {
+    const dayKey = `${selectedDay}:${key}`;
     setMealLogs(prev => ({
       ...prev,
-      [key]: { ...prev[key], eaten: prev[key]?.eaten || false, notes }
+      [dayKey]: { ...prev[dayKey], eaten: prev[dayKey]?.eaten || false, notes }
     }));
   };
 
-  const getTrackerStats = () => {
+  const getDayStats = (day: string) => {
     if (!plan) return { total: 0, eaten: 0, calories: 0 };
     let total = 0, eaten = 0, calories = 0;
     mealOrder.forEach((mealKey) => {
       const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
       (meals as MealItem[]).forEach((item, i) => {
         total++;
-        if (mealLogs[`${mealKey}-${i}`]?.eaten) { eaten++; calories += item.calories; }
+        const dayKey = `${day}:${mealKey}-${i}`;
+        if (mealLogs[dayKey]?.eaten) { eaten++; calories += item.calories; }
       });
     });
     return { total, eaten, calories };
   };
+
+  const getWeeklyStats = () => {
+    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    let totalEaten = 0, totalMeals = 0, totalCalories = 0;
+    const dayBreakdown = allDays.map(day => {
+      const s = getDayStats(day);
+      totalEaten += s.eaten;
+      totalMeals += s.total;
+      totalCalories += s.calories;
+      return { day, ...s };
+    });
+    return { totalEaten, totalMeals, totalCalories, dayBreakdown };
+  };
+
+  const getTrackerStats = () => getDayStats(selectedDay);
 
   const handleDownloadPDF = () => {
     if (!plan) return;
@@ -730,18 +752,64 @@ export default function DietPlanner() {
 
                 {/* Tracker Tab */}
                 <TabsContent value="tracker" className="space-y-4 mt-4">
+                  {/* Weekly Overview */}
+                  {(() => {
+                    const weekly = getWeeklyStats();
+                    const weekPct = weekly.totalMeals > 0 ? Math.round((weekly.totalEaten / weekly.totalMeals) * 100) : 0;
+                    return (
+                      <Card variant="elevated" className="border-primary/20">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                              <Target className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-foreground">Weekly Overview</h3>
+                              <p className="text-xs text-muted-foreground">{weekly.totalEaten} of {weekly.totalMeals} meals logged • {weekly.totalCalories} kcal total</p>
+                            </div>
+                            <Badge variant={weekPct === 100 ? "default" : "secondary"} className="text-sm">{weekPct}%</Badge>
+                          </div>
+                          <Progress value={weekPct} className="h-2" />
+                          {/* Mini day bars */}
+                          <div className="grid grid-cols-7 gap-1.5">
+                            {weekly.dayBreakdown.map(d => {
+                              const pct = d.total > 0 ? Math.round((d.eaten / d.total) * 100) : 0;
+                              return (
+                                <button
+                                  key={d.day}
+                                  onClick={() => setSelectedDay(d.day)}
+                                  className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${selectedDay === d.day ? "bg-primary/10 ring-1 ring-primary" : "bg-muted/40 hover:bg-muted"}`}
+                                >
+                                  <span className="font-medium text-foreground">{d.day.slice(0, 3)}</span>
+                                  <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-primary" : "bg-transparent"}`}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-muted-foreground">{pct}%</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
+
+                  {/* Selected Day Progress */}
                   {stats && (
-                    <Card variant="elevated" className="border-primary/20">
+                    <Card variant="default">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-                            <ClipboardCheck className="w-5 h-5" />
+                          <div className="p-2 rounded-xl bg-primary/10">
+                            <ClipboardCheck className="w-5 h-5 text-primary" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">Today's Progress</h3>
-                            <p className="text-xs text-muted-foreground">{stats.eaten} of {stats.total} meals logged • {stats.calories} kcal consumed</p>
+                            <h3 className="font-semibold text-foreground">{selectedDay}'s Meals</h3>
+                            <p className="text-xs text-muted-foreground">{stats.eaten} of {stats.total} meals • {stats.calories} kcal consumed</p>
                           </div>
-                          <Badge variant={stats.eaten === stats.total ? "default" : "secondary"} className="text-sm">
+                          <Badge variant={stats.eaten === stats.total && stats.total > 0 ? "default" : "secondary"} className="text-sm">
                             {stats.total > 0 ? Math.round((stats.eaten / stats.total) * 100) : 0}%
                           </Badge>
                         </div>
@@ -764,7 +832,8 @@ export default function DietPlanner() {
                           <div className="space-y-3">
                             {(meals as MealItem[]).map((item, i) => {
                               const key = `${mealKey}-${i}`;
-                              const log = mealLogs[key];
+                              const dayKey = `${selectedDay}:${key}`;
+                              const log = mealLogs[dayKey];
                               const isEaten = log?.eaten || false;
                               return (
                                 <div key={i} className={`p-3 rounded-lg border transition-colors ${isEaten ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : "bg-muted/30 border-border"}`}>
