@@ -1174,6 +1174,322 @@ export type Database = {
           },
         ]
       }
+      pharmacies: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          license_number: string | null
+          name: string
+          owner_user_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_number?: string | null
+          name: string
+          owner_user_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_number?: string | null
+          name?: string
+          owner_user_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pharmacy_inventory: {
+        Row: {
+          batch_number: string | null
+          category: string | null
+          created_at: string
+          expiry_date: string | null
+          form: string | null
+          generic_name: string | null
+          id: string
+          is_active: boolean | null
+          manufacturer: string | null
+          medicine_id: string | null
+          medicine_name: string
+          pharmacy_id: string
+          quantity_in_stock: number
+          reorder_level: number | null
+          selling_price: number
+          strength: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          category?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          generic_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          manufacturer?: string | null
+          medicine_id?: string | null
+          medicine_name: string
+          pharmacy_id: string
+          quantity_in_stock?: number
+          reorder_level?: number | null
+          selling_price?: number
+          strength?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          category?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          generic_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          manufacturer?: string | null
+          medicine_id?: string | null
+          medicine_name?: string
+          pharmacy_id?: string
+          quantity_in_stock?: number
+          reorder_level?: number | null
+          selling_price?: number
+          strength?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_inventory_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_inventory_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          medicine_name: string
+          order_id: string
+          quantity: number
+          total_cost: number | null
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medicine_name: string
+          order_id: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medicine_name?: string
+          order_id?: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_supplier_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string | null
+          medicine_name: string
+          quantity: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          medicine_name: string
+          quantity?: number
+          sale_id: string
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string | null
+          medicine_name?: string
+          quantity?: number
+          sale_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_sale_items_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_sales: {
+        Row: {
+          created_at: string
+          discount: number | null
+          id: string
+          net_amount: number
+          notes: string | null
+          patient_name: string | null
+          patient_phone: string | null
+          payment_method: string | null
+          payment_status: string | null
+          pharmacy_id: string
+          prescription_id: string | null
+          sold_by: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          discount?: number | null
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pharmacy_id: string
+          prescription_id?: string | null
+          sold_by?: string | null
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          discount?: number | null
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pharmacy_id?: string
+          prescription_id?: string | null
+          sold_by?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_sales_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_sales_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_supplier_orders: {
+        Row: {
+          created_at: string
+          expected_delivery: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          pharmacy_id: string
+          status: string | null
+          supplier_contact: string | null
+          supplier_name: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          pharmacy_id: string
+          status?: string | null
+          supplier_contact?: string | null
+          supplier_name: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          pharmacy_id?: string
+          status?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_supplier_orders_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
@@ -1650,7 +1966,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "patient" | "doctor" | "pa" | "admin"
+      app_role: "patient" | "doctor" | "pa" | "admin" | "pharmacy"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1778,7 +2094,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["patient", "doctor", "pa", "admin"],
+      app_role: ["patient", "doctor", "pa", "admin", "pharmacy"],
     },
   },
 } as const
