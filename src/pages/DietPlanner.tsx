@@ -210,11 +210,25 @@ export default function DietPlanner() {
     setActivePlanId(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("diet-planner", {
-        body: { age: parseInt(age), gender, height: parseFloat(height), weight: parseFloat(weight), goal, dietaryPreference, activityLevel, medicalConditions, allergies },
-      });
-
-      if (fnError) throw new Error(fnError.message);
+      const lovableProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const lovableAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(
+        `https://${lovableProjectId}.supabase.co/functions/v1/diet-planner`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": lovableAnonKey,
+            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || lovableAnonKey}`,
+          },
+          body: JSON.stringify({ age: parseInt(age), gender, height: parseFloat(height), weight: parseFloat(weight), goal, dietaryPreference, activityLevel, medicalConditions, allergies }),
+        }
+      );
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error || `Service error (${response.status})`);
+      }
+      const data = await response.json();
       if (data?.error) throw new Error(data.error);
 
       // Save to database
