@@ -39,6 +39,7 @@ import RiskEvaluator from "./pages/RiskEvaluator";
 import AIHealth from "./pages/AIHealth";
 import DietPlanner from "./pages/DietPlanner";
 import AIDietPlanner from "./pages/seo/AIDietPlanner";
+import PharmacyDashboard from "./pages/PharmacyDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
@@ -97,6 +98,7 @@ const App = () => (
                   <Route path="/diet-planner" element={<DietPlanner />} />
                   <Route path="/ai-diet-planner" element={<AIDietPlanner />} />
                   <Route path="/risk-evaluator" element={<RiskEvaluator />} />
+                  <Route path="/pharmacy" element={<PharmacyDashboard />} />
                   <Route path="/token/:appointmentId" element={<TokenPrint />} />
                   <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
                   <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />

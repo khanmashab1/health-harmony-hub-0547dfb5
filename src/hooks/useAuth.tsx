@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-type UserRole = "patient" | "doctor" | "pa" | "admin";
+type UserRole = "patient" | "doctor" | "pa" | "admin" | "pharmacy";
 
 interface Profile {
   id: string;
@@ -246,6 +246,7 @@ export function useRequireAuth(allowedRoles?: UserRole[]) {
           doctor: "/doctor",
           pa: "/pa",
           admin: "/admin",
+          pharmacy: "/pharmacy",
         };
         navigate(redirectMap[profile.role] || "/");
       }

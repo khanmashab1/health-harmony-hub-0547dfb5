@@ -31,6 +31,7 @@ import {
   CreditCard,
   Zap
 } from "lucide-react";
+import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -85,6 +86,7 @@ import { DoctorApplicationsPanel } from "@/components/admin/DoctorApplicationsPa
 import { PaymentPlansPanel } from "@/components/admin/PaymentPlansPanel";
 import { SubscriptionsPanel } from "@/components/admin/SubscriptionsPanel";
 import { AIPlansPanel } from "@/components/admin/AIPlansPanel";
+import { PharmacyManagementPanel } from "@/components/admin/PharmacyManagementPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -443,6 +445,11 @@ export default function AdminDashboard() {
                   <span className="hidden sm:inline">AI Plans</span>
                   <span className="sm:hidden">AI</span>
                 </TabsTrigger>
+                <TabsTrigger value="pharmacies" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Pharmacies</span>
+                  <span className="sm:hidden">Rx</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
@@ -455,6 +462,7 @@ export default function AdminDashboard() {
               <TabsContent value="plans"><PaymentPlansPanel /></TabsContent>
               <TabsContent value="subscriptions"><SubscriptionsPanel /></TabsContent>
               <TabsContent value="ai-plans"><AIPlansPanel /></TabsContent>
+              <TabsContent value="pharmacies"><PharmacyManagementPanel /></TabsContent>
 
               {/* Doctor Applications Tab */}
               <TabsContent value="applications">
