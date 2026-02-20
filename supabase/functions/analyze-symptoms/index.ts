@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/analyze";
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -151,79 +150,6 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
   };
 }
 
-// Fallback: Use Lovable AI (Gemini) when RAG agent is unavailable
-async function analyzeWithLovableAI(symptoms: string, age: number, gender: string, duration: string, severity: string, medicalHistory: string): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("AI fallback not configured");
-
-  const prompt = `You are a medical AI assistant. Analyze the following symptoms and provide a structured health assessment.
-
-Patient Information:
-- Symptoms: ${symptoms}
-- Age: ${age || 'Not specified'}
-- Gender: ${gender || 'Not specified'}
-- Duration: ${duration || 'Not specified'}
-- Severity: ${severity || 'moderate'}
-- Medical History: ${medicalHistory || 'None'}
-
-Provide your analysis in EXACTLY this format (use --- to separate conditions):
-
-Likely Condition: [Primary condition name]
-Confidence Level: [85-90]%
-Description: [Brief description of the condition]
-Risk Level: [low/moderate/high/critical]
-Advice to Treat:
-- [Actionable advice point 1]
-- [Actionable advice point 2]
-- [Actionable advice point 3]
-Recommendation: [Whether to see a doctor urgently or manage at home]
-
----
-
-Possible Consideration: [Second possible condition]
-Confidence Level: [85-88]%
-Description: [Brief description]
-Risk Level: [low/moderate/high/critical]
-Advice to Treat:
-- [Advice point 1]
-- [Advice point 2]
-Recommendation: [Recommendation]
-
----
-
-Possible Consideration: [Third possible condition]
-Confidence Level: [85-87]%
-Description: [Brief description]
-Risk Level: [low/moderate/high/critical]
-Advice to Treat:
-- [Advice point 1]
-Recommendation: [Recommendation]
-
-IMPORTANT: This is for informational purposes only and not a substitute for professional medical advice.`;
-
-  const response = await fetch(LOVABLE_AI_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
-      temperature: 0.3,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`AI fallback error: ${err}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -269,63 +195,50 @@ serve(async (req) => {
 
     const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
 
-    let analysisText = "";
-    let usedFallback = false;
+    console.log("Calling RAG agent:", allSymptoms);
 
-    // Try RAG agent first
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout
+
+    let response: Response;
     try {
-      console.log("Calling RAG agent:", allSymptoms);
+      response = await fetch(RAG_AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          symptoms: allSymptoms,
+          age: age ? parseInt(age) : 0,
+          gender: gender || "unknown",
+          duration: duration || "unknown",
+          severity: severity || "moderate",
+          medical_history: medicalHistory || null,
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout for RAG
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("RAG agent error:", response.status, errorText);
 
-      try {
-        const response = await fetch(RAG_AGENT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            symptoms: allSymptoms,
-            age: age ? parseInt(age) : 0,
-            gender: gender || "unknown",
-            duration: duration || "unknown",
-            severity: severity || "moderate",
-            medical_history: medicalHistory || null,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("RAG agent error:", response.status, errorText);
-          throw new Error(`RAG unavailable: ${response.status}`);
-        }
-
-        const data = await response.json();
-        analysisText = typeof data.analysis === 'string'
-          ? data.analysis
-          : (typeof data === 'string' ? data : JSON.stringify(data));
-      } finally {
-        clearTimeout(timeout);
-      }
-    } catch (ragError) {
-      // RAG failed — fallback to Lovable AI
-      console.log("RAG agent unavailable, using AI fallback:", ragError instanceof Error ? ragError.message : ragError);
-      usedFallback = true;
-      analysisText = await analyzeWithLovableAI(
-        allSymptoms,
-        age ? parseInt(age) : 0,
-        gender || "unknown",
-        duration || "unknown",
-        severity || "moderate",
-        medicalHistory || ""
+      // Return a user-friendly error (not a 500 crash) so the frontend can show a proper message
+      return new Response(
+        JSON.stringify({
+          error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes.",
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const data = await response.json();
+    const analysisText = typeof data.analysis === 'string' 
+      ? data.analysis 
+      : (typeof data === 'string' ? data : JSON.stringify(data));
+
     // Parse the raw text into structured data
-    const structured = parseAnalysisToStructured(analysisText);
-    if (usedFallback) {
-      console.log("Analysis completed via AI fallback");
-    }
+    const structured = parseAnalysisToStructured(analysisText, data.confidence_score);
 
     // Save submission
     if (userId !== "anonymous") {
@@ -356,8 +269,9 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error("Error:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred";
+    // Always return a proper JSON response, never crash with a blank screen
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      status: 503,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
