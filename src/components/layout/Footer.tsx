@@ -152,6 +152,11 @@ export function Footer() {
                   {t("footer.patientReviews")}
                 </Link>
               </li>
+              <li>
+                <Link to="/ai-diet-planner" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
+                  AI Diet Planner
+                </Link>
+              </li>
             </ul>
           </div>
 
