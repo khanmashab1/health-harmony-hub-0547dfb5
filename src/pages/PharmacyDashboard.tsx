@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import {
   Package, Search, Plus, Pill, ShoppingCart, TrendingUp, AlertTriangle,
   BarChart3, DollarSign, QrCode, Truck, LogOut, Check, X, Pencil, Trash2,
-  Eye, FileText, ArrowUpDown, ChevronDown
+  Eye, FileText, ArrowUpDown, ChevronDown, Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { parseMedicines } from "@/components/shared/MedicinesList";
+import { QrScannerDialog } from "@/components/pharmacy/QrScannerDialog";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell, LineChart, Line
@@ -427,13 +428,14 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
   const [appointmentId, setAppointmentId] = useState("");
   const [prescription, setPrescription] = useState<any>(null);
   const [loadingRx, setLoadingRx] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
-  const lookupPrescription = async () => {
-    if (!appointmentId.trim()) return;
+  const lookupById = async (id: string) => {
+    if (!id.trim()) return;
     setLoadingRx(true);
     try {
       const { data, error } = await supabase.rpc("get_prescription_verification", {
-        p_appointment_id: appointmentId.trim(),
+        p_appointment_id: id.trim(),
       });
       if (error) throw error;
       setPrescription(data);
@@ -444,6 +446,13 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
       setLoadingRx(false);
     }
   };
+
+  const lookupPrescription = () => lookupById(appointmentId);
+
+  const handleScanResult = useCallback((scannedId: string) => {
+    setAppointmentId(scannedId);
+    lookupById(scannedId);
+  }, []);
 
   const createSaleFromPrescription = useMutation({
     mutationFn: async () => {
@@ -491,7 +500,7 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
     <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
       <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10">
         <CardTitle className="flex items-center gap-2"><QrCode className="w-5 h-5 text-blue-600" />Scan Prescription</CardTitle>
-        <CardDescription>Enter the prescription/appointment ID from the QR code</CardDescription>
+        <CardDescription>Scan QR code or enter appointment ID to look up prescriptions</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
         <div className="flex gap-3 mb-6">
@@ -502,10 +511,20 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
             onKeyDown={(e) => e.key === "Enter" && lookupPrescription()}
             className="flex-1"
           />
+          <Button variant="outline" onClick={() => setScannerOpen(true)} className="gap-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30">
+            <Camera className="w-4 h-4" />
+            <span className="hidden sm:inline">Scan</span>
+          </Button>
           <Button onClick={lookupPrescription} disabled={loadingRx} className="bg-blue-600 hover:bg-blue-700">
             {loadingRx ? "Looking up..." : "Look Up"}
           </Button>
         </div>
+
+        <QrScannerDialog
+          open={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onScan={handleScanResult}
+        />
 
         {prescription && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
