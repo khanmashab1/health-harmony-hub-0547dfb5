@@ -42,7 +42,7 @@ import AIDietPlanner from "./pages/seo/AIDietPlanner";
 import PharmacyDashboard from "./pages/PharmacyDashboard";
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1 } },
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 });
 
 function PasswordChangeWrapper({ children }: { children: React.ReactNode }) {
