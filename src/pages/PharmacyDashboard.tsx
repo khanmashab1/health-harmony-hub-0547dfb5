@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import {
   Package, Search, Plus, Pill, ShoppingCart, TrendingUp, AlertTriangle,
   BarChart3, DollarSign, QrCode, Truck, LogOut, Check, X, Pencil, Trash2,
-  Eye, FileText, ArrowUpDown, ChevronDown, Camera
+  Eye, FileText, ArrowUpDown, ChevronDown, Camera, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { parseMedicines } from "@/components/shared/MedicinesList";
 import { QrScannerDialog } from "@/components/pharmacy/QrScannerDialog";
+import { ThermalReceipt } from "@/components/pharmacy/ThermalReceipt";
+import type { ReceiptItem } from "@/components/pharmacy/ThermalReceipt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell, LineChart, Line
@@ -134,7 +136,7 @@ export default function PharmacyDashboard() {
                 <ScanPrescriptionPanel pharmacyId={pharmacy.id} />
               </TabsContent>
               <TabsContent value="sales">
-                <SalesPanel pharmacyId={pharmacy.id} />
+                <SalesPanel pharmacyId={pharmacy.id} pharmacyName={pharmacy.name} pharmacyAddress={pharmacy.address} pharmacyPhone={pharmacy.phone} />
               </TabsContent>
               <TabsContent value="orders">
                 <SupplierOrdersPanel pharmacyId={pharmacy.id} />
@@ -592,7 +594,7 @@ function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
 }
 
 // ─── Sales Panel (POS Style) ────────────────────────────────
-function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
+function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }: { pharmacyId: string; pharmacyName: string; pharmacyAddress?: string | null; pharmacyPhone?: string | null }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -602,6 +604,8 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [discount, setDiscount] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [lastSale, setLastSale] = useState<{ items: ReceiptItem[]; subtotal: number; discount: number; total: number; paymentMethod: string; customerName: string; customerPhone: string; date: Date; receiptNo: string } | null>(null);
 
   // Fetch inventory for product search
   const { data: inventory } = useQuery({
@@ -696,6 +700,16 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
       }
     },
     onSuccess: () => {
+      // Save receipt data before clearing cart
+      const receiptNo = `RX-${Date.now().toString(36).toUpperCase()}`;
+      setLastSale({
+        items: cart.map(i => ({ medicine_name: i.medicine_name, quantity: i.quantity, unit_price: i.unit_price })),
+        subtotal, discount, total, paymentMethod,
+        customerName, customerPhone,
+        date: new Date(),
+        receiptNo,
+      });
+
       queryClient.invalidateQueries({ queryKey: ["pharmacy-sales"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-stats"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-inventory"] });
@@ -705,6 +719,9 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
       setCustomerPhone("");
       setDiscount(0);
       setSearchTerm("");
+
+      // Auto-print receipt
+      setTimeout(() => window.print(), 300);
     },
     onError: (err: any) => toast({ variant: "destructive", title: "Sale failed", description: err.message }),
   });
@@ -722,10 +739,18 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
             <p className="text-sm text-muted-foreground">Search medicines, add to cart & checkout</p>
           </div>
         </div>
-        <Button variant={showHistory ? "default" : "outline"} onClick={() => setShowHistory(!showHistory)} className="gap-2">
-          <FileText className="w-4 h-4" />
-          {showHistory ? "Back to POS" : "Sales History"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {lastSale && (
+            <Button variant="outline" onClick={() => window.print()} className="gap-2">
+              <Printer className="w-4 h-4" />
+              Reprint
+            </Button>
+          )}
+          <Button variant={showHistory ? "default" : "outline"} onClick={() => setShowHistory(!showHistory)} className="gap-2">
+            <FileText className="w-4 h-4" />
+            {showHistory ? "Back to POS" : "Sales History"}
+          </Button>
+        </div>
       </div>
 
       {showHistory ? (
@@ -969,6 +994,25 @@ function SalesPanel({ pharmacyId }: { pharmacyId: string }) {
             </Card>
           </div>
         </div>
+      )}
+
+      {/* Thermal Receipt (hidden, only shows on print) */}
+      {lastSale && (
+        <ThermalReceipt
+          ref={receiptRef}
+          pharmacyName={pharmacyName}
+          pharmacyAddress={pharmacyAddress || undefined}
+          pharmacyPhone={pharmacyPhone || undefined}
+          customerName={lastSale.customerName || undefined}
+          customerPhone={lastSale.customerPhone || undefined}
+          items={lastSale.items}
+          subtotal={lastSale.subtotal}
+          discount={lastSale.discount}
+          total={lastSale.total}
+          paymentMethod={lastSale.paymentMethod}
+          saleDate={lastSale.date}
+          receiptNo={lastSale.receiptNo}
+        />
       )}
     </div>
   );
