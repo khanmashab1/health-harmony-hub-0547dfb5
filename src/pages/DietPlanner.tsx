@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { generateDietPlanPDF } from "@/lib/dietPlanPdfGenerator";
+import { generateDietPlan } from "@/lib/dietPlanGenerator";
 import { format } from "date-fns";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -199,23 +200,18 @@ export default function DietPlanner() {
     setActivePlanId(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("generate-diet-plan", {
-        body: {
-          age: parseInt(age),
-          gender,
-          height: parseFloat(height),
-          weight: parseFloat(weight),
-          goal,
-          activityLevel,
-          allergies,
-        },
+      const data = await generateDietPlan({
+        age: parseInt(age),
+        gender,
+        height: parseFloat(height),
+        weight: parseFloat(weight),
+        goal,
+        activityLevel,
+        allergies,
+        userId: user.id,
       });
 
-      if (fnError) throw new Error(fnError.message);
-      if (data?.error) throw new Error(data.error);
-
-      const planId = data.planId;
-      if (planId) setActivePlanId(planId);
+      if (data.planId) setActivePlanId(data.planId);
 
       setPlan(data);
       setViewMode("plan");
