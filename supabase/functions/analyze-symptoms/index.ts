@@ -203,23 +203,37 @@ serve(async (req) => {
 
     console.log("Calling RAG agent:", allSymptoms);
 
-    const response = await fetch(RAG_AGENT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        symptoms: allSymptoms,
-        age: age ? parseInt(age) : 0,
-        gender: gender || "unknown",
-        duration: duration || "unknown",
-        severity: severity || "moderate",
-        medical_history: medicalHistory || null,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout
+
+    let response: Response;
+    try {
+      response = await fetch(RAG_AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          symptoms: allSymptoms,
+          age: age ? parseInt(age) : 0,
+          gender: gender || "unknown",
+          duration: duration || "unknown",
+          severity: severity || "moderate",
+          medical_history: medicalHistory || null,
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("RAG agent error:", response.status, errorText);
-      throw new Error(`RAG agent error: ${response.status}`);
+      let ragMessage = `The AI analysis service is temporarily unavailable (error ${response.status}). Please try again in a few minutes.`;
+      try {
+        const parsed = JSON.parse(errorText);
+        ragMessage = parsed.detail || parsed.error || parsed.message || ragMessage;
+      } catch {}
+      throw new Error(ragMessage);
     }
 
     const data = await response.json();
