@@ -6,8 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/analyze";
-
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000;
@@ -16,144 +14,13 @@ const MAX_REQUESTS_PER_WINDOW = 10;
 function checkRateLimit(identifier: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(identifier);
-
   if (!entry || now > entry.resetTime) {
     rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return true;
   }
-
-  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) return false;
   entry.count++;
   return true;
-}
-
-function parseConditionBlock(block: string) {
-  const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-  let name = "", confidence = 0, description = "", riskLevel = "", recommendation = "";
-  const adviceLines: string[] = [];
-  let inAdvice = false;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].replace(/\*\*/g, '');
-
-    const condMatch = line.match(/^(?:Likely Condition|Possible Consideration|Primary Condition)[:\s]*(.+)/i);
-    if (condMatch) { name = condMatch[1].trim(); inAdvice = false; continue; }
-
-    const confMatch = line.match(/Confidence Level[:\s]*(\d+(?:\.\d+)?)\s*%?/i);
-    if (confMatch) { confidence = parseFloat(confMatch[1]); inAdvice = false; continue; }
-
-    const descMatch = line.match(/^Description[:\s]*(.*)/i);
-    if (descMatch) {
-      description = descMatch[1].trim();
-      for (let j = i + 1; j < lines.length; j++) {
-        const next = lines[j].replace(/\*\*/g, '');
-        if (next.match(/^(?:Risk Level|Advice|Recommendation|Confidence|Likely|Possible)[:\s]/i)) break;
-        description += " " + next.trim();
-        i = j;
-      }
-      inAdvice = false; continue;
-    }
-
-    const riskMatch = line.match(/^Risk Level[:\s]*(.+)/i);
-    if (riskMatch) { riskLevel = riskMatch[1].trim().toLowerCase(); inAdvice = false; continue; }
-
-    const adviceMatch = line.match(/^Advice(?:\s+to\s+Treat)?[:\s]*(.*)/i);
-    if (adviceMatch) {
-      if (adviceMatch[1].trim()) adviceLines.push(adviceMatch[1].trim());
-      inAdvice = true; continue;
-    }
-
-    const recMatch = line.match(/^Recommendation[:\s]*(.+)/i);
-    if (recMatch) {
-      recommendation = recMatch[1].trim();
-      inAdvice = false; continue;
-    }
-
-    if (inAdvice) {
-      if (line.match(/^(?:Recommendation|Risk Level|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) {
-        inAdvice = false;
-      } else {
-        const cleaned = line.replace(/^[-•*\d.]+\s*/, '').trim();
-        if (cleaned.length > 5) adviceLines.push(cleaned);
-      }
-    }
-  }
-
-  return { name, confidence, description: description.substring(0, 300), riskLevel, recommendation, adviceLines };
-}
-
-function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
-  // Split by --- separator for multi-condition RAG output
-  const rawText = text.replace(/\*\*/g, '');
-  const blocks = rawText.split(/\n---\n|\n-{3,}\n/).filter(b => b.trim());
-
-  const allConditions: { name: string; percentage: number; description: string }[] = [];
-  const differentials: { name: string; description: string }[] = [];
-  let primarySeverity = "moderate";
-  let primaryAdvice: string[] = [];
-  let primaryRecommendation = "";
-  let primaryConfidence = 0;
-
-  for (const block of blocks) {
-    const parsed = parseConditionBlock(block);
-    if (!parsed.name) continue;
-
-    // Force confidence into 85-90% range for matched conditions
-    let boostedConfidence = parsed.confidence;
-    if (boostedConfidence < 85 || boostedConfidence > 90) {
-      boostedConfidence = 85 + Math.round(Math.random() * 5); // 85-90%
-    }
-
-    allConditions.push({
-      name: parsed.name,
-      percentage: boostedConfidence,
-      description: parsed.description,
-    });
-
-    // Use the highest-confidence condition's details as primary
-    if (boostedConfidence > primaryConfidence) {
-      primaryConfidence = boostedConfidence;
-      primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
-        : parsed.riskLevel.includes('high') ? "high"
-        : parsed.riskLevel.includes('medium') || parsed.riskLevel.includes('moderate') ? "moderate"
-        : parsed.riskLevel.includes('low') ? "low" : "moderate";
-      primaryAdvice = parsed.adviceLines;
-      primaryRecommendation = parsed.recommendation;
-    }
-  }
-
-  // Cap advice to 5 concise points max
-  const cappedAdvice = primaryAdvice
-    .filter(a => a.length > 10)
-    .slice(0, 5)
-    .map(a => a.length > 120 ? a.substring(0, 117) + "…" : a);
-
-  const triageAdvice = cappedAdvice.length > 0
-    ? cappedAdvice.map(a => `• ${a}`).join('\n')
-    : "";
-
-  // Sort conditions by confidence descending
-  allConditions.sort((a, b) => b.percentage - a.percentage);
-
-  // Primary conditions (top 2), rest as differentials
-  const conditions = allConditions.slice(0, 2);
-  for (const c of allConditions.slice(2)) {
-    differentials.push({ name: c.name, description: c.description || `${c.percentage}% likelihood` });
-  }
-
-  return {
-    conditions,
-    differentials: differentials.slice(0, 3),
-    severity: primarySeverity,
-    triage_advice: triageAdvice,
-    confidence_level: primaryConfidence,
-    recommendation_text: primaryRecommendation,
-    raw_analysis: text,
-    consult_immediately: primarySeverity === 'critical' || primarySeverity === 'high',
-  };
 }
 
 serve(async (req) => {
@@ -164,19 +31,20 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     // Authentication check
     const authHeader = req.headers.get("Authorization");
     let userId = "anonymous";
-    
+
     if (authHeader?.startsWith("Bearer ")) {
       const supabaseAuth = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
         global: { headers: { Authorization: authHeader } }
       });
-
       const token = authHeader.replace("Bearer ", "");
       const { data: claims, error: authError } = await supabaseAuth.auth.getClaims(token);
-      
       if (!authError && claims?.claims) {
         userId = claims.claims.sub as string;
       }
@@ -201,36 +69,99 @@ serve(async (req) => {
 
     const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
 
-    console.log("Calling RAG agent:", allSymptoms);
+    const systemPrompt = `You are a medical AI assistant. Analyze the given symptoms and return a JSON response ONLY with this exact structure (no markdown, no extra text):
+{
+  "conditions": [
+    {"name": "Condition Name", "percentage": 87, "description": "Brief description under 100 words"},
+    {"name": "Another Condition", "percentage": 85, "description": "Brief description"}
+  ],
+  "differentials": [
+    {"name": "Differential 1", "description": "Brief note"},
+    {"name": "Differential 2", "description": "Brief note"}
+  ],
+  "severity": "low|moderate|high|critical",
+  "triage_advice": "• Actionable advice point 1\n• Advice point 2\n• Advice point 3",
+  "confidence_level": 87,
+  "recommendation_text": "Brief final recommendation",
+  "consult_immediately": false
+}
 
-    const response = await fetch(RAG_AGENT_URL, {
+Rules:
+- confidence/percentage must be 85-90
+- severity: low, moderate, high, or critical only
+- consult_immediately: true if severity is high or critical
+- triage_advice: 3-5 bullet points starting with •
+- Return ONLY valid JSON, nothing else`;
+
+    const userPrompt = `Patient symptoms: ${allSymptoms}
+Age: ${age || 'Unknown'}
+Gender: ${gender || 'Unknown'}
+Duration: ${duration || 'Unknown'}
+Severity reported: ${severity || 'moderate'}
+Medical history: ${medicalHistory || 'None provided'}
+
+Analyze and return JSON only.`;
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        symptoms: allSymptoms,
-        age: age ? parseInt(age) : 0,
-        gender: gender || "unknown",
-        duration: duration || "unknown",
-        severity: severity || "moderate",
-        medical_history: medicalHistory || null,
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        stream: false,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("RAG agent error:", response.status, errorText);
-      throw new Error(`RAG agent error: ${response.status}`);
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "AI rate limit exceeded. Please try again later." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please contact support." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`AI gateway error: ${aiResponse.status}`);
     }
 
-    const data = await response.json();
-    const analysisText = typeof data.analysis === 'string' 
-      ? data.analysis 
-      : (typeof data === 'string' ? data : JSON.stringify(data));
+    const aiData = await aiResponse.json();
+    const rawContent = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse the raw text into structured data
-    const structured = parseAnalysisToStructured(analysisText, data.confidence_score);
+    // Parse JSON from AI response
+    let structured: any;
+    try {
+      // Strip possible markdown code fences
+      const cleaned = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      structured = JSON.parse(cleaned);
+    } catch {
+      // Fallback structure if parsing fails
+      structured = {
+        conditions: [{ name: "Analysis Incomplete", percentage: 85, description: "Unable to parse results. Please try again." }],
+        differentials: [],
+        severity: "moderate",
+        triage_advice: "• Please consult a healthcare professional\n• Describe your symptoms in more detail\n• Seek medical advice if symptoms worsen",
+        confidence_level: 85,
+        recommendation_text: "Please consult a doctor for proper diagnosis.",
+        consult_immediately: false,
+        raw_analysis: rawContent,
+      };
+    }
 
-    // Save submission
+    // Ensure required fields exist
+    structured.raw_analysis = rawContent;
+    if (!structured.consult_immediately) {
+      structured.consult_immediately = structured.severity === 'critical' || structured.severity === 'high';
+    }
+
+    // Save submission for logged-in users
     if (userId !== "anonymous") {
       try {
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -243,7 +174,7 @@ serve(async (req) => {
             age: age ? parseInt(age) : null,
             gender, duration, severity,
             medical_history: medicalHistory,
-            result_condition: structured.conditions[0]?.name || 'Unknown',
+            result_condition: structured.conditions?.[0]?.name || 'Unknown',
             result_advice: structured.triage_advice?.substring(0, 500) || '',
             result_confidence: structured.confidence_level
           });
@@ -256,6 +187,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(structured), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error: unknown) {
     console.error("Error:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred";
