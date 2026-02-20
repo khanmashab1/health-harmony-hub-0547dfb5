@@ -1440,6 +1440,60 @@ export type Database = {
           },
         ]
       }
+      pharmacy_stock_logs: {
+        Row: {
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          inventory_id: string
+          new_quantity: number
+          notes: string | null
+          pharmacy_id: string
+          previous_quantity: number
+          quantity_changed: number
+        }
+        Insert: {
+          change_type: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          inventory_id: string
+          new_quantity: number
+          notes?: string | null
+          pharmacy_id: string
+          previous_quantity: number
+          quantity_changed: number
+        }
+        Update: {
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          inventory_id?: string
+          new_quantity?: number
+          notes?: string | null
+          pharmacy_id?: string
+          previous_quantity?: number
+          quantity_changed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_stock_logs_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_stock_logs_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pharmacy_supplier_orders: {
         Row: {
           created_at: string
