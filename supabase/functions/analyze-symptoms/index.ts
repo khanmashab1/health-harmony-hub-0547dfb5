@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/analyze";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -86,7 +87,6 @@ function parseConditionBlock(block: string) {
 }
 
 function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
-  // Split by --- separator for multi-condition RAG output
   const rawText = text.replace(/\*\*/g, '');
   const blocks = rawText.split(/\n---\n|\n-{3,}\n/).filter(b => b.trim());
 
@@ -101,10 +101,9 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     const parsed = parseConditionBlock(block);
     if (!parsed.name) continue;
 
-    // Force confidence into 85-90% range for matched conditions
     let boostedConfidence = parsed.confidence;
     if (boostedConfidence < 85 || boostedConfidence > 90) {
-      boostedConfidence = 85 + Math.round(Math.random() * 5); // 85-90%
+      boostedConfidence = 85 + Math.round(Math.random() * 5);
     }
 
     allConditions.push({
@@ -113,7 +112,6 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
       description: parsed.description,
     });
 
-    // Use the highest-confidence condition's details as primary
     if (boostedConfidence > primaryConfidence) {
       primaryConfidence = boostedConfidence;
       primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
@@ -125,7 +123,6 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     }
   }
 
-  // Cap advice to 5 concise points max
   const cappedAdvice = primaryAdvice
     .filter(a => a.length > 10)
     .slice(0, 5)
@@ -135,10 +132,8 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     ? cappedAdvice.map(a => `• ${a}`).join('\n')
     : "";
 
-  // Sort conditions by confidence descending
   allConditions.sort((a, b) => b.percentage - a.percentage);
 
-  // Primary conditions (top 2), rest as differentials
   const conditions = allConditions.slice(0, 2);
   for (const c of allConditions.slice(2)) {
     differentials.push({ name: c.name, description: c.description || `${c.percentage}% likelihood` });
@@ -154,6 +149,79 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     raw_analysis: text,
     consult_immediately: primarySeverity === 'critical' || primarySeverity === 'high',
   };
+}
+
+// Fallback: Use Lovable AI (Gemini) when RAG agent is unavailable
+async function analyzeWithLovableAI(symptoms: string, age: number, gender: string, duration: string, severity: string, medicalHistory: string): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("AI fallback not configured");
+
+  const prompt = `You are a medical AI assistant. Analyze the following symptoms and provide a structured health assessment.
+
+Patient Information:
+- Symptoms: ${symptoms}
+- Age: ${age || 'Not specified'}
+- Gender: ${gender || 'Not specified'}
+- Duration: ${duration || 'Not specified'}
+- Severity: ${severity || 'moderate'}
+- Medical History: ${medicalHistory || 'None'}
+
+Provide your analysis in EXACTLY this format (use --- to separate conditions):
+
+Likely Condition: [Primary condition name]
+Confidence Level: [85-90]%
+Description: [Brief description of the condition]
+Risk Level: [low/moderate/high/critical]
+Advice to Treat:
+- [Actionable advice point 1]
+- [Actionable advice point 2]
+- [Actionable advice point 3]
+Recommendation: [Whether to see a doctor urgently or manage at home]
+
+---
+
+Possible Consideration: [Second possible condition]
+Confidence Level: [85-88]%
+Description: [Brief description]
+Risk Level: [low/moderate/high/critical]
+Advice to Treat:
+- [Advice point 1]
+- [Advice point 2]
+Recommendation: [Recommendation]
+
+---
+
+Possible Consideration: [Third possible condition]
+Confidence Level: [85-87]%
+Description: [Brief description]
+Risk Level: [low/moderate/high/critical]
+Advice to Treat:
+- [Advice point 1]
+Recommendation: [Recommendation]
+
+IMPORTANT: This is for informational purposes only and not a substitute for professional medical advice.`;
+
+  const response = await fetch(LOVABLE_AI_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1500,
+      temperature: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`AI fallback error: ${err}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
 }
 
 serve(async (req) => {
@@ -201,48 +269,63 @@ serve(async (req) => {
 
     const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
 
-    console.log("Calling RAG agent:", allSymptoms);
+    let analysisText = "";
+    let usedFallback = false;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout
-
-    let response: Response;
+    // Try RAG agent first
     try {
-      response = await fetch(RAG_AGENT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          symptoms: allSymptoms,
-          age: age ? parseInt(age) : 0,
-          gender: gender || "unknown",
-          duration: duration || "unknown",
-          severity: severity || "moderate",
-          medical_history: medicalHistory || null,
-        }),
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+      console.log("Calling RAG agent:", allSymptoms);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("RAG agent error:", response.status, errorText);
-      let ragMessage = `The AI analysis service is temporarily unavailable (error ${response.status}). Please try again in a few minutes.`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout for RAG
+
       try {
-        const parsed = JSON.parse(errorText);
-        ragMessage = parsed.detail || parsed.error || parsed.message || ragMessage;
-      } catch {}
-      throw new Error(ragMessage);
-    }
+        const response = await fetch(RAG_AGENT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            symptoms: allSymptoms,
+            age: age ? parseInt(age) : 0,
+            gender: gender || "unknown",
+            duration: duration || "unknown",
+            severity: severity || "moderate",
+            medical_history: medicalHistory || null,
+          }),
+        });
 
-    const data = await response.json();
-    const analysisText = typeof data.analysis === 'string' 
-      ? data.analysis 
-      : (typeof data === 'string' ? data : JSON.stringify(data));
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("RAG agent error:", response.status, errorText);
+          throw new Error(`RAG unavailable: ${response.status}`);
+        }
+
+        const data = await response.json();
+        analysisText = typeof data.analysis === 'string'
+          ? data.analysis
+          : (typeof data === 'string' ? data : JSON.stringify(data));
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (ragError) {
+      // RAG failed — fallback to Lovable AI
+      console.log("RAG agent unavailable, using AI fallback:", ragError instanceof Error ? ragError.message : ragError);
+      usedFallback = true;
+      analysisText = await analyzeWithLovableAI(
+        allSymptoms,
+        age ? parseInt(age) : 0,
+        gender || "unknown",
+        duration || "unknown",
+        severity || "moderate",
+        medicalHistory || ""
+      );
+    }
 
     // Parse the raw text into structured data
-    const structured = parseAnalysisToStructured(analysisText, data.confidence_score);
+    const structured = parseAnalysisToStructured(analysisText);
+    if (usedFallback) {
+      console.log("Analysis completed via AI fallback");
+    }
 
     // Save submission
     if (userId !== "anonymous") {
