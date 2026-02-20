@@ -295,7 +295,12 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
           <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
 
-        {isLoading ? (
+        {!search.trim() ? (
+          <div className="text-center py-12">
+            <Search className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground">Type to search medicines in your inventory</p>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-3">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12" />)}</div>
         ) : inventory && inventory.length > 0 ? (
           <div className="rounded-lg border border-border/50 overflow-hidden">
@@ -343,10 +348,9 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
             </Table>
           </div>
         ) : (
-          <div className="text-center py-16">
-            <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">No medicines in inventory</p>
-            <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="w-4 h-4 mr-2" />Add First Medicine</Button>
+          <div className="text-center py-12">
+            <Package className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground">No medicines found for "{search}"</p>
           </div>
         )}
       </CardContent>
