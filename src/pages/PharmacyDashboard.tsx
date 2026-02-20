@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import {
   Package, Search, Plus, Pill, ShoppingCart, TrendingUp, AlertTriangle,
-  BarChart3, DollarSign, QrCode, Truck, LogOut, Check, X, Pencil, Trash2,
-  Eye, FileText, ArrowUpDown, ChevronDown, Camera, Printer
+  BarChart3, DollarSign, Truck, LogOut, Check, X, Pencil, Trash2,
+  Eye, FileText, ArrowUpDown, ChevronDown, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-import { parseMedicines } from "@/components/shared/MedicinesList";
-import { QrScannerDialog } from "@/components/pharmacy/QrScannerDialog";
+
+
 import { ThermalReceipt } from "@/components/pharmacy/ThermalReceipt";
 import type { ReceiptItem } from "@/components/pharmacy/ThermalReceipt";
 import {
@@ -115,9 +115,6 @@ export default function PharmacyDashboard() {
                 <TabsTrigger value="inventory" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Package className="w-4 h-4 mr-1" />Inventory
                 </TabsTrigger>
-                <TabsTrigger value="scan" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <QrCode className="w-4 h-4 mr-1" />Scan Rx
-                </TabsTrigger>
                 <TabsTrigger value="sales" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <ShoppingCart className="w-4 h-4 mr-1" />Sales
                 </TabsTrigger>
@@ -131,9 +128,6 @@ export default function PharmacyDashboard() {
 
               <TabsContent value="inventory">
                 <InventoryPanel pharmacyId={pharmacy.id} />
-              </TabsContent>
-              <TabsContent value="scan">
-                <ScanPrescriptionPanel pharmacyId={pharmacy.id} />
               </TabsContent>
               <TabsContent value="sales">
                 <SalesPanel pharmacyId={pharmacy.id} pharmacyName={pharmacy.name} pharmacyAddress={pharmacy.address} pharmacyPhone={pharmacy.phone} />
@@ -427,171 +421,7 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
   );
 }
 
-// ─── Scan Prescription Panel ────────────────────────────────
-function ScanPrescriptionPanel({ pharmacyId }: { pharmacyId: string }) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [appointmentId, setAppointmentId] = useState("");
-  const [prescription, setPrescription] = useState<any>(null);
-  const [loadingRx, setLoadingRx] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
 
-  const lookupById = async (id: string) => {
-    if (!id.trim()) return;
-    setLoadingRx(true);
-    try {
-      const { data, error } = await supabase.rpc("get_prescription_verification", {
-        p_appointment_id: id.trim(),
-      });
-      if (error) throw error;
-      setPrescription(data);
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Prescription not found", description: err.message });
-      setPrescription(null);
-    } finally {
-      setLoadingRx(false);
-    }
-  };
-
-  const lookupPrescription = () => lookupById(appointmentId);
-
-  const handleScanResult = useCallback((scannedId: string) => {
-    setAppointmentId(scannedId);
-    lookupById(scannedId);
-  }, []);
-
-  const createSaleFromPrescription = useMutation({
-    mutationFn: async () => {
-      if (!prescription) return;
-      const medicines = parseMedicines(prescription.medicines);
-      const totalAmount = medicines.length * 100; // placeholder - you'd calculate from inventory prices
-
-      const { data: sale, error: saleError } = await supabase.from("pharmacy_sales").insert({
-        pharmacy_id: pharmacyId,
-        prescription_id: prescription.id,
-        patient_name: prescription.patient_full_name,
-        patient_phone: prescription.patient_phone,
-        total_amount: totalAmount,
-        net_amount: totalAmount,
-        payment_method: "Cash",
-        payment_status: "Paid",
-        sold_by: (await supabase.auth.getUser()).data.user?.id,
-      }).select().single();
-      if (saleError) throw saleError;
-
-      // Add sale items
-      if (medicines.length > 0) {
-        const items = medicines.map(m => ({
-          sale_id: sale.id,
-          medicine_name: m.name,
-          quantity: 1,
-          unit_price: 100,
-          total_price: 100,
-        }));
-        const { error: itemsError } = await supabase.from("pharmacy_sale_items").insert(items);
-        if (itemsError) throw itemsError;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pharmacy-sales"] });
-      queryClient.invalidateQueries({ queryKey: ["pharmacy-stats"] });
-      toast({ title: "Sale created from prescription" });
-      setPrescription(null);
-      setAppointmentId("");
-    },
-    onError: (err: any) => toast({ variant: "destructive", title: "Error creating sale", description: err.message }),
-  });
-
-  return (
-    <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
-      <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10">
-        <CardTitle className="flex items-center gap-2"><QrCode className="w-5 h-5 text-blue-600" />Scan Prescription</CardTitle>
-        <CardDescription>Scan QR code or enter appointment ID to look up prescriptions</CardDescription>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="flex gap-3 mb-6">
-          <Input
-            placeholder="Enter Appointment ID from QR code..."
-            value={appointmentId}
-            onChange={(e) => setAppointmentId(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && lookupPrescription()}
-            className="flex-1"
-          />
-          <Button variant="outline" onClick={() => setScannerOpen(true)} className="gap-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30">
-            <Camera className="w-4 h-4" />
-            <span className="hidden sm:inline">Scan</span>
-          </Button>
-          <Button onClick={lookupPrescription} disabled={loadingRx} className="bg-blue-600 hover:bg-blue-700">
-            {loadingRx ? "Looking up..." : "Look Up"}
-          </Button>
-        </div>
-
-        <QrScannerDialog
-          open={scannerOpen}
-          onClose={() => setScannerOpen(false)}
-          onScan={handleScanResult}
-        />
-
-        {prescription && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Patient</p>
-                    <p className="font-medium">{prescription.patient_full_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Doctor</p>
-                    <p className="font-medium">{prescription.doctor_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Date</p>
-                    <p className="font-medium">{prescription.appointment_date}</p>
-                  </div>
-                  {prescription.diagnosis && (
-                    <div className="col-span-2">
-                      <p className="text-xs text-muted-foreground">Diagnosis</p>
-                      <p className="font-medium">{prescription.diagnosis}</p>
-                    </div>
-                  )}
-                </div>
-
-                <h4 className="font-semibold mb-2 flex items-center gap-2"><Pill className="w-4 h-4" />Prescribed Medicines</h4>
-                {(() => {
-                  const meds = parseMedicines(prescription.medicines);
-                  if (meds.length === 0) return <p className="text-muted-foreground text-sm">{prescription.medicines || "No medicines prescribed"}</p>;
-                  return (
-                    <div className="space-y-2">
-                      {meds.map((med, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-background border border-border/50">
-                          <p className="font-medium">{med.name}</p>
-                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
-                            {med.dosage && <span>Dosage: {med.dosage}</span>}
-                            {med.frequency && <span>Freq: {med.frequency}</span>}
-                            {med.duration && <span>Duration: {med.duration}</span>}
-                          </div>
-                          {med.instructions && <p className="text-xs text-muted-foreground mt-1 italic">{med.instructions}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800">
-                  <Button onClick={() => createSaleFromPrescription.mutate()} disabled={createSaleFromPrescription.isPending} className="bg-emerald-600 hover:bg-emerald-700">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    {createSaleFromPrescription.isPending ? "Processing..." : "Fulfill & Create Sale"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 // ─── Sales Panel (POS Style) ────────────────────────────────
 function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }: { pharmacyId: string; pharmacyName: string; pharmacyAddress?: string | null; pharmacyPhone?: string | null }) {
