@@ -1,11 +1,11 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format, subDays, addDays, isBefore, isAfter } from "date-fns";
 import {
   Package, Search, Plus, Pill, ShoppingCart, TrendingUp, AlertTriangle,
   BarChart3, DollarSign, Truck, LogOut, Check, X, Pencil, Trash2,
   Eye, FileText, ArrowUpDown, ChevronDown, Printer, Clock, History,
-  ShieldAlert, Activity
+  ShieldAlert, Activity, Maximize, Minimize, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,10 +54,13 @@ export default function PharmacyDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Determine if user is pharmacy owner or cashier
   const { data: pharmacy } = useQuery({
     queryKey: ["my-pharmacy", user?.id],
     queryFn: async () => {
+      // First check if user is a pharmacy owner
       const { data, error } = await supabase
         .from("pharmacies")
         .select("*")
@@ -68,6 +71,42 @@ export default function PharmacyDashboard() {
     },
     enabled: !!user,
   });
+
+  // Check if user is a cashier (if not an owner)
+  const { data: cashierRecord } = useQuery({
+    queryKey: ["my-cashier-record", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pharmacy_cashiers")
+        .select("*, pharmacies(*)")
+        .eq("user_id", user!.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !pharmacy,
+  });
+
+  const isOwner = !!pharmacy;
+  const isCashier = !isOwner && !!cashierRecord;
+  const activePharmacy = pharmacy || (cashierRecord as any)?.pharmacies;
+  const pharmacyId = activePharmacy?.id;
+
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   if (loading) {
     return (
@@ -84,7 +123,7 @@ export default function PharmacyDashboard() {
     );
   }
 
-  if (!pharmacy) {
+  if (!activePharmacy) {
     return (
       <Layout showFooter={false}>
         <div className="min-h-screen flex items-center justify-center">
@@ -101,7 +140,7 @@ export default function PharmacyDashboard() {
   }
 
   return (
-    <Layout showFooter={false}>
+    <Layout showFooter={false} showHeader={!isFullscreen}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-emerald-50/20 dark:from-background dark:via-background dark:to-background">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
@@ -111,50 +150,73 @@ export default function PharmacyDashboard() {
                 <Package className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{pharmacy.name}</h1>
-                <p className="text-muted-foreground font-medium">Pharmacy Dashboard</p>
+                <h1 className="text-3xl font-bold">{activePharmacy.name}</h1>
+                <p className="text-muted-foreground font-medium">
+                  {isCashier ? `Cashier — ${cashierRecord?.name}` : "Pharmacy Dashboard"}
+                </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
-              <LogOut className="w-4 h-4 mr-2" />Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+                {isFullscreen ? <Minimize className="w-4 h-4 mr-2" /> : <Maximize className="w-4 h-4 mr-2" />}
+                {isFullscreen ? "Exit" : "Fullscreen"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
+                <LogOut className="w-4 h-4 mr-2" />Sign Out
+              </Button>
+            </div>
           </motion.div>
 
-          {/* Stats */}
-          <PharmacyStats pharmacyId={pharmacy.id} />
+          {/* Cashier: Only POS, no stats/analytics/profit */}
+          {isCashier ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <SalesPanel pharmacyId={pharmacyId!} pharmacyName={activePharmacy.name} pharmacyAddress={activePharmacy.address} pharmacyPhone={activePharmacy.phone} isCashier={true} />
+            </motion.div>
+          ) : (
+            <>
+              {/* Owner Stats */}
+              <PharmacyStats pharmacyId={pharmacyId!} />
 
-          {/* Tabs */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Tabs defaultValue="inventory" className="space-y-6">
-              <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex flex-wrap h-auto gap-1 justify-start">
-                <TabsTrigger value="inventory" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Package className="w-4 h-4 mr-1" />Inventory
-                </TabsTrigger>
-                <TabsTrigger value="sales" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <ShoppingCart className="w-4 h-4 mr-1" />Sales
-                </TabsTrigger>
-                <TabsTrigger value="orders" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <Truck className="w-4 h-4 mr-1" />Orders
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
-                  <BarChart3 className="w-4 h-4 mr-1" />Analytics
-                </TabsTrigger>
-              </TabsList>
+              {/* Owner Tabs */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <Tabs defaultValue="inventory" className="space-y-6">
+                  <TabsList className="bg-muted/80 dark:bg-muted/50 backdrop-blur-sm border border-border/50 p-1.5 rounded-xl shadow-sm flex flex-wrap h-auto gap-1 justify-start">
+                    <TabsTrigger value="inventory" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                      <Package className="w-4 h-4 mr-1" />Inventory
+                    </TabsTrigger>
+                    <TabsTrigger value="sales" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                      <ShoppingCart className="w-4 h-4 mr-1" />Sales
+                    </TabsTrigger>
+                    <TabsTrigger value="orders" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                      <Truck className="w-4 h-4 mr-1" />Orders
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                      <BarChart3 className="w-4 h-4 mr-1" />Analytics
+                    </TabsTrigger>
+                    <TabsTrigger value="cashiers" className="rounded-lg text-xs sm:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                      <Users className="w-4 h-4 mr-1" />Cashiers
+                    </TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="inventory">
-                <InventoryPanel pharmacyId={pharmacy.id} />
-              </TabsContent>
-              <TabsContent value="sales">
-                <SalesPanel pharmacyId={pharmacy.id} pharmacyName={pharmacy.name} pharmacyAddress={pharmacy.address} pharmacyPhone={pharmacy.phone} />
-              </TabsContent>
-              <TabsContent value="orders">
-                <SupplierOrdersPanel pharmacyId={pharmacy.id} />
-              </TabsContent>
-              <TabsContent value="analytics">
-                <AnalyticsPanel pharmacyId={pharmacy.id} />
-              </TabsContent>
-            </Tabs>
-          </motion.div>
+                  <TabsContent value="inventory">
+                    <InventoryPanel pharmacyId={pharmacyId!} />
+                  </TabsContent>
+                  <TabsContent value="sales">
+                    <SalesPanel pharmacyId={pharmacyId!} pharmacyName={activePharmacy.name} pharmacyAddress={activePharmacy.address} pharmacyPhone={activePharmacy.phone} isCashier={false} />
+                  </TabsContent>
+                  <TabsContent value="orders">
+                    <SupplierOrdersPanel pharmacyId={pharmacyId!} />
+                  </TabsContent>
+                  <TabsContent value="analytics">
+                    <AnalyticsPanel pharmacyId={pharmacyId!} />
+                  </TabsContent>
+                  <TabsContent value="cashiers">
+                    <CashierManagementPanel pharmacyId={pharmacyId!} />
+                  </TabsContent>
+                </Tabs>
+              </motion.div>
+            </>
+          )}
         </div>
       </div>
     </Layout>
@@ -558,7 +620,7 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
 }
 
 // ─── Sales Panel (POS Style — Enhanced with Expiry Guard + Stock Logs) ──
-function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }: { pharmacyId: string; pharmacyName: string; pharmacyAddress?: string | null; pharmacyPhone?: string | null }) {
+function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone, isCashier = false }: { pharmacyId: string; pharmacyName: string; pharmacyAddress?: string | null; pharmacyPhone?: string | null; isCashier?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -762,7 +824,7 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
       queryClient.invalidateQueries({ queryKey: ["pharmacy-stats"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-inventory"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-sale-items-for-profit"] });
-      toast({ title: "✅ Sale completed!", description: `₨${total.toLocaleString()} — ${itemCount} item(s) | Profit: ₨${cartProfit.toLocaleString()}` });
+      toast({ title: "✅ Sale completed!", description: `₨${total.toLocaleString()} — ${itemCount} item(s)${!isCashier ? ` | Profit: ₨${cartProfit.toLocaleString()}` : ""}` });
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
@@ -1029,7 +1091,7 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
                       <span>-₨{discount.toLocaleString()}</span>
                     </div>
                   )}
-                  {cart.length > 0 && (
+                  {cart.length > 0 && !isCashier && (
                     <div className="flex justify-between text-sm text-emerald-600">
                       <span>Est. Profit</span>
                       <span>₨{cartProfit.toLocaleString()}</span>
@@ -1436,6 +1498,181 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
           </div>
         )}
       </CardContent>
+    </Card>
+  );
+}
+
+// ─── Cashier Management Panel ──────────────────────────────
+function CashierManagementPanel({ pharmacyId }: { pharmacyId: string }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+
+  const { data: cashiers, isLoading } = useQuery({
+    queryKey: ["pharmacy-cashiers", pharmacyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pharmacy_cashiers")
+        .select("*")
+        .eq("pharmacy_id", pharmacyId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createCashier = useMutation({
+    mutationFn: async (data: { name: string; email: string; password: string }) => {
+      if (data.password.length < 6) throw new Error("Password must be at least 6 characters");
+
+      // 1. Create user account with pharmacy role
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: { name: data.name, role: "pharmacy" },
+        },
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create user");
+      if (authData.user.identities?.length === 0) throw new Error("This email is already registered");
+
+      // 2. Create cashier record linking user to pharmacy
+      const { error: cashierError } = await supabase.from("pharmacy_cashiers").insert({
+        pharmacy_id: pharmacyId,
+        user_id: authData.user.id,
+        name: data.name,
+      });
+      if (cashierError) throw cashierError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pharmacy-cashiers"] });
+      toast({ title: "Cashier created", description: "They can now log in and use the POS system." });
+      setIsDialogOpen(false);
+      setFormData({ name: "", email: "", password: "" });
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Failed to create cashier", description: err.message }),
+  });
+
+  const toggleCashier = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("pharmacy_cashiers").update({ is_active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pharmacy-cashiers"] });
+      toast({ title: "Cashier status updated" });
+    },
+  });
+
+  const deleteCashier = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pharmacy_cashiers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pharmacy-cashiers"] });
+      toast({ title: "Cashier removed" });
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Error", description: err.message }),
+  });
+
+  return (
+    <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
+      <CardHeader className="border-b border-border/30 bg-gradient-to-r from-violet-50/50 to-transparent dark:from-violet-900/10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-violet-600" />Cashier Management</CardTitle>
+            <CardDescription>Add cashiers who can only use the POS to sell medicines</CardDescription>
+          </div>
+          <Button onClick={() => { setFormData({ name: "", email: "", password: "" }); setIsDialogOpen(true); }} className="bg-violet-600 hover:bg-violet-700">
+            <Plus className="w-4 h-4 mr-2" />Add Cashier
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        {isLoading ? (
+          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+        ) : cashiers && cashiers.length > 0 ? (
+          <div className="rounded-lg border border-border/50 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cashiers.map(cashier => (
+                  <TableRow key={cashier.id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium">{cashier.name}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => toggleCashier.mutate({ id: cashier.id, is_active: !cashier.is_active })}
+                        className={cashier.is_active ? "text-green-600" : "text-muted-foreground"}
+                      >
+                        {cashier.is_active ? <><Check className="w-4 h-4 mr-1" />Active</> : <><X className="w-4 h-4 mr-1" />Inactive</>}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{format(new Date(cashier.created_at), "dd MMM yyyy")}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteCashier.mutate(cashier.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-2">No cashiers added yet</p>
+            <p className="text-sm text-muted-foreground mb-4">Cashiers can only sell medicines — they won't see inventory, analytics, or profits</p>
+            <Button onClick={() => setIsDialogOpen(true)} className="bg-violet-600 hover:bg-violet-700">
+              <Plus className="w-4 h-4 mr-2" />Add First Cashier
+            </Button>
+          </div>
+        )}
+      </CardContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Cashier</DialogTitle>
+            <DialogDescription>Create a cashier account — they'll only have access to the POS sales screen</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Cashier Name *</Label>
+              <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ali Khan" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="cashier@example.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Password *</Label>
+              <Input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => createCashier.mutate(formData)}
+              disabled={createCashier.isPending || !formData.name || !formData.email || !formData.password}
+              className="bg-violet-600 hover:bg-violet-700"
+            >
+              {createCashier.isPending ? "Creating..." : "Add Cashier"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

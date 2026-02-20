@@ -1213,6 +1213,41 @@ export type Database = {
         }
         Relationships: []
       }
+      pharmacy_cashiers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          pharmacy_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          pharmacy_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          pharmacy_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_cashiers_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pharmacy_inventory: {
         Row: {
           batch_number: string | null
