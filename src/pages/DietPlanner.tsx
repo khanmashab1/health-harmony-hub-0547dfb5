@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
@@ -26,10 +26,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, Legend, PieChart, Pie, Cell,
+} from "recharts";
+import {
   Salad, Loader2, Apple, Dumbbell, Moon, Droplets, Target,
   Flame, Clock, Activity, Heart, Lightbulb, ChevronRight, Utensils,
   Coffee, Sun, Sunset, Download, ClipboardCheck, Trash2, History,
-  LogIn, Plus, Eye, Share2, MessageCircle, Copy, Check, ArrowLeft
+  LogIn, Plus, Eye, Share2, MessageCircle, Copy, Check, ArrowLeft, BarChart3
 } from "lucide-react";
 
 interface MealItem {
@@ -298,17 +302,24 @@ export default function DietPlanner() {
   };
 
   const getDayStats = (day: string) => {
-    if (!plan) return { total: 0, eaten: 0, calories: 0 };
-    let total = 0, eaten = 0, calories = 0;
+    if (!plan) return { total: 0, eaten: 0, calories: 0, protein: 0, carbs: 0, fats: 0 };
+    let total = 0, eaten = 0, calories = 0, protein = 0, carbs = 0, fats = 0;
     mealOrder.forEach((mealKey) => {
       const meals = plan.dietPlan[mealKey as keyof typeof plan.dietPlan] || [];
       (meals as MealItem[]).forEach((item, i) => {
         total++;
         const dayKey = `${day}:${mealKey}-${i}`;
-        if (mealLogs[dayKey]?.eaten) { eaten++; calories += item.calories; }
+        if (mealLogs[dayKey]?.eaten) {
+          eaten++;
+          calories += item.calories;
+          // Estimate macros from calories: ~30% protein, ~45% carbs, ~25% fat
+          protein += Math.round((item.calories * 0.3) / 4);
+          carbs += Math.round((item.calories * 0.45) / 4);
+          fats += Math.round((item.calories * 0.25) / 9);
+        }
       });
     });
-    return { total, eaten, calories };
+    return { total, eaten, calories, protein, carbs, fats };
   };
 
   const getWeeklyStats = () => {
@@ -325,6 +336,33 @@ export default function DietPlanner() {
   };
 
   const getTrackerStats = () => getDayStats(selectedDay);
+
+  const weeklyChartData = useMemo(() => {
+    if (!plan) return [];
+    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return allDays.map(day => {
+      const s = getDayStats(day);
+      return {
+        day: day.slice(0, 3),
+        Calories: s.calories,
+        Protein: s.protein,
+        Carbs: s.carbs,
+        Fats: s.fats,
+        target: plan.dailyCalories,
+      };
+    });
+  }, [plan, mealLogs]);
+
+  const todayMacros = useMemo(() => {
+    if (!plan) return [];
+    const s = getDayStats(selectedDay);
+    if (s.calories === 0) return [];
+    return [
+      { name: "Protein", value: s.protein, color: "hsl(var(--chart-1))" },
+      { name: "Carbs", value: s.carbs, color: "hsl(var(--chart-2))" },
+      { name: "Fats", value: s.fats, color: "hsl(var(--chart-3))" },
+    ];
+  }, [plan, mealLogs, selectedDay]);
 
   const handleDownloadPDF = () => {
     if (!plan) return;
@@ -797,7 +835,128 @@ export default function DietPlanner() {
                     );
                   })()}
 
-                  {/* Selected Day Progress */}
+                  {/* Weekly Nutrition Chart */}
+                  {weeklyChartData.some(d => d.Calories > 0) && (
+                    <Card variant="elevated">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-primary/10">
+                            <BarChart3 className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">Weekly Calorie & Nutrition Chart</h3>
+                            <p className="text-xs text-muted-foreground">Calories consumed each day vs your {plan?.dailyCalories} kcal target</p>
+                          </div>
+                        </div>
+
+                        {/* Bar Chart - Calories per day */}
+                        <div className="h-64 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={weeklyChartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                              <XAxis dataKey="day" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                              <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                              <RechartsTooltip
+                                contentStyle={{
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  color: 'hsl(var(--foreground))',
+                                }}
+                              />
+                              <Legend />
+                              <Bar dataKey="Calories" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Protein" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Carbs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Fats" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Macro Pie Chart for selected day */}
+                        {todayMacros.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-foreground">{selectedDay}'s Macro Breakdown (g)</h4>
+                            <div className="flex items-center gap-4">
+                              <div className="h-40 w-40 shrink-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <PieChart>
+                                    <Pie
+                                      data={todayMacros}
+                                      cx="50%"
+                                      cy="50%"
+                                      innerRadius={30}
+                                      outerRadius={60}
+                                      dataKey="value"
+                                      stroke="none"
+                                    >
+                                      {todayMacros.map((entry, index) => (
+                                        <Cell key={index} fill={entry.color} />
+                                      ))}
+                                    </Pie>
+                                    <RechartsTooltip
+                                      contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px',
+                                        color: 'hsl(var(--foreground))',
+                                      }}
+                                      formatter={(value: number, name: string) => [`${value}g`, name]}
+                                    />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+                              <div className="space-y-2 flex-1">
+                                {todayMacros.map(m => (
+                                  <div key={m.name} className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                                    <span className="text-sm text-foreground font-medium">{m.name}</span>
+                                    <span className="text-sm text-muted-foreground ml-auto">{m.value}g</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Summary stats */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {(() => {
+                            const weekly = getWeeklyStats();
+                            const avgCal = weekly.dayBreakdown.filter(d => d.calories > 0).length > 0
+                              ? Math.round(weekly.totalCalories / weekly.dayBreakdown.filter(d => d.calories > 0).length)
+                              : 0;
+                            const daysTracked = weekly.dayBreakdown.filter(d => d.eaten > 0).length;
+                            return (
+                              <>
+                                <div className="text-center p-3 rounded-xl bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Total Calories</p>
+                                  <p className="text-lg font-bold text-foreground">{weekly.totalCalories}</p>
+                                  <p className="text-xs text-muted-foreground">kcal this week</p>
+                                </div>
+                                <div className="text-center p-3 rounded-xl bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Avg / Day</p>
+                                  <p className="text-lg font-bold text-foreground">{avgCal}</p>
+                                  <p className="text-xs text-muted-foreground">kcal/day</p>
+                                </div>
+                                <div className="text-center p-3 rounded-xl bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Days Tracked</p>
+                                  <p className="text-lg font-bold text-foreground">{daysTracked}</p>
+                                  <p className="text-xs text-muted-foreground">of 7 days</p>
+                                </div>
+                                <div className="text-center p-3 rounded-xl bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Meals Logged</p>
+                                  <p className="text-lg font-bold text-foreground">{weekly.totalEaten}</p>
+                                  <p className="text-xs text-muted-foreground">of {weekly.totalMeals}</p>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {stats && (
                     <Card variant="default">
                       <CardContent className="p-4">
