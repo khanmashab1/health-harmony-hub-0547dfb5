@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
-import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, subDays, addDays, isBefore, isAfter } from "date-fns";
 import {
   Package, Search, Plus, Pill, ShoppingCart, TrendingUp, AlertTriangle,
   BarChart3, DollarSign, Truck, LogOut, Check, X, Pencil, Trash2,
-  Eye, FileText, ArrowUpDown, ChevronDown, Printer
+  Eye, FileText, ArrowUpDown, ChevronDown, Printer, Clock, History,
+  ShieldAlert, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,14 +24,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-
-
 import { ThermalReceipt } from "@/components/pharmacy/ThermalReceipt";
 import type { ReceiptItem } from "@/components/pharmacy/ThermalReceipt";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
+
+// ─── Utility: Expiry Status ────────────────────────────────
+function getExpiryStatus(expiryDate: string | null): "expired" | "expiring" | "ok" | "unknown" {
+  if (!expiryDate) return "unknown";
+  const today = new Date();
+  const expiry = new Date(expiryDate);
+  if (isBefore(expiry, today)) return "expired";
+  if (isBefore(expiry, addDays(today, 30))) return "expiring";
+  return "ok";
+}
+
+function ExpiryBadge({ expiryDate }: { expiryDate: string | null }) {
+  const status = getExpiryStatus(expiryDate);
+  if (status === "expired") return <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400">Expired</Badge>;
+  if (status === "expiring") return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-950/30 dark:text-yellow-400">Expiring Soon</Badge>;
+  return null;
+}
 
 export default function PharmacyDashboard() {
   const { user, profile, loading } = useRequireAuth(["pharmacy"] as any);
@@ -39,7 +55,6 @@ export default function PharmacyDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch pharmacy
   const { data: pharmacy } = useQuery({
     queryKey: ["my-pharmacy", user?.id],
     queryFn: async () => {
@@ -60,8 +75,8 @@ export default function PharmacyDashboard() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-emerald-50/20 dark:from-background dark:via-background dark:to-background">
           <div className="container mx-auto px-4 py-8">
             <Skeleton className="h-12 w-64 mb-8" />
-            <div className="grid md:grid-cols-4 gap-4 mb-8">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
+            <div className="grid md:grid-cols-5 gap-4 mb-8">
+              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-28" />)}
             </div>
           </div>
         </div>
@@ -146,16 +161,21 @@ export default function PharmacyDashboard() {
   );
 }
 
-// ─── Stats Component ────────────────────────────────────────
+// ─── Stats Component (Enhanced with Expiry + Profit) ────────
 function PharmacyStats({ pharmacyId }: { pharmacyId: string }) {
   const { data: stats } = useQuery({
     queryKey: ["pharmacy-stats", pharmacyId],
     queryFn: async () => {
-      const [inventoryRes, lowStockRes, salesTodayRes, totalSalesRes] = await Promise.all([
+      const today = format(new Date(), "yyyy-MM-dd");
+      const thirtyDaysFromNow = format(addDays(new Date(), 30), "yyyy-MM-dd");
+
+      const [inventoryRes, lowStockRes, salesTodayRes, totalSalesRes, expiringRes] = await Promise.all([
         supabase.from("pharmacy_inventory").select("id", { count: "exact", head: true }).eq("pharmacy_id", pharmacyId).eq("is_active", true),
         supabase.from("pharmacy_inventory").select("id", { count: "exact", head: true }).eq("pharmacy_id", pharmacyId).eq("is_active", true).lte("quantity_in_stock", 10),
-        supabase.from("pharmacy_sales").select("net_amount").eq("pharmacy_id", pharmacyId).gte("created_at", format(new Date(), "yyyy-MM-dd")),
+        supabase.from("pharmacy_sales").select("net_amount").eq("pharmacy_id", pharmacyId).gte("created_at", today),
         supabase.from("pharmacy_sales").select("id", { count: "exact", head: true }).eq("pharmacy_id", pharmacyId),
+        // Expiring within 30 days (including already expired)
+        supabase.from("pharmacy_inventory").select("id", { count: "exact", head: true }).eq("pharmacy_id", pharmacyId).eq("is_active", true).lte("expiry_date", thirtyDaysFromNow),
       ]);
       const todayRevenue = salesTodayRes.data?.reduce((sum, s) => sum + Number(s.net_amount || 0), 0) || 0;
       return {
@@ -163,15 +183,17 @@ function PharmacyStats({ pharmacyId }: { pharmacyId: string }) {
         lowStock: lowStockRes.count || 0,
         todayRevenue,
         totalSales: totalSalesRes.count || 0,
+        expiringCount: expiringRes.count || 0,
       };
     },
   });
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {[
         { label: "Medicines", value: stats?.totalItems || 0, icon: Pill, color: "from-emerald-500 to-emerald-600" },
         { label: "Low Stock", value: stats?.lowStock || 0, icon: AlertTriangle, color: "from-red-500 to-red-600" },
+        { label: "Expiring / Expired", value: stats?.expiringCount || 0, icon: Clock, color: "from-amber-500 to-amber-600" },
         { label: "Today Revenue", value: `₨${(stats?.todayRevenue || 0).toLocaleString()}`, icon: DollarSign, color: "from-blue-500 to-blue-600" },
         { label: "Total Sales", value: stats?.totalSales || 0, icon: ShoppingCart, color: "from-purple-500 to-purple-600" },
       ].map((stat, index) => (
@@ -195,13 +217,14 @@ function PharmacyStats({ pharmacyId }: { pharmacyId: string }) {
   );
 }
 
-// ─── Inventory Panel ────────────────────────────────────────
+// ─── Inventory Panel (Enhanced with Expiry Badges + Stock History) ───
 function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [stockLogItem, setStockLogItem] = useState<any>(null);
   const [formData, setFormData] = useState({
     medicine_name: "", generic_name: "", category: "", form: "", strength: "",
     manufacturer: "", batch_number: "", expiry_date: "", quantity_in_stock: 0,
@@ -211,8 +234,7 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
   const { data: inventory, isLoading } = useQuery({
     queryKey: ["pharmacy-inventory", pharmacyId, search],
     queryFn: async () => {
-      let query = supabase.from("pharmacy_inventory").select("*").eq("pharmacy_id", pharmacyId).order("medicine_name");
-      const { data, error } = await query;
+      const { data, error } = await supabase.from("pharmacy_inventory").select("*").eq("pharmacy_id", pharmacyId).order("medicine_name");
       if (error) throw error;
       if (search) {
         const term = search.toLowerCase();
@@ -222,14 +244,61 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
     },
   });
 
+  // Stock history logs for selected item
+  const { data: stockLogs, isLoading: logsLoading } = useQuery({
+    queryKey: ["stock-logs", stockLogItem?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pharmacy_stock_logs")
+        .select("*")
+        .eq("inventory_id", stockLogItem.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!stockLogItem,
+  });
+
   const saveMedicine = useMutation({
     mutationFn: async (data: any) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
       if (editing) {
+        const previousQty = editing.quantity_in_stock;
+        const newQty = data.quantity_in_stock;
         const { error } = await supabase.from("pharmacy_inventory").update(data).eq("id", editing.id);
         if (error) throw error;
+
+        // ── AUDIT: Log manual stock adjustment if quantity changed ──
+        if (previousQty !== newQty) {
+          await supabase.from("pharmacy_stock_logs").insert({
+            pharmacy_id: pharmacyId,
+            inventory_id: editing.id,
+            change_type: "manual",
+            quantity_changed: newQty - previousQty,
+            previous_quantity: previousQty,
+            new_quantity: newQty,
+            changed_by: userId,
+            notes: `Manual adjustment via inventory edit`,
+          });
+        }
       } else {
-        const { error } = await supabase.from("pharmacy_inventory").insert({ ...data, pharmacy_id: pharmacyId });
+        const { data: inserted, error } = await supabase.from("pharmacy_inventory").insert({ ...data, pharmacy_id: pharmacyId }).select().single();
         if (error) throw error;
+
+        // ── AUDIT: Log initial stock entry ──
+        if (inserted && data.quantity_in_stock > 0) {
+          await supabase.from("pharmacy_stock_logs").insert({
+            pharmacy_id: pharmacyId,
+            inventory_id: inserted.id,
+            change_type: "restock",
+            quantity_changed: data.quantity_in_stock,
+            previous_quantity: 0,
+            new_quantity: data.quantity_in_stock,
+            changed_by: userId,
+            notes: `Initial stock entry`,
+          });
+        }
       }
     },
     onSuccess: () => {
@@ -278,7 +347,7 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2"><Package className="w-5 h-5 text-emerald-600" />Medicine Inventory</CardTitle>
-            <CardDescription>Manage your stock</CardDescription>
+            <CardDescription>Manage your stock — search to view medicines</CardDescription>
           </div>
           <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700">
             <Plus className="w-4 h-4 mr-2" />Add Medicine
@@ -313,33 +382,52 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory.map(item => (
-                  <TableRow key={item.id} className="hover:bg-muted/30">
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{item.medicine_name}</p>
-                        {item.generic_name && <p className="text-xs text-muted-foreground">{item.generic_name}</p>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {item.category && <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">{item.category}</Badge>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={item.quantity_in_stock <= (item.reorder_level || 10) ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400" : "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400"}>
-                        {item.quantity_in_stock}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">₨{Number(item.unit_cost).toLocaleString()}</TableCell>
-                    <TableCell>₨{Number(item.selling_price).toLocaleString()}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{item.expiry_date ? format(new Date(item.expiry_date), "MMM yyyy") : "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMedicine.mutate(item.id)}><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {inventory.map(item => {
+                  const expiryStatus = getExpiryStatus(item.expiry_date);
+                  const profit = Number(item.selling_price || 0) - Number(item.unit_cost || 0);
+                  return (
+                    <TableRow key={item.id} className={`hover:bg-muted/30 ${expiryStatus === "expired" ? "bg-red-50/50 dark:bg-red-950/10" : ""}`}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{item.medicine_name}</p>
+                          {item.generic_name && <p className="text-xs text-muted-foreground">{item.generic_name}</p>}
+                          {profit > 0 && <p className="text-xs text-emerald-600">Profit: ₨{profit.toLocaleString()}/unit</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {item.category && <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">{item.category}</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={item.quantity_in_stock <= (item.reorder_level || 10) ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400" : "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400"}>
+                          {item.quantity_in_stock}
+                        </Badge>
+                        {item.quantity_in_stock <= (item.reorder_level || 10) && item.quantity_in_stock > 0 && (
+                          <p className="text-xs text-amber-600 mt-0.5">⚠ Below reorder level</p>
+                        )}
+                        {item.quantity_in_stock === 0 && (
+                          <p className="text-xs text-destructive mt-0.5">Out of stock</p>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">₨{Number(item.unit_cost).toLocaleString()}</TableCell>
+                      <TableCell>₨{Number(item.selling_price).toLocaleString()}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm">{item.expiry_date ? format(new Date(item.expiry_date), "MMM yyyy") : "-"}</span>
+                          <ExpiryBadge expiryDate={item.expiry_date} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="Stock History" onClick={() => setStockLogItem(item)}>
+                            <History className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMedicine.mutate(item.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -351,6 +439,7 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
         )}
       </CardContent>
 
+      {/* Add/Edit Medicine Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -417,18 +506,63 @@ function InventoryPanel({ pharmacyId }: { pharmacyId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Stock History Dialog */}
+      <Dialog open={!!stockLogItem} onOpenChange={(v) => !v && setStockLogItem(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              Stock History — {stockLogItem?.medicine_name}
+            </DialogTitle>
+            <DialogDescription>Audit trail of all stock changes</DialogDescription>
+          </DialogHeader>
+          {logsLoading ? (
+            <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10" />)}</div>
+          ) : stockLogs && stockLogs.length > 0 ? (
+            <div className="space-y-2">
+              {stockLogs.map(log => (
+                <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                    log.change_type === "sale" ? "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400" :
+                    log.change_type === "restock" ? "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
+                    "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
+                  }`}>
+                    {log.change_type === "sale" ? "−" : log.change_type === "restock" ? "+" : "±"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs capitalize">{log.change_type}</Badge>
+                      <span className={`text-sm font-semibold ${log.quantity_changed > 0 ? "text-green-600" : "text-red-600"}`}>
+                        {log.quantity_changed > 0 ? "+" : ""}{log.quantity_changed}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {log.previous_quantity} → {log.new_quantity} • {format(new Date(log.created_at), "dd MMM yyyy, HH:mm")}
+                    </p>
+                    {log.notes && <p className="text-xs text-muted-foreground italic mt-0.5">{log.notes}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <History className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+              <p className="text-muted-foreground text-sm">No stock changes recorded yet</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
 
-
-
-// ─── Sales Panel (POS Style) ────────────────────────────────
+// ─── Sales Panel (POS Style — Enhanced with Expiry Guard + Stock Logs) ──
 function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }: { pharmacyId: string; pharmacyName: string; pharmacyAddress?: string | null; pharmacyPhone?: string | null }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [cart, setCart] = useState<{ id: string; medicine_name: string; quantity: number; unit_price: number; stock: number }[]>([]);
+  const [cart, setCart] = useState<{ id: string; medicine_name: string; quantity: number; unit_price: number; unit_cost: number; stock: number }[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
@@ -452,7 +586,7 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
     enabled: searchTerm.trim().length > 0,
   });
 
-  // Sales history
+  // Sales history with profit column
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["pharmacy-sales", pharmacyId],
     queryFn: async () => {
@@ -462,16 +596,49 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
     },
   });
 
+  // Fetch sale items for profit calculation
+  const { data: allSaleItems } = useQuery({
+    queryKey: ["pharmacy-sale-items-for-profit", pharmacyId],
+    queryFn: async () => {
+      if (!sales || sales.length === 0) return [];
+      const saleIds = sales.map(s => s.id);
+      const { data, error } = await supabase.from("pharmacy_sale_items").select("*").in("sale_id", saleIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sales && sales.length > 0,
+  });
+
   const addToCart = (item: any) => {
+    // ── GUARD: Prevent selling expired medicines ──
+    const expiryStatus = getExpiryStatus(item.expiry_date);
+    if (expiryStatus === "expired") {
+      toast({ variant: "destructive", title: "Cannot sell expired medicine", description: `${item.medicine_name} expired on ${item.expiry_date}` });
+      return;
+    }
+
+    // ── GUARD: Prevent selling out-of-stock items ──
+    if (item.quantity_in_stock <= 0) {
+      toast({ variant: "destructive", title: "Out of stock", description: `${item.medicine_name} has no stock available` });
+      return;
+    }
+
     const existing = cart.find(c => c.id === item.id);
     if (existing) {
       if (existing.quantity >= item.quantity_in_stock) {
-        toast({ variant: "destructive", title: "Out of stock", description: `Only ${item.quantity_in_stock} available` });
+        toast({ variant: "destructive", title: "Stock limit reached", description: `Only ${item.quantity_in_stock} available` });
         return;
       }
       setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c));
     } else {
-      setCart([...cart, { id: item.id, medicine_name: item.medicine_name, quantity: 1, unit_price: item.selling_price, stock: item.quantity_in_stock }]);
+      setCart([...cart, {
+        id: item.id,
+        medicine_name: item.medicine_name,
+        quantity: 1,
+        unit_price: item.selling_price,
+        unit_cost: item.unit_cost || 0,
+        stock: item.quantity_in_stock,
+      }]);
     }
     setSearchTerm("");
   };
@@ -495,10 +662,40 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
   const total = Math.max(0, subtotal - discount);
   const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
+  // Calculate profit for the cart
+  const cartProfit = cart.reduce((sum, i) => sum + i.quantity * (i.unit_price - i.unit_cost), 0);
+
+  /**
+   * ── ATOMIC SALE TRANSACTION ──────────────────────────────
+   * This mutation performs a multi-step sale process:
+   * 1. Create the sale record in pharmacy_sales
+   * 2. Create individual sale items in pharmacy_sale_items
+   * 3. Deduct stock from pharmacy_inventory for each item
+   * 4. Insert audit log entries in pharmacy_stock_logs
+   * 
+   * If any step fails, the error is thrown and subsequent steps
+   * are not executed. The mutation's onError handler displays
+   * a clear error message to the user.
+   * 
+   * NOTE: Supabase client SDK does not support true DB transactions,
+   * so this uses sequential operations with error checking at each
+   * step. For production, consider a server-side function.
+   */
   const createSale = useMutation({
     mutationFn: async () => {
+      // ── VALIDATION: Ensure cart is not empty ──
       if (cart.length === 0) throw new Error("Cart is empty");
 
+      // ── VALIDATION: Verify stock before proceeding ──
+      for (const item of cart) {
+        if (item.quantity > item.stock) {
+          throw new Error(`Insufficient stock for ${item.medicine_name}. Available: ${item.stock}, Requested: ${item.quantity}`);
+        }
+      }
+
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+
+      // ── STEP 1: Create sale record ──
       const { data: sale, error: saleError } = await supabase.from("pharmacy_sales").insert({
         pharmacy_id: pharmacyId,
         patient_name: customerName || null,
@@ -508,10 +705,11 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
         net_amount: total,
         payment_method: paymentMethod,
         payment_status: "Paid",
-        sold_by: (await supabase.auth.getUser()).data.user?.id,
+        sold_by: userId,
       }).select().single();
-      if (saleError) throw saleError;
+      if (saleError) throw new Error(`Failed to create sale: ${saleError.message}`);
 
+      // ── STEP 2: Create sale items ──
       const items = cart.map(i => ({
         sale_id: sale.id,
         medicine_name: i.medicine_name,
@@ -520,14 +718,34 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
         total_price: i.quantity * i.unit_price,
       }));
       const { error: itemsError } = await supabase.from("pharmacy_sale_items").insert(items);
-      if (itemsError) throw itemsError;
+      if (itemsError) throw new Error(`Failed to create sale items: ${itemsError.message}`);
 
-      // Deduct stock
+      // ── STEP 3: Deduct stock & STEP 4: Insert audit logs ──
       for (const item of cart) {
-        await supabase.from("pharmacy_inventory").update({
-          quantity_in_stock: item.stock - item.quantity,
+        const newStock = item.stock - item.quantity;
+
+        // Prevent negative stock (defensive check)
+        if (newStock < 0) throw new Error(`Stock underflow for ${item.medicine_name}`);
+
+        const { error: stockError } = await supabase.from("pharmacy_inventory").update({
+          quantity_in_stock: newStock,
         }).eq("id", item.id);
+        if (stockError) throw new Error(`Failed to update stock for ${item.medicine_name}: ${stockError.message}`);
+
+        // ── AUDIT LOG: Record stock deduction from sale ──
+        await supabase.from("pharmacy_stock_logs").insert({
+          pharmacy_id: pharmacyId,
+          inventory_id: item.id,
+          change_type: "sale",
+          quantity_changed: -item.quantity,
+          previous_quantity: item.stock,
+          new_quantity: newStock,
+          changed_by: userId,
+          notes: `Sale #${sale.id.substring(0, 8)} — ${item.quantity}x ${item.medicine_name}`,
+        });
       }
+
+      return sale;
     },
     onSuccess: () => {
       // Save receipt data before clearing cart
@@ -543,7 +761,8 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
       queryClient.invalidateQueries({ queryKey: ["pharmacy-sales"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-stats"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy-inventory"] });
-      toast({ title: "✅ Sale completed!", description: `₨${total.toLocaleString()} — ${itemCount} item(s)` });
+      queryClient.invalidateQueries({ queryKey: ["pharmacy-sale-items-for-profit"] });
+      toast({ title: "✅ Sale completed!", description: `₨${total.toLocaleString()} — ${itemCount} item(s) | Profit: ₨${cartProfit.toLocaleString()}` });
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
@@ -584,7 +803,7 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
       </div>
 
       {showHistory ? (
-        /* ─── Sales History View ─── */
+        /* ─── Sales History View (Enhanced with Profit Column) ─── */
         <Card variant="glass" className="border-border/50 dark:border-border/30">
           <CardContent className="p-4">
             {salesLoading ? (
@@ -643,31 +862,44 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
                   />
                 </div>
 
-                {/* Search Results */}
+                {/* Search Results — with expiry & stock warnings */}
                 {searchTerm.trim() && (
                   <div className="mt-3 max-h-64 overflow-y-auto space-y-1">
-                    {inventory && inventory.length > 0 ? inventory.map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => addToCart(item)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all text-left group"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-medium group-hover:text-primary transition-colors">{item.medicine_name}</p>
-                          <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
-                            {item.generic_name && <span>{item.generic_name}</span>}
-                            {item.strength && <span>• {item.strength}</span>}
-                            {item.form && <span>• {item.form}</span>}
+                    {inventory && inventory.length > 0 ? inventory.map(item => {
+                      const expiryStatus = getExpiryStatus(item.expiry_date);
+                      const isExpired = expiryStatus === "expired";
+                      const isOutOfStock = item.quantity_in_stock <= 0;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => addToCart(item)}
+                          disabled={isExpired || isOutOfStock}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border border-transparent transition-all text-left group ${
+                            isExpired || isOutOfStock
+                              ? "opacity-50 cursor-not-allowed bg-muted/30"
+                              : "hover:bg-primary/5 hover:border-primary/20"
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className={`font-medium ${!isExpired && !isOutOfStock ? "group-hover:text-primary" : ""} transition-colors`}>{item.medicine_name}</p>
+                            <div className="flex gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                              {item.generic_name && <span>{item.generic_name}</span>}
+                              {item.strength && <span>• {item.strength}</span>}
+                              {item.form && <span>• {item.form}</span>}
+                              {isExpired && <span className="text-destructive font-medium">• EXPIRED</span>}
+                              {isOutOfStock && <span className="text-destructive font-medium">• OUT OF STOCK</span>}
+                              {expiryStatus === "expiring" && <span className="text-amber-600 font-medium">• Expiring Soon</span>}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-3">
-                          <p className="font-bold text-primary">₨{Number(item.selling_price).toLocaleString()}</p>
-                          <p className={`text-xs ${item.quantity_in_stock <= (item.reorder_level || 10) ? "text-destructive" : "text-muted-foreground"}`}>
-                            Stock: {item.quantity_in_stock}
-                          </p>
-                        </div>
-                      </button>
-                    )) : (
+                          <div className="text-right flex-shrink-0 ml-3">
+                            <p className="font-bold text-primary">₨{Number(item.selling_price).toLocaleString()}</p>
+                            <p className={`text-xs ${item.quantity_in_stock <= (item.reorder_level || 10) ? "text-destructive" : "text-muted-foreground"}`}>
+                              Stock: {item.quantity_in_stock}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    }) : (
                       <p className="text-center text-muted-foreground py-4 text-sm">No medicines found</p>
                     )}
                   </div>
@@ -770,7 +1002,7 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
                         key={method}
                         variant={paymentMethod === method ? "default" : "outline"}
                         size="sm"
-                        className={`h-9 text-xs ${paymentMethod === method ? "" : ""}`}
+                        className="h-9 text-xs"
                         onClick={() => setPaymentMethod(method)}
                       >
                         {method}
@@ -795,6 +1027,12 @@ function SalesPanel({ pharmacyId, pharmacyName, pharmacyAddress, pharmacyPhone }
                     <div className="flex justify-between text-sm text-destructive">
                       <span>Discount</span>
                       <span>-₨{discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {cart.length > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span>Est. Profit</span>
+                      <span>₨{cartProfit.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="border-t border-border/50 pt-2 mt-2">
@@ -1037,7 +1275,7 @@ function SupplierOrdersPanel({ pharmacyId }: { pharmacyId: string }) {
   );
 }
 
-// ─── Analytics Panel ────────────────────────────────────────
+// ─── Analytics Panel (Enhanced with Profit Analytics) ────────
 function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
   const { data: salesData } = useQuery({
     queryKey: ["pharmacy-analytics", pharmacyId],
@@ -1045,7 +1283,7 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
       const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("pharmacy_sales")
-        .select("created_at, net_amount, payment_method")
+        .select("id, created_at, net_amount, total_amount, payment_method")
         .eq("pharmacy_id", pharmacyId)
         .gte("created_at", thirtyDaysAgo)
         .order("created_at");
@@ -1054,15 +1292,54 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
     },
   });
 
+  // Fetch all sale items for profit calculation
+  const { data: saleItems } = useQuery({
+    queryKey: ["pharmacy-analytics-items", pharmacyId, salesData?.map(s => s.id)],
+    queryFn: async () => {
+      if (!salesData || salesData.length === 0) return [];
+      const saleIds = salesData.map(s => s.id);
+      const { data, error } = await supabase.from("pharmacy_sale_items").select("sale_id, quantity, unit_price, medicine_name").in("sale_id", saleIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!salesData && salesData.length > 0,
+  });
+
+  // Fetch inventory for cost data
+  const { data: inventoryData } = useQuery({
+    queryKey: ["pharmacy-analytics-inventory", pharmacyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pharmacy_inventory").select("medicine_name, unit_cost, selling_price").eq("pharmacy_id", pharmacyId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const dailyRevenue = useMemo(() => {
     if (!salesData) return [];
-    const grouped: Record<string, number> = {};
+    const grouped: Record<string, { revenue: number; profit: number }> = {};
     salesData.forEach(s => {
       const day = format(new Date(s.created_at), "dd MMM");
-      grouped[day] = (grouped[day] || 0) + Number(s.net_amount || 0);
+      if (!grouped[day]) grouped[day] = { revenue: 0, profit: 0 };
+      grouped[day].revenue += Number(s.net_amount || 0);
     });
-    return Object.entries(grouped).map(([day, revenue]) => ({ day, revenue }));
-  }, [salesData]);
+
+    // Calculate profit per day by matching sale items to inventory cost
+    if (saleItems && inventoryData) {
+      const costMap = new Map(inventoryData.map(i => [i.medicine_name.toLowerCase(), Number(i.unit_cost || 0)]));
+      saleItems.forEach(item => {
+        const sale = salesData.find(s => s.id === item.sale_id);
+        if (sale) {
+          const day = format(new Date(sale.created_at), "dd MMM");
+          const cost = costMap.get(item.medicine_name.toLowerCase()) || 0;
+          const itemProfit = (Number(item.unit_price) - cost) * item.quantity;
+          if (grouped[day]) grouped[day].profit += itemProfit;
+        }
+      });
+    }
+
+    return Object.entries(grouped).map(([day, data]) => ({ day, revenue: data.revenue, profit: Math.round(data.profit) }));
+  }, [salesData, saleItems, inventoryData]);
 
   const paymentBreakdown = useMemo(() => {
     if (!salesData) return [];
@@ -1077,20 +1354,27 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
   const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
   const totalRevenue = salesData?.reduce((sum, s) => sum + Number(s.net_amount || 0), 0) || 0;
+  const totalProfit = dailyRevenue.reduce((sum, d) => sum + d.profit, 0);
   const avgSale = salesData && salesData.length > 0 ? totalRevenue / salesData.length : 0;
 
   return (
     <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
       <CardHeader className="border-b border-border/30 bg-gradient-to-r from-indigo-50/50 to-transparent dark:from-indigo-900/10">
-        <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-indigo-600" />Sales Analytics</CardTitle>
-        <CardDescription>Last 30 days performance</CardDescription>
+        <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-indigo-600" />Sales & Profit Analytics</CardTitle>
+        <CardDescription>Last 30 days performance overview</CardDescription>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="bg-muted/50">
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-bold text-emerald-600">₨{totalRevenue.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/50">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">Total Profit</p>
+              <p className="text-2xl font-bold text-blue-600">₨{totalProfit.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="bg-muted/50">
@@ -1108,18 +1392,34 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
         </div>
 
         {dailyRevenue.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3">Daily Revenue</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <RechartsTooltip />
-                <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Revenue (₨)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <>
+            <div>
+              <h4 className="font-semibold mb-3">Daily Revenue</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="day" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <RechartsTooltip formatter={(value: number) => `₨${value.toLocaleString()}`} />
+                  <Legend />
+                  <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Daily Profit Trend</h4>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={dailyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="day" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <RechartsTooltip formatter={(value: number) => `₨${value.toLocaleString()}`} />
+                  <Line type="monotone" dataKey="profit" stroke="hsl(var(--chart-2))" strokeWidth={2} name="Profit" dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
         )}
 
         {paymentBreakdown.length > 0 && (
@@ -1127,21 +1427,12 @@ function AnalyticsPanel({ pharmacyId }: { pharmacyId: string }) {
             <h4 className="font-semibold mb-3">Payment Methods</h4>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={paymentBreakdown} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                  {paymentBreakdown.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
+                <Pie data={paymentBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ₨${value.toLocaleString()}`}>
+                  {paymentBreakdown.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
-                <RechartsTooltip />
+                <RechartsTooltip formatter={(value: number) => `₨${value.toLocaleString()}`} />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        )}
-
-        {(!salesData || salesData.length === 0) && (
-          <div className="text-center py-12">
-            <BarChart3 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No sales data yet. Start recording sales to see analytics.</p>
           </div>
         )}
       </CardContent>
