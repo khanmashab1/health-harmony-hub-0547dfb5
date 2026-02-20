@@ -230,6 +230,7 @@ export type Database = {
       }
       diet_plans: {
         Row: {
+          calorie_target: number | null
           created_at: string
           id: string
           meal_logs: Json | null
@@ -239,6 +240,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          calorie_target?: number | null
           created_at?: string
           id?: string
           meal_logs?: Json | null
@@ -248,6 +250,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          calorie_target?: number | null
           created_at?: string
           id?: string
           meal_logs?: Json | null
@@ -694,6 +697,48 @@ export type Database = {
           subject?: string
           template_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      foods: {
+        Row: {
+          allergy_tags: string[] | null
+          calories: number
+          carbs: number
+          category: string | null
+          created_at: string
+          fats: number
+          id: string
+          is_active: boolean | null
+          meal_type: string
+          name: string
+          protein: number
+        }
+        Insert: {
+          allergy_tags?: string[] | null
+          calories: number
+          carbs?: number
+          category?: string | null
+          created_at?: string
+          fats?: number
+          id?: string
+          is_active?: boolean | null
+          meal_type: string
+          name: string
+          protein?: number
+        }
+        Update: {
+          allergy_tags?: string[] | null
+          calories?: number
+          carbs?: number
+          category?: string | null
+          created_at?: string
+          fats?: number
+          id?: string
+          is_active?: boolean | null
+          meal_type?: string
+          name?: string
+          protein?: number
         }
         Relationships: []
       }
