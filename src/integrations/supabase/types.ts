@@ -2053,6 +2053,10 @@ export type Database = {
         Args: { doctor_uuid: string; pa_uuid: string }
         Returns: boolean
       }
+      is_pharmacy_owner: {
+        Args: { check_pharmacy_id: string; check_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "patient" | "doctor" | "pa" | "admin" | "pharmacy"
