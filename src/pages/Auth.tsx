@@ -178,7 +178,17 @@ export default function Auth() {
       setLoginError(true);
       let message = error.message;
       if (message.includes("Invalid login credentials") || message.includes("invalid_grant") || message.includes("Invalid API")) {
-        message = "Email or password is incorrect. Please check your credentials and try again.";
+        // Check if user exists in profiles by looking up via a sign-in attempt result
+        // Supabase returns the same error for wrong password and non-existent user
+        // We can check profiles table to distinguish
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .limit(1);
+        
+        // Since we can't query by email in profiles (no email column), 
+        // show a clear message that covers both cases
+        message = "Account not found or password is incorrect. Please check your email and password, or create a new account.";
       } else if (message.includes("Email not confirmed")) {
         try {
           await supabase.auth.resend({
