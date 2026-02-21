@@ -21,11 +21,12 @@ interface PharmacyFormData {
   license_number: string;
   owner_email: string;
   owner_name: string;
+  owner_password: string;
 }
 
 const initialForm: PharmacyFormData = {
   name: "", address: "", phone: "", email: "", license_number: "",
-  owner_email: "", owner_name: "",
+  owner_email: "", owner_name: "", owner_password: "",
 };
 
 export function PharmacyManagementPanel() {
@@ -63,37 +64,39 @@ export function PharmacyManagementPanel() {
 
   const createPharmacy = useMutation({
     mutationFn: async (data: PharmacyFormData) => {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const cloudUrl = `https://${projectId}.supabase.co/functions/v1/create-pharmacy-owner`;
-      
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      
-      const response = await fetch(cloudUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      // 1. Create user account for pharmacy owner
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.owner_email,
+        password: data.owner_password,
+        options: {
+          data: {
+            name: data.owner_name,
+            role: "pharmacy",
+          },
         },
-        body: JSON.stringify({
-          ownerEmail: data.owner_email,
-          ownerName: data.owner_name,
-          pharmacyName: data.name,
-          pharmacyAddress: data.address || null,
-          pharmacyPhone: data.phone || null,
-          pharmacyEmail: data.email || null,
-          licenseNumber: data.license_number || null,
-        }),
       });
-      
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Failed to create pharmacy");
-      if (result?.error) throw new Error(result.error);
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create user");
+
+      // Check for fake user (email already exists)
+      if (authData.user.identities?.length === 0) {
+        throw new Error("This email is already registered");
+      }
+
+      // 2. Create pharmacy record
+      const { error: pharmacyError } = await supabase.from("pharmacies").insert({
+        name: data.name,
+        address: data.address || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        license_number: data.license_number || null,
+        owner_user_id: authData.user.id,
+      });
+      if (pharmacyError) throw pharmacyError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pharmacies"] });
-      toast({ title: "Pharmacy created successfully", description: "The pharmacy owner will receive an email to set their password." });
+      toast({ title: "Pharmacy created successfully", description: "The pharmacy owner will receive a verification email." });
       setIsDialogOpen(false);
       setFormData(initialForm);
     },
@@ -246,7 +249,10 @@ export function PharmacyManagementPanel() {
                   <Label>Owner Email *</Label>
                   <Input type="email" value={formData.owner_email} onChange={e => setFormData({...formData, owner_email: e.target.value})} />
                 </div>
-                <p className="text-xs text-muted-foreground">The owner will receive an email to set their own password.</p>
+                <div className="space-y-2">
+                  <Label>Password *</Label>
+                  <Input type="password" value={formData.owner_password} onChange={e => setFormData({...formData, owner_password: e.target.value})} placeholder="Min 6 characters" />
+                </div>
               </div>
             </div>
           </div>
@@ -254,7 +260,7 @@ export function PharmacyManagementPanel() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={() => createPharmacy.mutate(formData)}
-              disabled={createPharmacy.isPending || !formData.name || !formData.owner_email || !formData.owner_name}
+              disabled={createPharmacy.isPending || !formData.name || !formData.owner_email || !formData.owner_name || !formData.owner_password}
               className="bg-teal-600 hover:bg-teal-700"
             >
               {createPharmacy.isPending ? "Creating..." : "Create Pharmacy"}

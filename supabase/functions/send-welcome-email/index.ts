@@ -12,90 +12,6 @@ interface WelcomeRequest {
   userId: string;
   email: string;
   name: string;
-  role?: string;
-}
-
-// Role-specific email content
-function getRoleContent(role: string, displayName: string) {
-  switch (role) {
-    case "doctor":
-      return {
-        subject: "Welcome to MediCare+ — Your Doctor Account is Active!",
-        greeting: `Hello Dr. ${displayName}! 🩺`,
-        intro: "Your doctor account on MediCare+ has been verified and activated. You're all set to manage patients and appointments.",
-        features: [
-          "📅 Manage your appointment schedule",
-          "💊 Write and manage prescriptions digitally",
-          "📊 View patient history and medical records",
-          "⚙️ Configure your clinic settings and fees",
-        ],
-        ctaText: "Go to Dashboard",
-        ctaLink: "https://medicareplus.app/doctor",
-      };
-    case "pa":
-      return {
-        subject: "Welcome to MediCare+ — Your PA Account is Ready!",
-        greeting: `Hello ${displayName}! 👋`,
-        intro: "Your Personal Assistant account on MediCare+ is now active. You can assist your assigned doctor with patient management.",
-        features: [
-          "📋 Manage patient queue and appointments",
-          "🩺 Enter patient vitals before consultations",
-          "📅 Handle walk-in patient registrations",
-          "🔔 Monitor appointment status in real-time",
-        ],
-        ctaText: "Go to PA Dashboard",
-        ctaLink: "https://medicareplus.app/pa",
-      };
-    case "admin":
-      return {
-        subject: "Welcome to MediCare+ — Admin Access Granted!",
-        greeting: `Hello ${displayName}! 🔐`,
-        intro: "Your admin account on MediCare+ is now active. You have full access to manage the platform.",
-        features: [
-          "👥 Manage all users, doctors, and staff",
-          "📊 View platform analytics and reports",
-          "⚙️ Configure system settings and branding",
-          "🔒 Manage subscriptions and payment plans",
-        ],
-        ctaText: "Go to Admin Panel",
-        ctaLink: "https://medicareplus.app/admin",
-      };
-    case "pharmacy":
-      return {
-        subject: "Welcome to MediCare+ — Your Pharmacy Account is Live!",
-        greeting: `Hello ${displayName}! 💊`,
-        intro: "Your pharmacy account on MediCare+ has been activated. You can now manage inventory, process prescriptions, and handle POS sales.",
-        features: [
-          "📦 Manage your medicine inventory",
-          "🧾 Scan and verify digital prescriptions",
-          "💰 Process sales with the built-in POS system",
-          "📊 Track sales analytics and stock levels",
-        ],
-        ctaText: "Go to Pharmacy Dashboard",
-        ctaLink: "https://medicareplus.app/pharmacy",
-      };
-    case "patient":
-    default:
-      return {
-        subject: "Welcome to MediCare+ — Your Health Journey Begins!",
-        greeting: `Hello ${displayName}! 🎉`,
-        intro: "Congratulations! Your email has been verified and your MediCare+ account is now fully activated.",
-        features: [
-          "📅 Book appointments with verified doctors",
-          "📊 Track your health metrics over time",
-          "💊 Access your prescriptions and medical records",
-          "🔍 Get instant AI-powered symptom analysis",
-        ],
-        ctaText: "Start Booking",
-        ctaLink: "https://medicareplus.app/booking",
-      };
-  }
-}
-
-function buildEmailHtml(role: string, displayName: string): string {
-  const content = getRoleContent(role, displayName);
-  const featuresList = content.features.map((f) => `<li>${f}</li>`).join("");
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px;"><div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); border-radius: 16px; margin-bottom: 15px;"></div><h1 style="color: #16a34a; margin: 0;">Welcome to MediCare+</h1><p style="color: #666; margin-top: 5px;">Your Health, Our Priority</p></div><div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 30px; margin-bottom: 20px;"><h2 style="margin-top: 0; color: #166534;">${content.greeting}</h2><p>${content.intro}</p><p><strong>What you can do now:</strong></p><ul style="padding-left: 20px;">${featuresList}</ul><div style="text-align: center; margin: 30px 0;"><a href="${content.ctaLink}" style="background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">${content.ctaText}</a></div></div><div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;"><p style="margin: 0; font-size: 14px; color: #64748b;"><strong>Need help?</strong> If you have any questions or need assistance, our support team is here to help.</p></div><div style="text-align: center; font-size: 12px; color: #999;"><p>&copy; ${new Date().getFullYear()} MediCare+. All rights reserved.</p><p>This is an automated message, please do not reply.</p></div></body></html>`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -104,20 +20,22 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { userId, email, name, role }: WelcomeRequest = await req.json();
+    const { userId, email, name }: WelcomeRequest = await req.json();
 
     if (!email || !userId) {
       throw new Error("Email and userId are required");
     }
 
-    const userRole = role || "patient";
-    console.log(`Sending welcome email to: ${email} (role: ${userRole})`);
+    console.log(`Sending welcome email to: ${email}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     });
 
     // Check if welcome email was already sent
@@ -148,19 +66,21 @@ const handler = async (req: Request): Promise<Response> => {
         hostname: "smtp.gmail.com",
         port: 465,
         tls: true,
-        auth: { username: gmailUser, password: gmailAppPassword },
+        auth: {
+          username: gmailUser,
+          password: gmailAppPassword,
+        },
       },
     });
 
-    const displayName = name || email.split("@")[0];
-    const content = getRoleContent(userRole, displayName);
+    const displayName = name || email.split('@')[0];
 
     await client.send({
       from: gmailUser,
       to: email,
-      subject: content.subject,
-      content: `Welcome to MediCare+, ${displayName}! Your ${userRole} account is now active.`,
-      html: buildEmailHtml(userRole, displayName),
+      subject: "Welcome to MediCare+ - Your Health Journey Begins!",
+      content: `Welcome to MediCare+, ${displayName}! Your account is now verified and you can book appointments with top doctors.`,
+       html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px;"><div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); border-radius: 16px; margin-bottom: 15px;"></div><h1 style="color: #16a34a; margin: 0;">Welcome to MediCare+</h1><p style="color: #666; margin-top: 5px;">Your Health, Our Priority</p></div><div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 30px; margin-bottom: 20px;"><h2 style="margin-top: 0; color: #166534;">Hello ${displayName}! 🎉</h2><p>Congratulations! Your email has been verified and your MediCare+ account is now fully activated.</p><p><strong>What you can do now:</strong></p><ul style="padding-left: 20px;"><li>📅 Book appointments with verified doctors</li><li>📊 Track your health metrics over time</li><li>💊 Access your prescriptions and medical records</li><li>🔍 Get instant AI-powered symptom analysis</li></ul><div style="text-align: center; margin: 30px 0;"><a href="https://medicare-nine-wine.vercel.app/booking" style="background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Start Booking</a></div></div><div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;"><p style="margin: 0; font-size: 14px; color: #64748b;"><strong>Need help?</strong> If you have any questions or need assistance, our support team is here to help.</p></div><div style="text-align: center; font-size: 12px; color: #999;"><p>© ${new Date().getFullYear()} MediCare+. All rights reserved.</p><p>This is an automated message, please do not reply.</p></div></body></html>`,
     });
 
     await client.close();
@@ -175,22 +95,28 @@ const handler = async (req: Request): Promise<Response> => {
     await supabase.from("email_logs").insert({
       recipient_email: email,
       email_type: "welcome",
-      subject: content.subject,
+      subject: "Welcome to MediCare+ - Your Health Journey Begins!",
       status: "sent",
       sent_at: new Date().toISOString(),
     });
 
-    console.log(`Welcome email sent successfully (role: ${userRole})`);
+    console.log("Welcome email sent successfully");
 
     return new Response(
       JSON.stringify({ success: true, message: "Welcome email sent" }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
     );
   } catch (error: any) {
     console.error("Error in welcome email:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
     );
   }
 };
