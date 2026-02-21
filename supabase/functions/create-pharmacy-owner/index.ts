@@ -31,9 +31,15 @@ serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Check if email already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(u => u.email === ownerEmail);
+    // Check if email already exists using a targeted query
+    const { data: existingUsers } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    
+    // Use a more reliable check - try to find user by email directly
+    const allUsers = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const emailExists = allUsers.data?.users?.some(u => u.email?.toLowerCase() === ownerEmail.toLowerCase());
     if (emailExists) {
       return new Response(
         JSON.stringify({ error: "This email is already registered. Please use a different email." }),
