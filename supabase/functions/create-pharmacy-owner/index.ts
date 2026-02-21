@@ -33,12 +33,20 @@ serve(async (req: Request) => {
 
     // Check if email already exists
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(u => u.email === ownerEmail);
-    if (emailExists) {
-      return new Response(
-        JSON.stringify({ error: "This email is already registered. Please use a different email." }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    const existingUser = existingUsers?.users?.find(u => u.email === ownerEmail);
+    
+    if (existingUser) {
+      // Check if this user already has a pharmacy
+      const { data: existingPharmacy } = await supabase.from("pharmacies").select("id").eq("owner_user_id", existingUser.id).maybeSingle();
+      if (existingPharmacy) {
+        return new Response(
+          JSON.stringify({ error: "This email is already registered with a pharmacy. Please use a different email." }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      // User exists but no pharmacy — delete orphaned user and recreate
+      await supabase.auth.admin.deleteUser(existingUser.id);
+      console.log(`Deleted orphaned user ${existingUser.id} for re-registration`);
     }
 
     // Create user with a random password (they'll set their own via reset link)
