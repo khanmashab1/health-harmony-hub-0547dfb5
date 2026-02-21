@@ -134,6 +134,7 @@ export default function Auth() {
         doctor: "/doctor",
         pa: "/pa",
         admin: "/admin",
+        pharmacy: "/pharmacy",
       };
       navigate(redirectMap[profile.role] || "/profile");
     }

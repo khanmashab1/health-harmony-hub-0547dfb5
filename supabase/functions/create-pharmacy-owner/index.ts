@@ -8,8 +8,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function buildInviteEmailHtml(displayName: string, resetLink: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px;"><div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); border-radius: 16px; margin-bottom: 15px;"></div><h1 style="color: #16a34a; margin: 0;">Welcome to MediCare+</h1><p style="color: #666; margin-top: 5px;">Your Pharmacy Account Has Been Created</p></div><div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 30px; margin-bottom: 20px;"><h2 style="margin-top: 0; color: #166534;">Hello ${displayName}! 💊</h2><p>An admin has created a pharmacy account for you on MediCare+. To get started, please set your password by clicking the button below:</p><div style="text-align: center; margin: 30px 0;"><a href="${resetLink}" style="background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Set Your Password</a></div><p><strong>What you can do after logging in:</strong></p><ul style="padding-left: 20px;"><li>📦 Manage your medicine inventory</li><li>🧾 Scan and verify digital prescriptions</li><li>💰 Process sales with the built-in POS system</li><li>📊 Track sales analytics and stock levels</li></ul></div><div style="background: #fff3cd; border-radius: 12px; padding: 15px; margin-bottom: 20px;"><p style="margin: 0; font-size: 14px; color: #856404;">⚠️ This link will expire in 24 hours. If it expires, contact your admin to resend the invitation.</p></div><div style="text-align: center; font-size: 12px; color: #999;"><p>&copy; ${new Date().getFullYear()} MediCare+. All rights reserved.</p><p>This is an automated message, please do not reply.</p></div></body></html>`;
+function generateTempPassword(length = 10): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let result = "";
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+  for (const val of randomValues) {
+    result += chars[val % chars.length];
+  }
+  return result + "A1!"; // Ensure it meets password requirements
+}
+
+function buildInviteEmailHtml(displayName: string, tempPassword: string, loginUrl: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px;"><div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); border-radius: 16px; margin-bottom: 15px;"></div><h1 style="color: #16a34a; margin: 0;">Welcome to MediCare+</h1><p style="color: #666; margin-top: 5px;">Your Pharmacy Account Has Been Created</p></div><div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 30px; margin-bottom: 20px;"><h2 style="margin-top: 0; color: #166534;">Hello ${displayName}! 💊</h2><p>An admin has created a pharmacy account for you on MediCare+. Here are your login credentials:</p><div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #bbf7d0;"><p style="margin: 0 0 10px 0;"><strong>Temporary Password:</strong></p><p style="margin: 0; font-size: 24px; font-family: monospace; color: #16a34a; letter-spacing: 2px; text-align: center;">${tempPassword}</p></div><p style="color: #dc2626; font-weight: 600;">⚠️ You will be required to set a new password on your first login.</p><div style="text-align: center; margin: 30px 0;"><a href="${loginUrl}" style="background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Login to MediCare+</a></div><p><strong>What you can do after logging in:</strong></p><ul style="padding-left: 20px;"><li>📦 Manage your medicine inventory</li><li>🧾 Scan and verify digital prescriptions</li><li>💰 Process sales with the built-in POS system</li><li>📊 Track sales analytics and stock levels</li></ul></div><div style="text-align: center; font-size: 12px; color: #999;"><p>&copy; ${new Date().getFullYear()} MediCare+. All rights reserved.</p><p>This is an automated message, please do not reply.</p></div></body></html>`;
 }
 
 serve(async (req: Request) => {
@@ -49,8 +60,8 @@ serve(async (req: Request) => {
       console.log(`Deleted orphaned user ${existingUser.id} for re-registration`);
     }
 
-    // Create user with a random password (they'll set their own via reset link)
-    const tempPassword = crypto.randomUUID() + "Aa1!";
+    // Create user with a readable temporary password
+    const tempPassword = generateTempPassword();
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: ownerEmail,
       password: tempPassword,
@@ -58,6 +69,7 @@ serve(async (req: Request) => {
       user_metadata: {
         name: ownerName,
         role: "pharmacy",
+        requires_password_change: true,
       },
     });
 
@@ -80,24 +92,9 @@ serve(async (req: Request) => {
       throw pharmacyError;
     }
 
-    // Generate password reset link for the user to set their password
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email: ownerEmail,
-      options: {
-        redirectTo: "https://medicareplus.app/auth",
-      },
-    });
+    const loginUrl = "https://medicareplus.app/auth";
 
-    if (linkError) {
-      console.error("Error generating reset link:", linkError);
-      throw new Error("Failed to generate password setup link");
-    }
-
-    // Build the actual verification link using the token hash
-    const resetLink = `${supabaseUrl}/auth/v1/verify?token=${linkData.properties.hashed_token}&type=recovery&redirect_to=https://medicareplus.app/auth`;
-
-    // Send the invite email via Gmail SMTP (non-blocking — don't fail pharmacy creation)
+    // Send the invite email via Gmail SMTP (non-blocking)
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
 
@@ -115,9 +112,9 @@ serve(async (req: Request) => {
         await client.send({
           from: gmailUser,
           to: ownerEmail,
-          subject: `Welcome to MediCare+ — Set Up Your Pharmacy Account`,
-          content: `Hello ${ownerName}, your pharmacy account "${pharmacyName}" has been created on MediCare+. Set your password here: ${resetLink}`,
-          html: buildInviteEmailHtml(ownerName, resetLink),
+          subject: `Welcome to MediCare+ — Your Pharmacy Account Credentials`,
+          content: `Hello ${ownerName}, your pharmacy account "${pharmacyName}" has been created on MediCare+. Your temporary password is: ${tempPassword}. Please login at ${loginUrl} and set a new password.`,
+          html: buildInviteEmailHtml(ownerName, tempPassword, loginUrl),
         });
 
         await client.close();
@@ -125,7 +122,7 @@ serve(async (req: Request) => {
         await supabase.from("email_logs").insert({
           recipient_email: ownerEmail,
           email_type: "pharmacy_invite",
-          subject: "Welcome to MediCare+ — Set Up Your Pharmacy Account",
+          subject: "Welcome to MediCare+ — Your Pharmacy Account Credentials",
           status: "sent",
           sent_at: new Date().toISOString(),
         });
@@ -136,7 +133,7 @@ serve(async (req: Request) => {
         await supabase.from("email_logs").insert({
           recipient_email: ownerEmail,
           email_type: "pharmacy_invite",
-          subject: "Welcome to MediCare+ — Set Up Your Pharmacy Account",
+          subject: "Welcome to MediCare+ — Your Pharmacy Account Credentials",
           status: "failed",
           error_message: emailErr.message,
         });
