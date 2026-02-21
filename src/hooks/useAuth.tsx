@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               userId: data.id,
               email: user.email,
               name: data.name,
+              role: data.role,
             },
           }).catch(err => console.error("Failed to send welcome email:", err));
         }
