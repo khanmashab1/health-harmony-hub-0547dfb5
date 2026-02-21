@@ -63,9 +63,20 @@ export function PharmacyManagementPanel() {
 
   const createPharmacy = useMutation({
     mutationFn: async (data: PharmacyFormData) => {
-      // 1. Use edge function to create pharmacy owner with invite (no password needed)
-      const { data: result, error: fnError } = await supabase.functions.invoke("create-pharmacy-owner", {
-        body: {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const cloudUrl = `https://${projectId}.supabase.co/functions/v1/create-pharmacy-owner`;
+      
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      const response = await fetch(cloudUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
           ownerEmail: data.owner_email,
           ownerName: data.owner_name,
           pharmacyName: data.name,
@@ -73,9 +84,11 @@ export function PharmacyManagementPanel() {
           pharmacyPhone: data.phone || null,
           pharmacyEmail: data.email || null,
           licenseNumber: data.license_number || null,
-        },
+        }),
       });
-      if (fnError) throw fnError;
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to create pharmacy");
       if (result?.error) throw new Error(result.error);
     },
     onSuccess: () => {
