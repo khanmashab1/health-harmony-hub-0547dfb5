@@ -2032,8 +2032,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          check_role: Database["public"]["Enums"]["app_role"]
-          user_uuid: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
