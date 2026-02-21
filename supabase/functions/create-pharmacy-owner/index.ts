@@ -89,40 +89,50 @@ serve(async (req: Request) => {
     // Build the actual verification link using the token hash
     const resetLink = `${supabaseUrl}/auth/v1/verify?token=${linkData.properties.hashed_token}&type=recovery&redirect_to=https://medicareplus.app/auth`;
 
-    // Send the invite email via Gmail SMTP
+    // Send the invite email via Gmail SMTP (non-blocking — don't fail pharmacy creation)
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
 
     if (gmailUser && gmailAppPassword) {
-      const client = new SMTPClient({
-        connection: {
-          hostname: "smtp.gmail.com",
-          port: 465,
-          tls: true,
-          auth: { username: gmailUser, password: gmailAppPassword },
-        },
-      });
+      try {
+        const client = new SMTPClient({
+          connection: {
+            hostname: "smtp.gmail.com",
+            port: 465,
+            tls: true,
+            auth: { username: gmailUser, password: gmailAppPassword },
+          },
+        });
 
-      await client.send({
-        from: gmailUser,
-        to: ownerEmail,
-        subject: `Welcome to MediCare+ — Set Up Your Pharmacy Account`,
-        content: `Hello ${ownerName}, your pharmacy account "${pharmacyName}" has been created on MediCare+. Set your password here: ${resetLink}`,
-        html: buildInviteEmailHtml(ownerName, resetLink),
-      });
+        await client.send({
+          from: gmailUser,
+          to: ownerEmail,
+          subject: `Welcome to MediCare+ — Set Up Your Pharmacy Account`,
+          content: `Hello ${ownerName}, your pharmacy account "${pharmacyName}" has been created on MediCare+. Set your password here: ${resetLink}`,
+          html: buildInviteEmailHtml(ownerName, resetLink),
+        });
 
-      await client.close();
+        await client.close();
 
-      // Log the email
-      await supabase.from("email_logs").insert({
-        recipient_email: ownerEmail,
-        email_type: "pharmacy_invite",
-        subject: "Welcome to MediCare+ — Set Up Your Pharmacy Account",
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      });
+        await supabase.from("email_logs").insert({
+          recipient_email: ownerEmail,
+          email_type: "pharmacy_invite",
+          subject: "Welcome to MediCare+ — Set Up Your Pharmacy Account",
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
 
-      console.log(`Pharmacy invite email sent to ${ownerEmail}`);
+        console.log(`Pharmacy invite email sent to ${ownerEmail}`);
+      } catch (emailErr: any) {
+        console.error("Email sending failed (pharmacy still created):", emailErr.message);
+        await supabase.from("email_logs").insert({
+          recipient_email: ownerEmail,
+          email_type: "pharmacy_invite",
+          subject: "Welcome to MediCare+ — Set Up Your Pharmacy Account",
+          status: "failed",
+          error_message: emailErr.message,
+        });
+      }
     }
 
     return new Response(
