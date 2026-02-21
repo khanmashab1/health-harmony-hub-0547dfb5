@@ -87,6 +87,7 @@ import { PaymentPlansPanel } from "@/components/admin/PaymentPlansPanel";
 import { SubscriptionsPanel } from "@/components/admin/SubscriptionsPanel";
 import { AIPlansPanel } from "@/components/admin/AIPlansPanel";
 import { PharmacyManagementPanel } from "@/components/admin/PharmacyManagementPanel";
+import { UserManagementPanel } from "@/components/admin/UserManagementPanel";
 
 export default function AdminDashboard() {
   const { user, profile, loading } = useRequireAuth(["admin"]);
@@ -98,7 +99,7 @@ export default function AdminDashboard() {
   const [createDoctorOpen, setCreateDoctorOpen] = useState(false);
   const [createPAOpen, setCreatePAOpen] = useState(false);
   const [assignPAOpen, setAssignPAOpen] = useState(false);
-  const [userSearch, setUserSearch] = useState("");
+  const [userSearch, setUserSearch] = useState(""); // kept for backward compat
   const [doctorSearch, setDoctorSearch] = useState("");
   const [doctorSpecialtyFilter, setDoctorSpecialtyFilter] = useState<string>("all");
   const [doctorCityFilter, setDoctorCityFilter] = useState<string>("all");
@@ -482,62 +483,7 @@ export default function AdminDashboard() {
 
               {/* Users Tab */}
               <TabsContent value="users">
-                <Card variant="glass" className="border-border/50 dark:border-border/30 dark:bg-card/50">
-                  <CardHeader className="border-b border-border/30 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />User Management</CardTitle>
-                      <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9 border-border/50" />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {loadingUsers ? (
-                      <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16" />)}</div>
-                    ) : users && users.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead><tr className="border-b"><th className="text-left py-3 px-4 font-medium">Name</th><th className="text-left py-3 px-4 font-medium">Role</th><th className="text-left py-3 px-4 font-medium">Phone</th><th className="text-left py-3 px-4 font-medium">Status</th><th className="text-left py-3 px-4 font-medium">Actions</th></tr></thead>
-                          <tbody>
-                            {users.map((u) => (
-                              <tr key={u.id} className="border-b hover:bg-muted/50">
-                                <td className="py-3 px-4 font-medium">{u.name || "-"}</td>
-                                <td className="py-3 px-4"><Badge variant="outline" className="capitalize">{u.role}</Badge></td>
-                                <td className="py-3 px-4 text-muted-foreground">{u.phone || "-"}</td>
-                                <td className="py-3 px-4"><Badge className={u.status === "Active" ? "status-completed" : "status-pending"}>{u.status}</Badge></td>
-                                <td className="py-3 px-4">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                      <DropdownMenuItem onClick={() => updateUserStatus.mutate({ userId: u.id, status: u.status === "Active" ? "Inactive" : "Active" })}>
-                                        {u.status === "Active" ? "Deactivate" : "Activate"}
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem 
-                                        onClick={() => updateUserStatus.mutate({ userId: u.id, status: "Deleted" })}
-                                        className="text-destructive focus:text-destructive"
-                                      >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete User
-                                      </DropdownMenuItem>
-                                     <DropdownMenuItem 
-                                       onClick={() => deleteUser.mutate(u.id)}
-                                       className="text-destructive focus:text-destructive"
-                                     >
-                                       <Trash2 className="w-4 h-4 mr-2" />
-                                       Permanently Delete
-                                     </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (<p className="text-center py-8 text-muted-foreground">No users found</p>)}
-                  </CardContent>
-                </Card>
+                <UserManagementPanel />
               </TabsContent>
 
               {/* Doctors Tab */}
