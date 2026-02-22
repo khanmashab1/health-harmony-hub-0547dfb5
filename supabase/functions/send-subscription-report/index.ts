@@ -43,15 +43,7 @@ serve(async (req) => {
 
     const siteName = settings?.find(s => s.setting_key === "site_name")?.setting_value || "MediCare+";
     const siteUrl = settings?.find(s => s.setting_key === "site_url")?.setting_value || "https://medicare-nine-wine.vercel.app";
-    const adminEmail = settings?.find(s => s.setting_key === "admin_email")?.setting_value;
-
-    if (!adminEmail) {
-      logStep("No admin email configured, skipping report");
-      return new Response(JSON.stringify({ success: false, message: "No admin email configured" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
+    const adminEmail = "khanmashab1@gmail.com";
 
     // Calculate date ranges
     const now = new Date();
