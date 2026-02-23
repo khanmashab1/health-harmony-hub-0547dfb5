@@ -22,7 +22,8 @@
 11. [Organization / Multi-Clinic Support](#11-organization--multi-clinic-support)
 12. [SEO & Public Pages](#12-seo--public-pages)
 13. [UI/UX & Accessibility](#13-uiux--accessibility)
-14. [DevOps & Infrastructure](#14-devops--infrastructure)
+14. [Pharmacy Portal & POS System](#14-pharmacy-portal--pos-system)
+15. [DevOps & Infrastructure](#15-devops--infrastructure)
 
 ---
 
@@ -257,20 +258,38 @@
 
 ---
 
-## 14. DevOps & Infrastructure
+## 14. Pharmacy Portal & POS System
 
 | # | Feature | Description |
 |---|---------|-------------|
-| 14.1 | Vercel Deployment | Production deployment on Vercel with automatic builds from Git. |
-| 14.2 | Supabase Backend | PostgreSQL database, authentication, storage, and edge functions via Supabase. |
-| 14.3 | Edge Functions | 18+ serverless functions handling emails, payments, AI, and automation. |
-| 14.4 | Database Migrations | Version-controlled database schema changes with migration files. |
-| 14.5 | Cron Jobs | Scheduled tasks for follow-up reminders, appointment reminders, and admin reports. |
-| 14.6 | File Storage | Secure file storage for avatars, receipts, doctor documents, and organization logos. |
-| 14.7 | Audit Logging | Database-level audit logs tracking important actions with user and entity details. |
-| 14.8 | Environment Variables | Secure secrets management for API keys and configuration. |
-| 14.9 | TypeScript | Full TypeScript implementation with strict typing and auto-generated database types. |
-| 14.10 | PWA Manifest | Web app manifest enabling "Add to Home Screen" on mobile devices. |
+| 14.1 | Pharmacy Dashboard | Comprehensive dashboard for pharmacy owners with sales analytics, inventory overview, and quick actions. |
+| 14.2 | Point of Sale (POS) | Split-panel POS interface with real-time inventory search, cart management, and multi-payment support (Cash, Card, JazzCash, Easypaisa). |
+| 14.3 | Inventory Management | Full medicine inventory with batch tracking, expiry dates, stock levels, reorder alerts, and category management. |
+| 14.4 | Prescription Scanning | QR code scanner to load prescriptions directly into the POS for fulfillment. |
+| 14.5 | Sales History & Analytics | Daily and weekly profit analytics, sales tracking, and revenue breakdowns by payment method. |
+| 14.6 | Thermal Receipt Printing | 80mm thermal receipt generation for completed sales with itemized details. |
+| 14.7 | Expiry Alert System | Automated alerts for medicines expiring within 30 days with dashboard notifications. |
+| 14.8 | Stock Audit Trail | Complete audit logging of all inventory changes (sales, restocking, adjustments) with timestamps. |
+| 14.9 | Supplier Order Management | Create and track purchase orders to suppliers with expected delivery dates and status tracking. |
+| 14.10 | Cashier Management | Create and manage cashier accounts with role-based access for POS operations. |
+| 14.11 | Low Stock Alerts | Automatic notifications when medicine stock falls below configurable reorder levels. |
+
+---
+
+## 15. DevOps & Infrastructure
+
+| # | Feature | Description |
+|---|---------|-------------|
+| 15.1 | Vercel Deployment | Production deployment on Vercel with automatic builds from Git. |
+| 15.2 | Supabase Backend | PostgreSQL database, authentication, storage, and edge functions via Supabase. |
+| 15.3 | Edge Functions | 18+ serverless functions handling emails, payments, AI, and automation. |
+| 15.4 | Database Migrations | Version-controlled database schema changes with migration files. |
+| 15.5 | Cron Jobs | Scheduled tasks for follow-up reminders, appointment reminders, and admin reports. |
+| 15.6 | File Storage | Secure file storage for avatars, receipts, doctor documents, and organization logos. |
+| 15.7 | Audit Logging | Database-level audit logs tracking important actions with user and entity details. |
+| 15.8 | Environment Variables | Secure secrets management for API keys and configuration. |
+| 15.9 | TypeScript | Full TypeScript implementation with strict typing and auto-generated database types. |
+| 15.10 | PWA Manifest | Web app manifest enabling "Add to Home Screen" on mobile devices. |
 
 ---
 
@@ -278,14 +297,15 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Features** | 80+ |
-| **User Roles** | 4 (Patient, Doctor, PA, Admin) |
+| **Total Features** | 90+ |
+| **User Roles** | 5 (Patient, Doctor, PA, Admin, Pharmacy) |
 | **Edge Functions** | 18+ |
-| **Database Tables** | 25+ |
+| **Database Tables** | 30+ |
 | **AI Features** | 10 |
 | **Email Types** | 12 |
 | **SEO Pages** | 10 |
 | **Cron Jobs** | 3 |
+| **Feature Categories** | 15 |
 
 ---
 
