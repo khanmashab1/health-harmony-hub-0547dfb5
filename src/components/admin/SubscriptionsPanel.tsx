@@ -41,6 +41,7 @@ import { format } from "date-fns";
 import { SubscriptionAnalyticsCharts } from "./SubscriptionAnalyticsCharts";
 import { toast } from "sonner";
 import { downloadPlatformReportPDF } from "@/lib/platformReportPdf";
+import { downloadFeaturesListPDF } from "@/lib/featuresListPdf";
 
 interface DoctorWithPlan {
   user_id: string;
@@ -252,6 +253,21 @@ export function SubscriptionsPanel() {
               <FileText className="w-4 h-4" />
             )}
             {isDownloadingPDF ? "Generating..." : "Download PDF"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              try {
+                downloadFeaturesListPDF();
+                toast.success("Features PDF downloaded!");
+              } catch (err: any) {
+                toast.error("Failed to generate Features PDF", { description: err.message });
+              }
+            }}
+            className="gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Features PDF
           </Button>
           <Button
             onClick={handleSendReport}
