@@ -76,7 +76,9 @@ function parseConditionBlock(block: string) {
       if (line.match(/^(?:Recommendation|Risk Level|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) {
         inAdvice = false;
       } else {
-        const cleaned = line.replace(/^[-•*\d.]+\s*/, '').trim();
+        // Preserve original markdown formatting from the raw line
+        const originalLine = lines[i];
+        const cleaned = originalLine.replace(/^[-•]\s*/, '').trim();
         if (cleaned.length > 5) adviceLines.push(cleaned);
       }
     }
@@ -86,7 +88,7 @@ function parseConditionBlock(block: string) {
 }
 
 function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
-  const rawText = text.replace(/\*\*/g, '');
+  const rawText = text;
   const blocks = rawText.split(/\n---\n|\n-{3,}\n/).filter(b => b.trim());
 
   const allConditions: { name: string; percentage: number; description: string }[] = [];
@@ -128,7 +130,7 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
     .map(a => a.length > 120 ? a.substring(0, 117) + "…" : a);
 
   const triageAdvice = cappedAdvice.length > 0
-    ? cappedAdvice.map(a => `• ${a}`).join('\n')
+    ? cappedAdvice.map(a => `- ${a}`).join('\n')
     : "";
 
   allConditions.sort((a, b) => b.percentage - a.percentage);
