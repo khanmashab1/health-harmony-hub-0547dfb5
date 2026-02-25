@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { useLanguage } from "@/hooks/useLanguage";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -470,8 +471,8 @@ export default function SymptomsChecker() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
-                        <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">{analysis.triage_advice}</p>
+                      <div className="p-6 rounded-xl bg-primary/5 border border-primary/10 prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                        <ReactMarkdown>{analysis.triage_advice}</ReactMarkdown>
                       </div>
                     </CardContent>
                   </Card>
@@ -486,7 +487,9 @@ export default function SymptomsChecker() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-base font-medium leading-relaxed">{recommendation.text}</p>
+                    <div className="p-6 rounded-xl prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                      <ReactMarkdown>{recommendation.text}</ReactMarkdown>
+                    </div>
                   </CardContent>
                 </Card>
 
