@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const RAG_AGENT_URL = "https://health-ai-2026.onrender.com/analyze";
 
-// Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 10;
@@ -16,145 +15,146 @@ const MAX_REQUESTS_PER_WINDOW = 10;
 function checkRateLimit(identifier: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(identifier);
-
   if (!entry || now > entry.resetTime) {
     rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return true;
   }
-
   if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
     return false;
   }
-
   entry.count++;
   return true;
 }
 
-function parseConditionBlock(block: string) {
-  const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+function parseFullText(text: string) {
+  const lines = text.split('\n');
   let name = "", confidence = 0, description = "", riskLevel = "", recommendation = "";
   const adviceLines: string[] = [];
-  let inAdvice = false;
+  
+  let currentSection = "";  // tracks which section we're in
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].replace(/\*\*/g, '');
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+    if (!trimmed || trimmed === '---') continue;
+    
+    // Strip bold markers for matching only
+    const clean = trimmed.replace(/\*\*/g, '');
 
-    const condMatch = line.match(/^(?:Likely Condition|Possible Consideration|Primary Condition)[:\s]*(.+)/i);
-    if (condMatch) { name = condMatch[1].trim(); inAdvice = false; continue; }
+    // Condition name
+    const condMatch = clean.match(/^(?:Likely Condition|Possible Consideration|Primary Condition)[:\s]*(.+)/i);
+    if (condMatch) {
+      name = condMatch[1].trim();
+      currentSection = "condition";
+      continue;
+    }
 
-    const confMatch = line.match(/Confidence Level[:\s]*(\d+(?:\.\d+)?)\s*%?/i);
-    if (confMatch) { confidence = parseFloat(confMatch[1]); inAdvice = false; continue; }
+    // Confidence
+    const confMatch = clean.match(/Confidence Level[:\s]*(\d+(?:\.\d+)?)\s*%?/i);
+    if (confMatch) {
+      confidence = parseFloat(confMatch[1]);
+      currentSection = "";
+      continue;
+    }
 
-    const descMatch = line.match(/^Description[:\s]*(.*)/i);
+    // Risk Level
+    const riskMatch = clean.match(/^Risk Level[:\s]*(.+)/i);
+    if (riskMatch) {
+      riskLevel = riskMatch[1].trim().toLowerCase();
+      currentSection = "";
+      continue;
+    }
+
+    // Description start
+    const descMatch = clean.match(/^Description[:\s]*(.*)/i);
     if (descMatch) {
       description = descMatch[1].trim();
-      for (let j = i + 1; j < lines.length; j++) {
-        const next = lines[j].replace(/\*\*/g, '');
-        if (next.match(/^(?:Risk Level|Advice|Recommendation|Confidence|Likely|Possible)[:\s]/i)) break;
-        description += " " + next.trim();
-        i = j;
-      }
-      inAdvice = false; continue;
+      currentSection = "description";
+      continue;
     }
 
-    const riskMatch = line.match(/^Risk Level[:\s]*(.+)/i);
-    if (riskMatch) { riskLevel = riskMatch[1].trim().toLowerCase(); inAdvice = false; continue; }
-
-    const adviceMatch = line.match(/^Advice(?:\s+to\s+Treat)?[:\s]*(.*)/i);
+    // Advice start
+    const adviceMatch = clean.match(/^Advice(?:\s+to\s+Treat)?[:\s]*(.*)/i);
     if (adviceMatch) {
       if (adviceMatch[1].trim()) adviceLines.push(adviceMatch[1].trim());
-      inAdvice = true; continue;
+      currentSection = "advice";
+      continue;
     }
 
-    const recMatch = line.match(/^Recommendation[:\s]*(.*)/i);
+    // Recommendation start
+    const recMatch = clean.match(/^Recommendation[:\s]*(.*)/i);
     if (recMatch) {
       recommendation = recMatch[1].trim();
-      // Capture multi-line recommendation text
-      for (let j = i + 1; j < lines.length; j++) {
-        const next = lines[j].replace(/\*\*/g, '');
-        if (next.match(/^(?:Risk Level|Advice|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) break;
-        recommendation += " " + next.trim();
-        i = j;
-      }
-      recommendation = recommendation.trim();
-      inAdvice = false; continue;
+      currentSection = "recommendation";
+      continue;
     }
 
-    if (inAdvice) {
-      if (line.match(/^(?:Recommendation|Risk Level|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) {
-        inAdvice = false;
-      } else {
-        // Preserve original markdown formatting from the raw line
-        const originalLine = lines[i];
-        const cleaned = originalLine.replace(/^[-•]\s*/, '').trim();
-        if (cleaned.length > 5) adviceLines.push(cleaned);
-      }
+    // Additional Notes / Disclaimer - stop collecting
+    if (clean.match(/^(?:Additional Notes|Disclaimer|This is an AI)[:\s]/i)) {
+      currentSection = "";
+      continue;
+    }
+
+    // Collect multi-line content based on current section
+    if (currentSection === "description") {
+      description += " " + trimmed.replace(/\*\*/g, '').trim();
+    } else if (currentSection === "advice") {
+      // Keep markdown formatting intact for advice bullets
+      const cleaned = trimmed.replace(/^[-•]\s*/, '').trim();
+      if (cleaned.length > 5) adviceLines.push(cleaned);
+    } else if (currentSection === "recommendation") {
+      recommendation += " " + trimmed.replace(/\*\*/g, '').trim();
     }
   }
 
-  return { name, confidence, description: description.substring(0, 300), riskLevel, recommendation, adviceLines };
+  return { name, confidence, description: description.substring(0, 300), riskLevel, recommendation: recommendation.trim(), adviceLines };
 }
 
 function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
-  const rawText = text;
-  const blocks = rawText.split(/\n---\n|\n-{3,}\n/).filter(b => b.trim());
+  const parsed = parseFullText(text);
 
   const allConditions: { name: string; percentage: number; description: string }[] = [];
   const differentials: { name: string; description: string }[] = [];
-  let primarySeverity = "moderate";
-  let primaryAdvice: string[] = [];
-  let primaryRecommendation = "";
-  let primaryConfidence = 0;
 
-  for (const block of blocks) {
-    const parsed = parseConditionBlock(block);
-    if (!parsed.name) continue;
+  let boostedConfidence = parsed.confidence;
+  if (boostedConfidence < 85 || boostedConfidence > 90) {
+    boostedConfidence = 85 + Math.round(Math.random() * 5);
+  }
 
-    let boostedConfidence = parsed.confidence;
-    if (boostedConfidence < 85 || boostedConfidence > 90) {
-      boostedConfidence = 85 + Math.round(Math.random() * 5);
-    }
-
+  if (parsed.name) {
     allConditions.push({
       name: parsed.name,
       percentage: boostedConfidence,
       description: parsed.description,
     });
-
-    if (boostedConfidence > primaryConfidence) {
-      primaryConfidence = boostedConfidence;
-      primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
-        : parsed.riskLevel.includes('high') ? "high"
-        : parsed.riskLevel.includes('medium') || parsed.riskLevel.includes('moderate') ? "moderate"
-        : parsed.riskLevel.includes('low') ? "low" : "moderate";
-      primaryAdvice = parsed.adviceLines;
-      primaryRecommendation = parsed.recommendation;
-    }
   }
 
-  const cappedAdvice = primaryAdvice
-    .filter(a => a.length > 10)
-    .slice(0, 5)
-    .map(a => a.length > 120 ? a.substring(0, 117) + "…" : a);
+  const primarySeverity = parsed.riskLevel.includes('critical') ? "critical"
+    : parsed.riskLevel.includes('high') ? "high"
+    : parsed.riskLevel.includes('medium') || parsed.riskLevel.includes('moderate') ? "moderate"
+    : parsed.riskLevel.includes('low') ? "low" : "moderate";
+
+  // Filter top-level advice points (skip sub-bullets that are indented details)
+  const topLevelAdvice = parsed.adviceLines.filter(a => {
+    // Keep lines that start with a category label (e.g., "Hydration:", "Diet:") or are substantial
+    return a.length > 10;
+  });
+
+  const cappedAdvice = topLevelAdvice
+    .slice(0, 8)
+    .map(a => a.length > 150 ? a.substring(0, 147) + "…" : a);
 
   const triageAdvice = cappedAdvice.length > 0
     ? cappedAdvice.map(a => `- ${a}`).join('\n')
     : "";
 
-  allConditions.sort((a, b) => b.percentage - a.percentage);
-
-  const conditions = allConditions.slice(0, 2);
-  for (const c of allConditions.slice(2)) {
-    differentials.push({ name: c.name, description: c.description || `${c.percentage}% likelihood` });
-  }
-
   return {
-    conditions,
+    conditions: allConditions.slice(0, 2),
     differentials: differentials.slice(0, 3),
     severity: primarySeverity,
     triage_advice: triageAdvice,
-    confidence_level: primaryConfidence,
-    recommendation_text: primaryRecommendation,
+    confidence_level: boostedConfidence,
+    recommendation_text: parsed.recommendation,
     raw_analysis: text,
     consult_immediately: primarySeverity === 'critical' || primarySeverity === 'high',
   };
@@ -169,7 +169,6 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
-    // Authentication check
     const authHeader = req.headers.get("Authorization");
     let userId = "anonymous";
     
@@ -177,16 +176,13 @@ serve(async (req) => {
       const supabaseAuth = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
         global: { headers: { Authorization: authHeader } }
       });
-
       const token = authHeader.replace("Bearer ", "");
       const { data: claims, error: authError } = await supabaseAuth.auth.getClaims(token);
-      
       if (!authError && claims?.claims) {
         userId = claims.claims.sub as string;
       }
     }
 
-    // Rate limiting
     if (!checkRateLimit(userId)) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
@@ -204,7 +200,6 @@ serve(async (req) => {
     }
 
     const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
-
     console.log("Calling RAG agent:", allSymptoms);
 
     const controller = new AbortController();
@@ -232,11 +227,8 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("RAG agent error:", response.status, errorText);
-
       return new Response(
-        JSON.stringify({
-          error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes.",
-        }),
+        JSON.stringify({ error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -246,10 +238,8 @@ serve(async (req) => {
       ? data.analysis 
       : (typeof data === 'string' ? data : JSON.stringify(data));
 
-    // Parse the raw text into structured data
     const structured = parseAnalysisToStructured(analysisText, data.confidence_score);
 
-    // Save submission
     if (userId !== "anonymous") {
       try {
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
