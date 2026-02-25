@@ -66,9 +66,17 @@ function parseConditionBlock(block: string) {
       inAdvice = true; continue;
     }
 
-    const recMatch = line.match(/^Recommendation[:\s]*(.+)/i);
+    const recMatch = line.match(/^Recommendation[:\s]*(.*)/i);
     if (recMatch) {
       recommendation = recMatch[1].trim();
+      // Capture multi-line recommendation text
+      for (let j = i + 1; j < lines.length; j++) {
+        const next = lines[j].replace(/\*\*/g, '');
+        if (next.match(/^(?:Risk Level|Advice|Description|Confidence|Likely|Possible|Disclaimer|This is an AI)[:\s]/i)) break;
+        recommendation += " " + next.trim();
+        i = j;
+      }
+      recommendation = recommendation.trim();
       inAdvice = false; continue;
     }
 

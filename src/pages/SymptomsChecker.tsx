@@ -348,7 +348,7 @@ export default function SymptomsChecker() {
 
               // Use recommendation from RAG agent if available, otherwise fallback by severity
               const getRecommendation = () => {
-                if (analysis.recommendation_text) {
+                if (analysis.recommendation_text && analysis.recommendation_text.replace(/^[:\s]+/, '').trim().length > 3) {
                   const urgent = analysis.severity === 'critical' || analysis.severity === 'high' ||
                     analysis.recommendation_text.toLowerCase().includes('immediately') ||
                     analysis.recommendation_text.toLowerCase().includes('emergency');
