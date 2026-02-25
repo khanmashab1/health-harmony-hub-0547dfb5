@@ -208,7 +208,7 @@ serve(async (req) => {
     console.log("Calling RAG agent:", allSymptoms);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     let response: Response;
     try {
@@ -233,7 +233,6 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error("RAG agent error:", response.status, errorText);
 
-      // Return a user-friendly error (not a 500 crash) so the frontend can show a proper message
       return new Response(
         JSON.stringify({
           error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes.",
@@ -279,7 +278,6 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error("Error:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred";
-    // Always return a proper JSON response, never crash with a blank screen
     return new Response(JSON.stringify({ error: message }), {
       status: 503,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
