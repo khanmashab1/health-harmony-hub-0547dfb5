@@ -160,73 +160,6 @@ function parseAnalysisToStructured(text: string, _ragConfidence?: number) {
   };
 }
 
-async function buildKnowledgeFallbackAnalysis(
-  allSymptoms: string,
-  symptomsText: string,
-  selectedTags: string[] = [],
-): Promise<ReturnType<typeof parseAnalysisToStructured> | null> {
-  try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data, error } = await supabase
-      .from("symptom_knowledge")
-      .select("symptom, description, advice, severity")
-      .limit(100);
-
-    if (error || !data || data.length === 0) return null;
-
-    const haystack = [allSymptoms, symptomsText, ...(selectedTags || [])]
-      .join(" ")
-      .toLowerCase();
-
-    const matched = data.find((row) => haystack.includes((row.symptom || "").toLowerCase()));
-    const fallback = matched ?? data[0];
-    if (!fallback) return null;
-
-    const normalizedSeverity = String(fallback.severity || "moderate").toLowerCase();
-    const severity = normalizedSeverity.includes("critical")
-      ? "critical"
-      : normalizedSeverity.includes("high")
-      ? "high"
-      : normalizedSeverity.includes("low")
-      ? "low"
-      : "moderate";
-
-    const adviceLines = String(fallback.advice || "")
-      .split(/[.;\n]/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-      .slice(0, 6);
-
-    return {
-      conditions: [
-        {
-          name: fallback.symptom || "General symptom guidance",
-          percentage: matched ? 78 : 65,
-          description: String(fallback.description || "General symptom guidance based on your input.").slice(0, 300),
-        },
-      ],
-      differentials: [],
-      severity,
-      triage_advice: adviceLines.map((line) => `- ${line}`).join("\n"),
-      confidence_level: matched ? 78 : 65,
-      recommendation_text:
-        severity === "critical" || severity === "high"
-          ? "Please seek urgent medical care as soon as possible."
-          : "Monitor symptoms closely and consult a doctor if they worsen or persist.",
-      raw_analysis: `Fallback knowledge analysis for: ${allSymptoms}`,
-      consult_immediately: severity === "critical" || severity === "high",
-    };
-  } catch (error) {
-    console.error("Fallback generation failed:", error);
-    return null;
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -269,60 +202,43 @@ serve(async (req) => {
     const allSymptoms = [symptoms, ...(selectedTags || [])].filter(Boolean).join(', ');
     console.log("Calling RAG agent:", allSymptoms);
 
-    let structured: ReturnType<typeof parseAnalysisToStructured> | null = null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
+    let response: Response;
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 90000);
-
-      let response: Response;
-      try {
-        response = await fetch(RAG_AGENT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            symptoms: allSymptoms,
-            age: age ? parseInt(age) : 0,
-            gender: gender || "unknown",
-            duration: duration || "unknown",
-            severity: severity || "moderate",
-            medical_history: medicalHistory || null,
-          }),
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("RAG agent error:", response.status, errorText);
-        throw new Error(`Upstream returned ${response.status}`);
-      }
-
-      const data = await response.json();
-      const analysisText = typeof data.analysis === 'string'
-        ? data.analysis
-        : (typeof data === 'string' ? data : JSON.stringify(data));
-
-      structured = parseAnalysisToStructured(analysisText, data.confidence_score);
-    } catch (upstreamError) {
-      console.warn("Primary AI service unavailable, using knowledge fallback:", upstreamError);
-      structured = await buildKnowledgeFallbackAnalysis(allSymptoms, symptoms, selectedTags);
-      if (!structured) {
-        return new Response(
-          JSON.stringify({ error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes." }),
-          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      response = await fetch(RAG_AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          symptoms: allSymptoms,
+          age: age ? parseInt(age) : 0,
+          gender: gender || "unknown",
+          duration: duration || "unknown",
+          severity: severity || "moderate",
+          medical_history: medicalHistory || null,
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
     }
 
-    if (!structured) {
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("RAG agent error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "Unable to generate symptom analysis at this time." }),
+        JSON.stringify({ error: "The AI analysis service is temporarily unavailable. Please try again in a few minutes." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const data = await response.json();
+    const analysisText = typeof data.analysis === 'string' 
+      ? data.analysis 
+      : (typeof data === 'string' ? data : JSON.stringify(data));
+
+    const structured = parseAnalysisToStructured(analysisText, data.confidence_score);
 
     if (userId !== "anonymous") {
       try {

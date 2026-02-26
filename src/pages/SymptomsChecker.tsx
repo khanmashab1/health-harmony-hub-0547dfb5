@@ -108,42 +108,26 @@ export default function SymptomsChecker() {
 
     setIsAnalyzing(true);
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const cloudUrl = `https://${projectId}.supabase.co/functions/v1/analyze-symptoms`;
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-
-      const response = await fetch(cloudUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('analyze-symptoms', {
+        body: {
           symptoms,
           age: age ? parseInt(age) : null,
-          gender,
-          duration,
-          severity,
-          medicalHistory,
+          gender, duration, severity, medicalHistory,
           selectedTags: selectedTags.map((tag) => {
             const idx = SYMPTOM_TAG_KEYS.indexOf(tag);
             return idx >= 0 ? SYMPTOM_TAGS_EN[idx] : tag;
-          }),
-        }),
+          })
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const msg = data?.error || "Failed to analyze symptoms.";
+      if (error) {
+        // Extract meaningful message from edge function errors
+        const msg = (error as any)?.context?.error || error.message || "Failed to analyze symptoms.";
         toast.error(msg.includes("temporarily unavailable")
           ? "The AI analysis service is temporarily unavailable. Please try again in a few minutes."
           : msg);
         return;
       }
-
       if (data?.error) {
         toast.error(data.error);
         return;
