@@ -587,14 +587,14 @@ export default function SymptomsChecker() {
 
                 {/* Recommendation */}
                 <Card className={recommendation.urgent ? "border-red-500/30 bg-red-500/5" : "border-primary/30 bg-primary/5"}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Stethoscope className="w-5 h-5" />
+                  <CardHeader className="pb-2 px-4 md:px-6">
+                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                      <Stethoscope className="w-4 h-4 md:w-5 md:h-5" />
                       Recommendation
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="p-6 rounded-xl prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                  <CardContent className="px-4 md:px-6">
+                    <div className="p-3 md:p-6 rounded-xl prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 md:[&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-4 md:[&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
                       <ReactMarkdown>{recommendation.text}</ReactMarkdown>
                     </div>
                   </CardContent>
