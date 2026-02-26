@@ -39,6 +39,7 @@ import RiskEvaluator from "./pages/RiskEvaluator";
 import AIHealth from "./pages/AIHealth";
 import DietPlanner from "./pages/DietPlanner";
 import AIDietPlanner from "./pages/seo/AIDietPlanner";
+import AIHealthRiskEvaluator from "./pages/seo/AIHealthRiskEvaluator";
 import PharmacyDashboard from "./pages/PharmacyDashboard";
 
 const queryClient = new QueryClient({
