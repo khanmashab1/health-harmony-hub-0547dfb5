@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { SEOHead } from "@/components/seo/SEOHead";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HeartPulse, Salad, ArrowRight, Brain, Activity, Dumbbell, Apple, Moon } from "lucide-react";
