@@ -326,9 +326,22 @@ export default function RiskEvaluator() {
   return (
     <Layout>
       <SEOHead
-        title="AI Health Risk Evaluator | MediCare+"
-        description="Get a real-time, AI-driven assessment of your health vitals."
+        title="AI Health Risk Evaluator — Free Vitals Assessment"
+        description="Free AI health risk evaluator by MediCare+. Enter your vitals, lifestyle habits, and family history to get an instant AI-powered health risk score with personalized suggestions."
+        keywords="AI health risk evaluator, free health risk assessment, BMI calculator, blood pressure checker, health risk score, vitals assessment, AI health checkup free, online health screening"
         canonicalUrl="/risk-evaluator"
+        jsonLd={[
+          seoSchemas.medicalService({
+            name: "AI Health Risk Evaluator",
+            description: "AI-powered health risk assessment analyzing BMI, blood pressure, oxygen levels, and lifestyle factors.",
+            url: "/risk-evaluator",
+          }),
+          seoSchemas.breadcrumb([
+            { name: "Home", url: "/" },
+            { name: "AI Health", url: "/ai-health" },
+            { name: "Health Risk Evaluator", url: "/risk-evaluator" },
+          ]),
+        ]}
       />
       <div className="container mx-auto px-4 py-10 max-w-4xl">
         <Card variant="elevated" className="shadow-xl">
