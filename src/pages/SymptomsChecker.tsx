@@ -302,7 +302,7 @@ export default function SymptomsChecker() {
             )}
 
             {/* Step 2: Additional Info */}
-            {step === 2 && (
+            {step === 2 && !isAnalyzing && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <Card>
                   <CardHeader>
