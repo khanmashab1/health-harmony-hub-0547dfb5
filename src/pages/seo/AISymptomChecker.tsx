@@ -44,20 +44,20 @@ export default function AISymptomChecker() {
         ]}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-10 md:py-16 max-w-4xl">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 md:mb-6">
           AI-Powered Symptom Checker — Free Health Assessment
         </h1>
 
-        <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+        <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed">
           Not sure what's causing your symptoms? MediCare+'s AI Symptom Checker uses artificial intelligence combined with a curated medical knowledge base to analyze your symptoms and provide preliminary health insights. It's free, instant, and available 24/7 — helping you decide whether to see a doctor and which specialist to consult.
         </p>
 
-        <div className="flex flex-wrap gap-4 mb-12">
-          <Button asChild size="lg">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8 md:mb-12">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link to="/symptoms">Check Your Symptoms Now</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
             <Link to="/our-doctors">Find a Doctor</Link>
           </Button>
         </div>
