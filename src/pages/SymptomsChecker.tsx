@@ -368,6 +368,82 @@ export default function SymptomsChecker() {
               </motion.div>
             )}
 
+            {/* Loading Screen */}
+            {isAnalyzing && (
+              <motion.div 
+                key="loading" 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="flex flex-col items-center justify-center py-12 md:py-16"
+              >
+                <Card className="w-full max-w-md mx-auto border-primary/20 overflow-hidden">
+                  <CardContent className="p-6 md:p-8 space-y-6">
+                    {/* Animated Brain Icon */}
+                    <div className="flex justify-center">
+                      <motion.div 
+                        animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center"
+                      >
+                        <Brain className="w-10 h-10 text-primary" />
+                      </motion.div>
+                    </div>
+
+                    {/* Progress Percentage */}
+                    <div className="text-center space-y-1">
+                      <motion.p 
+                        key={loadingProgress}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-4xl font-bold text-foreground"
+                      >
+                        {loadingProgress}%
+                      </motion.p>
+                      <p className="text-sm text-muted-foreground font-medium">AI Analysis in Progress</p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${loadingProgress}%` }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                      />
+                    </div>
+
+                    {/* Status Message */}
+                    <AnimatePresence mode="wait">
+                      <motion.div 
+                        key={loadingMessage}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+                      >
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span>{loadingMessage}</span>
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* Animated dots */}
+                    <div className="flex justify-center gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-2 h-2 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Step 3: Results */}
             {step === 3 && analysis && (() => {
               const conditions = analysis.conditions || [];
