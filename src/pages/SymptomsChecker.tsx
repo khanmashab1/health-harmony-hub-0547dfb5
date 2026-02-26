@@ -93,13 +93,25 @@ export default function SymptomsChecker() {
     }
   };
 
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
+
+  const loadingMessages = [
+    "Initializing AI engine...",
+    "Scanning symptom database...",
+    "Matching conditions...",
+    "Analyzing severity patterns...",
+    "Cross-referencing medical knowledge...",
+    "Generating health insights...",
+    "Preparing your report...",
+  ];
+
   const handleAnalyze = async () => {
     if (!symptoms.trim() && selectedTags.length === 0) {
       toast.error(t("symptoms.whatSymptoms"));
       return;
     }
 
-    // Check usage limit before proceeding
     const allowed = await usageLimit.checkAndIncrement();
     if (!allowed) {
       toast.error(`Daily limit of ${usageLimit.dailyLimit} free uses reached. Subscribe for more!`);
@@ -107,6 +119,19 @@ export default function SymptomsChecker() {
     }
 
     setIsAnalyzing(true);
+    setLoadingProgress(0);
+    setLoadingMessage(loadingMessages[0]);
+
+    // Simulate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 12 + 3;
+      if (progress > 92) progress = 92;
+      setLoadingProgress(Math.round(progress));
+      const msgIdx = Math.min(Math.floor(progress / 15), loadingMessages.length - 1);
+      setLoadingMessage(loadingMessages[msgIdx]);
+    }, 600);
+
     try {
       const { data, error } = await supabase.functions.invoke('analyze-symptoms', {
         body: {
@@ -120,8 +145,11 @@ export default function SymptomsChecker() {
         }
       });
 
+      clearInterval(interval);
+      setLoadingProgress(100);
+      setLoadingMessage("Analysis complete!");
+
       if (error) {
-        // Extract meaningful message from edge function errors
         const msg = (error as any)?.context?.error || error.message || "Failed to analyze symptoms.";
         toast.error(msg.includes("temporarily unavailable")
           ? "The AI analysis service is temporarily unavailable. Please try again in a few minutes."
@@ -133,14 +161,17 @@ export default function SymptomsChecker() {
         return;
       }
 
+      await new Promise(r => setTimeout(r, 500));
       setAnalysis(data);
       setStep(3);
       toast.success("Analysis complete!");
     } catch (error: any) {
+      clearInterval(interval);
       console.error("Error analyzing symptoms:", error);
       toast.error("The AI analysis service is temporarily unavailable. Please try again in a few minutes.");
     } finally {
       setIsAnalyzing(false);
+      setLoadingProgress(0);
     }
   };
 
