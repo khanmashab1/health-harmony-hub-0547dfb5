@@ -211,19 +211,19 @@ export default function SymptomsChecker() {
         })}
       />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8">
-        <div className="container max-w-4xl mx-auto px-4">
+        <div className="container max-w-4xl mx-auto px-3 sm:px-4">
           <AIUsageBanner {...usageLimit} />
           {/* Header */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-6 md:mb-8"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Brain className="w-8 h-8 text-primary" />
+            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/10 mb-3 md:mb-4">
+              <Brain className="w-6 h-6 md:w-8 md:h-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2">{t("symptoms.title")}</h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">{t("symptoms.description")}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{t("symptoms.title")}</h1>
+            <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">{t("symptoms.description")}</p>
           </motion.div>
 
           {/* Disclaimer */}
