@@ -639,11 +639,11 @@ export default function SymptomsChecker() {
                 </Card>
 
                 {/* Actions */}
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={resetChecker} className="flex-1 h-12">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" onClick={resetChecker} className="flex-1 h-11 md:h-12 text-sm md:text-base">
                     {t("symptoms.checkNewSymptoms")}
                   </Button>
-                  <Button onClick={() => window.location.href = '/booking'} className="flex-1 h-12">
+                  <Button onClick={() => window.location.href = '/booking'} className="flex-1 h-11 md:h-12 text-sm md:text-base">
                     <Stethoscope className="w-4 h-4 mr-2" />
                     {t("symptoms.bookAppointment")}
                   </Button>
