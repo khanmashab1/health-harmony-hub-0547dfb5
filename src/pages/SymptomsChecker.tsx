@@ -200,15 +200,21 @@ export default function SymptomsChecker() {
   return (
     <Layout>
       <SEOHead
-        title="AI Symptom Checker - Free Health Assessment"
-        description="Use MediCare+ AI-powered symptom checker to get preliminary health insights."
-        keywords="AI symptom checker, online health assessment, symptom analysis"
+        title="AI Symptom Checker — Free Online Health Analysis"
+        description="Free AI-powered symptom checker by MediCare+. Describe your symptoms, get instant health analysis with possible conditions, severity rating, and doctor recommendations. Works in English & Urdu."
+        keywords="AI symptom checker, online symptom checker Pakistan, free symptom analysis, health assessment tool, symptom diagnosis online, check symptoms online free, AI doctor, medical symptom analyzer, health checker free, symptoms to disease checker"
         canonicalUrl="/symptoms"
-        jsonLd={seoSchemas.medicalService({
-          name: "AI-Powered Symptom Checker",
-          description: "Describe your symptoms and get AI-powered health analysis.",
-          url: "/symptoms",
-        })}
+        jsonLd={[
+          seoSchemas.medicalService({
+            name: "AI-Powered Symptom Checker",
+            description: "Free AI symptom analysis tool providing preliminary health insights, condition matching, and doctor recommendations.",
+            url: "/symptoms",
+          }),
+          seoSchemas.breadcrumb([
+            { name: "Home", url: "/" },
+            { name: "AI Symptom Checker", url: "/symptoms" },
+          ]),
+        ]}
       />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8">
         <div className="container max-w-4xl mx-auto px-3 sm:px-4">
