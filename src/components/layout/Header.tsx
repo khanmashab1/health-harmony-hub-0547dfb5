@@ -76,7 +76,7 @@ export function Header() {
             <img 
               src={newLogo} 
               alt={`${siteName} Logo`} 
-              className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform rounded-md"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform"
             />
             <div className="flex flex-col leading-none">
               <span className="text-lg sm:text-xl tracking-tight whitespace-nowrap italic" style={{ fontFamily: "'Alegreya', serif" }}>
