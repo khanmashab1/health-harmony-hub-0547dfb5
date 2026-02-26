@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, HeartPulse, Calendar, AlertTriangle, ShieldCheck, ShieldAlert, Activity, Droplets, Moon, Dumbbell, Cigarette, Wine, TrendingUp, TrendingDown, Minus, Brain, Utensils, Users } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
-import { SEOHead } from "@/components/seo/SEOHead";
+import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIUsageLimit } from "@/hooks/useAIUsageLimit";
 import { AIUsageBanner } from "@/components/shared/AIUsageBanner";
