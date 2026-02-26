@@ -93,13 +93,25 @@ export default function SymptomsChecker() {
     }
   };
 
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
+
+  const loadingMessages = [
+    "Initializing AI engine...",
+    "Scanning symptom database...",
+    "Matching conditions...",
+    "Analyzing severity patterns...",
+    "Cross-referencing medical knowledge...",
+    "Generating health insights...",
+    "Preparing your report...",
+  ];
+
   const handleAnalyze = async () => {
     if (!symptoms.trim() && selectedTags.length === 0) {
       toast.error(t("symptoms.whatSymptoms"));
       return;
     }
 
-    // Check usage limit before proceeding
     const allowed = await usageLimit.checkAndIncrement();
     if (!allowed) {
       toast.error(`Daily limit of ${usageLimit.dailyLimit} free uses reached. Subscribe for more!`);
@@ -107,6 +119,19 @@ export default function SymptomsChecker() {
     }
 
     setIsAnalyzing(true);
+    setLoadingProgress(0);
+    setLoadingMessage(loadingMessages[0]);
+
+    // Simulate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 12 + 3;
+      if (progress > 92) progress = 92;
+      setLoadingProgress(Math.round(progress));
+      const msgIdx = Math.min(Math.floor(progress / 15), loadingMessages.length - 1);
+      setLoadingMessage(loadingMessages[msgIdx]);
+    }, 600);
+
     try {
       const { data, error } = await supabase.functions.invoke('analyze-symptoms', {
         body: {
@@ -120,8 +145,11 @@ export default function SymptomsChecker() {
         }
       });
 
+      clearInterval(interval);
+      setLoadingProgress(100);
+      setLoadingMessage("Analysis complete!");
+
       if (error) {
-        // Extract meaningful message from edge function errors
         const msg = (error as any)?.context?.error || error.message || "Failed to analyze symptoms.";
         toast.error(msg.includes("temporarily unavailable")
           ? "The AI analysis service is temporarily unavailable. Please try again in a few minutes."
@@ -133,14 +161,17 @@ export default function SymptomsChecker() {
         return;
       }
 
+      await new Promise(r => setTimeout(r, 500));
       setAnalysis(data);
       setStep(3);
       toast.success("Analysis complete!");
     } catch (error: any) {
+      clearInterval(interval);
       console.error("Error analyzing symptoms:", error);
       toast.error("The AI analysis service is temporarily unavailable. Please try again in a few minutes.");
     } finally {
       setIsAnalyzing(false);
+      setLoadingProgress(0);
     }
   };
 
@@ -180,19 +211,19 @@ export default function SymptomsChecker() {
         })}
       />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8">
-        <div className="container max-w-4xl mx-auto px-4">
+        <div className="container max-w-4xl mx-auto px-3 sm:px-4">
           <AIUsageBanner {...usageLimit} />
           {/* Header */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-6 md:mb-8"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Brain className="w-8 h-8 text-primary" />
+            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/10 mb-3 md:mb-4">
+              <Brain className="w-6 h-6 md:w-8 md:h-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-2">{t("symptoms.title")}</h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">{t("symptoms.description")}</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{t("symptoms.title")}</h1>
+            <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">{t("symptoms.description")}</p>
           </motion.div>
 
           {/* Disclaimer */}
@@ -208,13 +239,13 @@ export default function SymptomsChecker() {
           </motion.div>
 
           {/* Progress Steps */}
-          <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-6 md:mb-8">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors ${
                   step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}>{s}</div>
-                {s < 3 && <div className={`w-12 h-1 mx-1 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
+                {s < 3 && <div className={`w-8 sm:w-12 h-1 mx-1 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
               </div>
             ))}
           </div>
@@ -337,6 +368,82 @@ export default function SymptomsChecker() {
               </motion.div>
             )}
 
+            {/* Loading Screen */}
+            {isAnalyzing && (
+              <motion.div 
+                key="loading" 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="flex flex-col items-center justify-center py-12 md:py-16"
+              >
+                <Card className="w-full max-w-md mx-auto border-primary/20 overflow-hidden">
+                  <CardContent className="p-6 md:p-8 space-y-6">
+                    {/* Animated Brain Icon */}
+                    <div className="flex justify-center">
+                      <motion.div 
+                        animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center"
+                      >
+                        <Brain className="w-10 h-10 text-primary" />
+                      </motion.div>
+                    </div>
+
+                    {/* Progress Percentage */}
+                    <div className="text-center space-y-1">
+                      <motion.p 
+                        key={loadingProgress}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-4xl font-bold text-foreground"
+                      >
+                        {loadingProgress}%
+                      </motion.p>
+                      <p className="text-sm text-muted-foreground font-medium">AI Analysis in Progress</p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${loadingProgress}%` }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                      />
+                    </div>
+
+                    {/* Status Message */}
+                    <AnimatePresence mode="wait">
+                      <motion.div 
+                        key={loadingMessage}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+                      >
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span>{loadingMessage}</span>
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* Animated dots */}
+                    <div className="flex justify-center gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-2 h-2 rounded-full bg-primary"
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Step 3: Results */}
             {step === 3 && analysis && (() => {
               const conditions = analysis.conditions || [];
@@ -386,10 +493,10 @@ export default function SymptomsChecker() {
                 {/* Primary Condition Card */}
                 {primaryCondition && (
                   <Card>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Target className="w-5 h-5 text-primary" />
+                     <CardHeader className="pb-2 px-4 md:px-6">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                          <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                           {isLikely ? 'Likely Condition' : 'Possible Consideration'}
                         </CardTitle>
                         <Badge variant={isLikely ? "default" : "secondary"} className="text-xs">
@@ -397,17 +504,17 @@ export default function SymptomsChecker() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3 md:space-y-4 px-4 md:px-6">
                       {conditions.slice(0, 2).map((c, i) => (
-                        <div key={i} className="p-5 rounded-xl bg-muted/50 border border-border/50">
-                          <div className="flex items-center justify-between mb-3">
-                            <p className="font-bold text-foreground text-lg md:text-xl">{c.name}</p>
+                        <div key={i} className="p-3 md:p-5 rounded-xl bg-muted/50 border border-border/50">
+                          <div className="flex items-start sm:items-center justify-between mb-2 md:mb-3 gap-2 flex-wrap">
+                            <p className="font-bold text-foreground text-base md:text-xl">{c.name}</p>
                             {c.percentage > 0 && (
-                              <span className="text-base font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{c.percentage}%</span>
+                              <span className="text-sm md:text-base font-bold text-primary bg-primary/10 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full">{c.percentage}%</span>
                             )}
                           </div>
                           {c.description && (
-                            <p className="text-base text-muted-foreground leading-relaxed">{c.description}</p>
+                            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{c.description}</p>
                           )}
                         </div>
                       ))}
@@ -464,14 +571,14 @@ export default function SymptomsChecker() {
                 {/* Advice to Treat */}
                 {analysis.triage_advice && (
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <ListChecks className="w-5 h-5 text-primary" />
+                    <CardHeader className="pb-3 px-4 md:px-6">
+                      <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                        <ListChecks className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                         Advice to Treat
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="p-6 rounded-xl bg-primary/5 border border-primary/10 prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                    <CardContent className="px-4 md:px-6">
+                      <div className="p-3 md:p-6 rounded-xl bg-primary/5 border border-primary/10 prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 md:[&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-4 md:[&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
                         <ReactMarkdown>{analysis.triage_advice}</ReactMarkdown>
                       </div>
                     </CardContent>
@@ -480,14 +587,14 @@ export default function SymptomsChecker() {
 
                 {/* Recommendation */}
                 <Card className={recommendation.urgent ? "border-red-500/30 bg-red-500/5" : "border-primary/30 bg-primary/5"}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Stethoscope className="w-5 h-5" />
+                  <CardHeader className="pb-2 px-4 md:px-6">
+                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                      <Stethoscope className="w-4 h-4 md:w-5 md:h-5" />
                       Recommendation
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="p-6 rounded-xl prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                  <CardContent className="px-4 md:px-6">
+                    <div className="p-3 md:p-6 rounded-xl prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 md:[&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-4 md:[&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
                       <ReactMarkdown>{recommendation.text}</ReactMarkdown>
                     </div>
                   </CardContent>
@@ -532,11 +639,11 @@ export default function SymptomsChecker() {
                 </Card>
 
                 {/* Actions */}
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={resetChecker} className="flex-1 h-12">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" onClick={resetChecker} className="flex-1 h-11 md:h-12 text-sm md:text-base">
                     {t("symptoms.checkNewSymptoms")}
                   </Button>
-                  <Button onClick={() => window.location.href = '/booking'} className="flex-1 h-12">
+                  <Button onClick={() => window.location.href = '/booking'} className="flex-1 h-11 md:h-12 text-sm md:text-base">
                     <Stethoscope className="w-4 h-4 mr-2" />
                     {t("symptoms.bookAppointment")}
                   </Button>

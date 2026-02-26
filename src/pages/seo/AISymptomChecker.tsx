@@ -44,26 +44,26 @@ export default function AISymptomChecker() {
         ]}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+      <div className="container mx-auto px-3 sm:px-4 py-10 md:py-16 max-w-4xl">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 md:mb-6">
           AI-Powered Symptom Checker — Free Health Assessment
         </h1>
 
-        <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+        <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed">
           Not sure what's causing your symptoms? MediCare+'s AI Symptom Checker uses artificial intelligence combined with a curated medical knowledge base to analyze your symptoms and provide preliminary health insights. It's free, instant, and available 24/7 — helping you decide whether to see a doctor and which specialist to consult.
         </p>
 
-        <div className="flex flex-wrap gap-4 mb-12">
-          <Button asChild size="lg">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8 md:mb-12">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link to="/symptoms">Check Your Symptoms Now</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
             <Link to="/our-doctors">Find a Doctor</Link>
           </Button>
         </div>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">How the AI Symptom Checker Works</h2>
+        <section className="mb-8 md:mb-12">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3 md:mb-4">How the AI Symptom Checker Works</h2>
           <p className="text-muted-foreground mb-4 leading-relaxed">
             Our symptom checker uses a Retrieval-Augmented Generation (RAG) architecture. When you describe your symptoms, the system searches a curated database of medical conditions and symptom patterns. This retrieved knowledge is then processed by an AI model to generate a personalized health analysis — including possible conditions, severity assessment, recommended actions, and when to seek immediate medical attention.
           </p>
@@ -164,16 +164,16 @@ export default function AISymptomChecker() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-primary/5 border border-primary/20 p-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Try the AI Symptom Checker Now</h2>
-          <p className="text-muted-foreground mb-6">
+        <section className="rounded-2xl bg-primary/5 border border-primary/20 p-5 md:p-8">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">Try the AI Symptom Checker Now</h2>
+          <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-6">
             Describe your symptoms and get an instant AI-powered health analysis. It's free, private, and takes less than a minute.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link to="/symptoms">Start Symptom Analysis</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link to="/online-doctor-appointment-system">Book a Doctor Instead</Link>
             </Button>
           </div>
