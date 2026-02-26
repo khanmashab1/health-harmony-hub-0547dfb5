@@ -164,16 +164,16 @@ export default function AISymptomChecker() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-primary/5 border border-primary/20 p-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Try the AI Symptom Checker Now</h2>
-          <p className="text-muted-foreground mb-6">
+        <section className="rounded-2xl bg-primary/5 border border-primary/20 p-5 md:p-8">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">Try the AI Symptom Checker Now</h2>
+          <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-6">
             Describe your symptoms and get an instant AI-powered health analysis. It's free, private, and takes less than a minute.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link to="/symptoms">Start Symptom Analysis</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link to="/online-doctor-appointment-system">Book a Doctor Instead</Link>
             </Button>
           </div>
