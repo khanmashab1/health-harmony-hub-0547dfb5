@@ -571,14 +571,14 @@ export default function SymptomsChecker() {
                 {/* Advice to Treat */}
                 {analysis.triage_advice && (
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <ListChecks className="w-5 h-5 text-primary" />
+                    <CardHeader className="pb-3 px-4 md:px-6">
+                      <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                        <ListChecks className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                         Advice to Treat
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="p-6 rounded-xl bg-primary/5 border border-primary/10 prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
+                    <CardContent className="px-4 md:px-6">
+                      <div className="p-3 md:p-6 rounded-xl bg-primary/5 border border-primary/10 prose prose-sm dark:prose-invert max-w-none leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 md:[&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-4 md:[&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2">
                         <ReactMarkdown>{analysis.triage_advice}</ReactMarkdown>
                       </div>
                     </CardContent>
