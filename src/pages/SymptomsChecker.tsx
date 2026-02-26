@@ -516,7 +516,6 @@ export default function SymptomsChecker() {
                           {c.description && (
                             <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{c.description}</p>
                           )}
-                          )}
                         </div>
                       ))}
                     </CardContent>
