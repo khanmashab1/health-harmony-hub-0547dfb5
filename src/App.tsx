@@ -98,6 +98,7 @@ const App = () => (
                   <Route path="/ai-health" element={<AIHealth />} />
                   <Route path="/diet-planner" element={<DietPlanner />} />
                   <Route path="/ai-diet-planner" element={<AIDietPlanner />} />
+                  <Route path="/ai-health-risk-evaluator" element={<AIHealthRiskEvaluator />} />
                   <Route path="/risk-evaluator" element={<RiskEvaluator />} />
                   <Route path="/pharmacy" element={<PharmacyDashboard />} />
                   <Route path="/token/:appointmentId" element={<TokenPrint />} />

@@ -17,13 +17,15 @@ Allow: /clinic-management-software
 Allow: /hospital-management-software
 Allow: /ai-symptom-checker
 Allow: /ai-diet-planner
+Allow: /ai-health-risk-evaluator
 Allow: /diet-planner
 Allow: /ai-health
 Allow: /our-doctors
-Disallow: /booking
 Allow: /symptoms
+Allow: /risk-evaluator
 Allow: /reviews
 Allow: /become-doctor
+Disallow: /booking
 Disallow: /admin
 Disallow: /doctor
 Disallow: /pa
@@ -34,5 +36,6 @@ Disallow: /verify/
 Disallow: /lab-tests/
 Disallow: /print/
 Disallow: /organization
+Disallow: /pharmacy
 
 Sitemap: https://medicareplus.app/sitemap.xml
