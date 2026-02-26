@@ -62,8 +62,8 @@ export default function AISymptomChecker() {
           </Button>
         </div>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">How the AI Symptom Checker Works</h2>
+        <section className="mb-8 md:mb-12">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3 md:mb-4">How the AI Symptom Checker Works</h2>
           <p className="text-muted-foreground mb-4 leading-relaxed">
             Our symptom checker uses a Retrieval-Augmented Generation (RAG) architecture. When you describe your symptoms, the system searches a curated database of medical conditions and symptom patterns. This retrieved knowledge is then processed by an AI model to generate a personalized health analysis — including possible conditions, severity assessment, recommended actions, and when to seek immediate medical attention.
           </p>
