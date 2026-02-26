@@ -42,9 +42,26 @@ export default function AIHealth() {
   return (
     <Layout>
       <SEOHead
-        title="AI Health Tools | MediCare+"
-        description="Explore AI-powered health tools: Risk Evaluator, Diet & Exercise Planner, and more. Get personalized health insights instantly."
+        title="AI Health Tools — Free AI Medical Assessment"
+        description="Explore MediCare+ AI-powered health tools: Symptom Checker, Health Risk Evaluator, and Diet & Exercise Planner. Get personalized health insights instantly — free and private."
+        keywords="AI health tools, free health assessment, AI medical tools, online health checker, AI diet planner, AI symptom checker, health risk calculator, free health screening, AI doctor tools Pakistan"
         canonicalUrl="/ai-health"
+        jsonLd={[
+          seoSchemas.medicalService({
+            name: "MediCare+ AI Health Hub",
+            description: "Centralized AI-powered health tools including symptom checker, risk evaluator, and diet planner.",
+            url: "/ai-health",
+          }),
+          seoSchemas.breadcrumb([
+            { name: "Home", url: "/" },
+            { name: "AI Health Tools", url: "/ai-health" },
+          ]),
+          seoSchemas.itemList([
+            { name: "AI Symptom Checker", url: "/symptoms", position: 1 },
+            { name: "AI Health Risk Evaluator", url: "/risk-evaluator", position: 2 },
+            { name: "AI Diet Planner", url: "/diet-planner", position: 3 },
+          ]),
+        ]}
       />
       <div className="container mx-auto px-4 py-6 md:py-10 max-w-5xl">
         {/* Header */}
