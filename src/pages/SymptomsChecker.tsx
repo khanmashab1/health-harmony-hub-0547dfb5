@@ -493,10 +493,10 @@ export default function SymptomsChecker() {
                 {/* Primary Condition Card */}
                 {primaryCondition && (
                   <Card>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Target className="w-5 h-5 text-primary" />
+                     <CardHeader className="pb-2 px-4 md:px-6">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                          <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                           {isLikely ? 'Likely Condition' : 'Possible Consideration'}
                         </CardTitle>
                         <Badge variant={isLikely ? "default" : "secondary"} className="text-xs">
@@ -504,17 +504,18 @@ export default function SymptomsChecker() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3 md:space-y-4 px-4 md:px-6">
                       {conditions.slice(0, 2).map((c, i) => (
-                        <div key={i} className="p-5 rounded-xl bg-muted/50 border border-border/50">
-                          <div className="flex items-center justify-between mb-3">
-                            <p className="font-bold text-foreground text-lg md:text-xl">{c.name}</p>
+                        <div key={i} className="p-3 md:p-5 rounded-xl bg-muted/50 border border-border/50">
+                          <div className="flex items-start sm:items-center justify-between mb-2 md:mb-3 gap-2 flex-wrap">
+                            <p className="font-bold text-foreground text-base md:text-xl">{c.name}</p>
                             {c.percentage > 0 && (
-                              <span className="text-base font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{c.percentage}%</span>
+                              <span className="text-sm md:text-base font-bold text-primary bg-primary/10 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full">{c.percentage}%</span>
                             )}
                           </div>
                           {c.description && (
-                            <p className="text-base text-muted-foreground leading-relaxed">{c.description}</p>
+                            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{c.description}</p>
+                          )}
                           )}
                         </div>
                       ))}
