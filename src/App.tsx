@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { SplashScreen } from "@/components/SplashScreen";
 import { PasswordChangeDialog } from "@/components/auth/PasswordChangeDialog";
 import { SessionTimeoutWarning } from "@/components/session/SessionTimeoutWarning";
 import { GeoBlock } from "@/components/GeoBlock";
