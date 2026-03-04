@@ -64,60 +64,66 @@ function PasswordChangeWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <LanguageProvider>
-        <TooltipProvider>
-          <GeoBlock>
-          <BrowserRouter>
-            <AuthProvider>
-              <Toaster />
-              <Sonner />
-              <SessionTimeoutWarning />
-              <PasswordChangeWrapper>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/booking" element={<Booking />} />
-                  <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
-                  <Route path="/profile" element={<PatientDashboard />} />
-                  <Route path="/doctor" element={<DoctorDashboard />} />
-                  <Route path="/pa" element={<PADashboard />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
-                  <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
-                  <Route path="/admin/reviews" element={<AdminReviews />} />
-                  <Route path="/symptoms" element={<SymptomsChecker />} />
-                  <Route path="/reviews" element={<Reviews />} />
-                  <Route path="/become-doctor" element={<BecomeDoctor />} />
-                  <Route path="/our-doctors" element={<OurDoctors />} />
-                  <Route path="/organization" element={<OrganizationDashboard />} />
-                  <Route path="/online-doctor-appointment-system" element={<OnlineDoctorAppointmentSystem />} />
-                  <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
-                  <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
-                  <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
-                  <Route path="/ai-health" element={<AIHealth />} />
-                  <Route path="/diet-planner" element={<DietPlanner />} />
-                  <Route path="/ai-diet-planner" element={<AIDietPlanner />} />
-                  <Route path="/ai-health-risk-evaluator" element={<AIHealthRiskEvaluator />} />
-                  <Route path="/risk-evaluator" element={<RiskEvaluator />} />
-                  <Route path="/pharmacy" element={<PharmacyDashboard />} />
-                  <Route path="/token/:appointmentId" element={<TokenPrint />} />
-                  <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
-                  <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
-                  <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
-                  <Route path="/print/history" element={<MedicalHistoryPrint />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </PasswordChangeWrapper>
-            </AuthProvider>
-          </BrowserRouter>
-          </GeoBlock>
-        </TooltipProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashComplete = useCallback(() => setSplashDone(true), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <LanguageProvider>
+          <TooltipProvider>
+            {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
+            <GeoBlock>
+            <BrowserRouter>
+              <AuthProvider>
+                <Toaster />
+                <Sonner />
+                <SessionTimeoutWarning />
+                <PasswordChangeWrapper>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/booking" element={<Booking />} />
+                    <Route path="/doctor/:doctorId" element={<DoctorProfile />} />
+                    <Route path="/profile" element={<PatientDashboard />} />
+                    <Route path="/doctor" element={<DoctorDashboard />} />
+                    <Route path="/pa" element={<PADashboard />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/symptom-checker" element={<AdminSymptomChecker />} />
+                    <Route path="/admin/email-templates" element={<AdminEmailTemplates />} />
+                    <Route path="/admin/reviews" element={<AdminReviews />} />
+                    <Route path="/symptoms" element={<SymptomsChecker />} />
+                    <Route path="/reviews" element={<Reviews />} />
+                    <Route path="/become-doctor" element={<BecomeDoctor />} />
+                    <Route path="/our-doctors" element={<OurDoctors />} />
+                    <Route path="/organization" element={<OrganizationDashboard />} />
+                    <Route path="/online-doctor-appointment-system" element={<OnlineDoctorAppointmentSystem />} />
+                    <Route path="/clinic-management-software" element={<ClinicManagementSoftware />} />
+                    <Route path="/hospital-management-software" element={<HospitalManagementSoftware />} />
+                    <Route path="/ai-symptom-checker" element={<AISymptomChecker />} />
+                    <Route path="/ai-health" element={<AIHealth />} />
+                    <Route path="/diet-planner" element={<DietPlanner />} />
+                    <Route path="/ai-diet-planner" element={<AIDietPlanner />} />
+                    <Route path="/ai-health-risk-evaluator" element={<AIHealthRiskEvaluator />} />
+                    <Route path="/risk-evaluator" element={<RiskEvaluator />} />
+                    <Route path="/pharmacy" element={<PharmacyDashboard />} />
+                    <Route path="/token/:appointmentId" element={<TokenPrint />} />
+                    <Route path="/prescription/:appointmentId" element={<PrescriptionPrint />} />
+                    <Route path="/verify/:appointmentId" element={<PrescriptionVerify />} />
+                    <Route path="/lab-tests/:appointmentId" element={<LabTestsPrint />} />
+                    <Route path="/print/history" element={<MedicalHistoryPrint />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </PasswordChangeWrapper>
+              </AuthProvider>
+            </BrowserRouter>
+            </GeoBlock>
+          </TooltipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
