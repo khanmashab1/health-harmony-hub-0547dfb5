@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2, Pencil } from "lucide-react";
+import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2, Pencil, MapPin, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
