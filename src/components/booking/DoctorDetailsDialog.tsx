@@ -107,6 +107,27 @@ export function DoctorDetailsDialog({ doctor, open, onOpenChange, onSelect }: Do
             </div>
           )}
 
+          {/* Clinic Location */}
+          {doctor.clinic_address && (
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Clinic Location
+              </h4>
+              <p className="text-sm text-muted-foreground">{doctor.clinic_address}</p>
+              {doctor.google_maps_link && (
+                <a
+                  href={doctor.google_maps_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Open in Google Maps →
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Fee */}
           <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
             <div className="flex items-center justify-between">

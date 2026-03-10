@@ -345,6 +345,26 @@ export default function DoctorProfile() {
                     </div>
                   </>
                 )}
+                {(doctor as any).clinic_address && (
+                  <>
+                    <Separator />
+                    <div className="space-y-1">
+                      <span className="text-muted-foreground text-sm">Clinic Address</span>
+                      <p className="font-medium text-sm">{(doctor as any).clinic_address}</p>
+                      {(doctor as any).google_maps_link && (
+                        <a
+                          href={(doctor as any).google_maps_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          View on Google Maps →
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
