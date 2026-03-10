@@ -22,6 +22,8 @@ interface Doctor {
   bio: string | null;
   degree: string | null;
   qualifications: string | null;
+  clinic_address?: string | null;
+  google_maps_link?: string | null;
   profile?: { name: string | null };
 }
 
@@ -102,6 +104,27 @@ export function DoctorDetailsDialog({ doctor, open, onOpenChange, onSelect }: Do
                 {t("common.about")}
               </h4>
               <p className="text-sm text-muted-foreground leading-relaxed">{doctor.bio}</p>
+            </div>
+          )}
+
+          {/* Clinic Location */}
+          {doctor.clinic_address && (
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Clinic Location
+              </h4>
+              <p className="text-sm text-muted-foreground">{doctor.clinic_address}</p>
+              {doctor.google_maps_link && (
+                <a
+                  href={doctor.google_maps_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Open in Google Maps →
+                </a>
+              )}
             </div>
           )}
 

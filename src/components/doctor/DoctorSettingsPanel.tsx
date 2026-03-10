@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2, Pencil } from "lucide-react";
+import { Settings, Users, TrendingUp, Activity, CheckCircle2, Save, Edit2, Camera, Loader2, Pencil, MapPin, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +54,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
   const [degree, setDegree] = useState(doctorInfo?.degree || "");
   const [qualifications, setQualifications] = useState(doctorInfo?.qualifications || "");
   const [bio, setBio] = useState(doctorInfo?.bio || "");
+  const [clinicAddress, setClinicAddress] = useState((doctorInfo as any)?.clinic_address || "");
+  const [googleMapsLink, setGoogleMapsLink] = useState((doctorInfo as any)?.google_maps_link || "");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isEditingMaxPatients, setIsEditingMaxPatients] = useState(false);
   const [maxPatientsValue, setMaxPatientsValue] = useState(doctorInfo?.max_patients_per_day?.toString() || "30");
@@ -68,6 +71,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
           degree: degree.trim() || null,
           qualifications: qualifications.trim() || null,
           bio: bio.trim() || null,
+          clinic_address: clinicAddress.trim() || null,
+          google_maps_link: googleMapsLink.trim() || null,
         })
         .eq("user_id", userId);
       if (error) throw error;
@@ -155,6 +160,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
     setDegree(doctorInfo?.degree || "");
     setQualifications(doctorInfo?.qualifications || "");
     setBio(doctorInfo?.bio || "");
+    setClinicAddress((doctorInfo as any)?.clinic_address || "");
+    setGoogleMapsLink((doctorInfo as any)?.google_maps_link || "");
     setIsEditing(false);
   };
 
@@ -383,6 +390,53 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
                 {doctorInfo?.bio || "No bio provided. Click 'Edit Profile' to add your professional bio."}
               </p>
             )}
+          </div>
+
+          {/* Clinic Location */}
+          <Separator />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="clinic_address" className="font-medium flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-brand-500" />
+                Clinic Address
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="clinic_address"
+                  value={clinicAddress}
+                  onChange={(e) => setClinicAddress(e.target.value)}
+                  placeholder="e.g., Suite 5, City Hospital, Main Boulevard, Lahore"
+                  className="border-border/50"
+                />
+              ) : (
+                <p className="text-muted-foreground p-2 rounded-lg bg-muted/30 min-h-10">
+                  {(doctorInfo as any)?.clinic_address || "Not specified"}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="google_maps_link" className="font-medium flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-brand-500" />
+                Google Maps Link
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="google_maps_link"
+                  value={googleMapsLink}
+                  onChange={(e) => setGoogleMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className="border-border/50"
+                />
+              ) : (
+                <p className="text-muted-foreground p-2 rounded-lg bg-muted/30 min-h-10">
+                  {(doctorInfo as any)?.google_maps_link ? (
+                    <a href={(doctorInfo as any).google_maps_link} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      View on Google Maps
+                    </a>
+                  ) : "Not specified"}
+                </p>
+              )}
+            </div>
           </div>
 
           {isEditing && (

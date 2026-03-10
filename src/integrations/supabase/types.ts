@@ -521,6 +521,7 @@ export type Database = {
           bank_name: string | null
           bio: string | null
           city: string | null
+          clinic_address: string | null
           consultation_duration: number | null
           created_at: string
           degree: string | null
@@ -528,6 +529,7 @@ export type Database = {
           easypaisa_number: string | null
           experience_years: number | null
           fee: number
+          google_maps_link: string | null
           image_path: string | null
           jazzcash_number: string | null
           max_patients_per_day: number
@@ -546,6 +548,7 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           city?: string | null
+          clinic_address?: string | null
           consultation_duration?: number | null
           created_at?: string
           degree?: string | null
@@ -553,6 +556,7 @@ export type Database = {
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
+          google_maps_link?: string | null
           image_path?: string | null
           jazzcash_number?: string | null
           max_patients_per_day?: number
@@ -571,6 +575,7 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           city?: string | null
+          clinic_address?: string | null
           consultation_duration?: number | null
           created_at?: string
           degree?: string | null
@@ -578,6 +583,7 @@ export type Database = {
           easypaisa_number?: string | null
           experience_years?: number | null
           fee?: number
+          google_maps_link?: string | null
           image_path?: string | null
           jazzcash_number?: string | null
           max_patients_per_day?: number
@@ -1890,12 +1896,14 @@ export type Database = {
         Row: {
           bio: string | null
           city: string | null
+          clinic_address: string | null
           consultation_duration: number | null
           created_at: string | null
           degree: string | null
           delay_minutes: number | null
           experience_years: number | null
           fee: number | null
+          google_maps_link: string | null
           image_path: string | null
           max_patients_per_day: number | null
           organization_id: string | null
@@ -1910,12 +1918,14 @@ export type Database = {
         Insert: {
           bio?: string | null
           city?: string | null
+          clinic_address?: string | null
           consultation_duration?: number | null
           created_at?: string | null
           degree?: string | null
           delay_minutes?: number | null
           experience_years?: number | null
           fee?: number | null
+          google_maps_link?: string | null
           image_path?: string | null
           max_patients_per_day?: number | null
           organization_id?: string | null
@@ -1930,12 +1940,14 @@ export type Database = {
         Update: {
           bio?: string | null
           city?: string | null
+          clinic_address?: string | null
           consultation_duration?: number | null
           created_at?: string | null
           degree?: string | null
           delay_minutes?: number | null
           experience_years?: number | null
           fee?: number | null
+          google_maps_link?: string | null
           image_path?: string | null
           max_patients_per_day?: number | null
           organization_id?: string | null
