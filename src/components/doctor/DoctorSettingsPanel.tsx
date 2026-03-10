@@ -53,6 +53,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
   const [degree, setDegree] = useState(doctorInfo?.degree || "");
   const [qualifications, setQualifications] = useState(doctorInfo?.qualifications || "");
   const [bio, setBio] = useState(doctorInfo?.bio || "");
+  const [clinicAddress, setClinicAddress] = useState((doctorInfo as any)?.clinic_address || "");
+  const [googleMapsLink, setGoogleMapsLink] = useState((doctorInfo as any)?.google_maps_link || "");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isEditingMaxPatients, setIsEditingMaxPatients] = useState(false);
   const [maxPatientsValue, setMaxPatientsValue] = useState(doctorInfo?.max_patients_per_day?.toString() || "30");
