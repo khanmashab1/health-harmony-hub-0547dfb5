@@ -391,6 +391,53 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
             )}
           </div>
 
+          {/* Clinic Location */}
+          <Separator />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="clinic_address" className="font-medium flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-brand-500" />
+                Clinic Address
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="clinic_address"
+                  value={clinicAddress}
+                  onChange={(e) => setClinicAddress(e.target.value)}
+                  placeholder="e.g., Suite 5, City Hospital, Main Boulevard, Lahore"
+                  className="border-border/50"
+                />
+              ) : (
+                <p className="text-muted-foreground p-2 rounded-lg bg-muted/30 min-h-10">
+                  {(doctorInfo as any)?.clinic_address || "Not specified"}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="google_maps_link" className="font-medium flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-brand-500" />
+                Google Maps Link
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="google_maps_link"
+                  value={googleMapsLink}
+                  onChange={(e) => setGoogleMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className="border-border/50"
+                />
+              ) : (
+                <p className="text-muted-foreground p-2 rounded-lg bg-muted/30 min-h-10">
+                  {(doctorInfo as any)?.google_maps_link ? (
+                    <a href={(doctorInfo as any).google_maps_link} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      View on Google Maps
+                    </a>
+                  ) : "Not specified"}
+                </p>
+              )}
+            </div>
+          </div>
+
           {isEditing && (
             <div className="flex gap-3 pt-2">
               <Button 
