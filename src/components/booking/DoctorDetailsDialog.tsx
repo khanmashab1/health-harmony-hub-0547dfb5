@@ -22,6 +22,8 @@ interface Doctor {
   bio: string | null;
   degree: string | null;
   qualifications: string | null;
+  clinic_address?: string | null;
+  google_maps_link?: string | null;
   profile?: { name: string | null };
 }
 
