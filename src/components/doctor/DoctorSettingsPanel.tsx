@@ -70,6 +70,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
           degree: degree.trim() || null,
           qualifications: qualifications.trim() || null,
           bio: bio.trim() || null,
+          clinic_address: clinicAddress.trim() || null,
+          google_maps_link: googleMapsLink.trim() || null,
         })
         .eq("user_id", userId);
       if (error) throw error;
