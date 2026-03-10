@@ -159,6 +159,8 @@ export function DoctorSettingsPanel({ doctorInfo, userId, profileName }: DoctorS
     setDegree(doctorInfo?.degree || "");
     setQualifications(doctorInfo?.qualifications || "");
     setBio(doctorInfo?.bio || "");
+    setClinicAddress((doctorInfo as any)?.clinic_address || "");
+    setGoogleMapsLink((doctorInfo as any)?.google_maps_link || "");
     setIsEditing(false);
   };
 
