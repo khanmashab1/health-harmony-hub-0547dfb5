@@ -61,6 +61,11 @@ type AuthMode = "login" | "signup" | "reset" | "new-password";
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>(() => {
+    // Check hash FIRST for recovery/signup tokens (before auth state kicks in)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashType = hashParams.get("type");
+    if (hashType === "recovery" && hashParams.get("access_token")) return "new-password";
+    
     const modeParam = searchParams.get("mode");
     if (modeParam === "signup") return "signup";
     if (modeParam === "reset") return "reset";
