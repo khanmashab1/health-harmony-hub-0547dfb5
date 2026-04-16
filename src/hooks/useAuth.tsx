@@ -140,8 +140,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Security: Check if this is a fresh browser session
-    // If there was a previous session but sessionStorage is empty, sign out
+    // Skip forced sign-out when user arrives via an auth link (password reset / email verification)
     const checkSessionSecurity = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const authLinkType = hashParams.get("type");
+      const hasAuthLinkSession = !!hashParams.get("access_token") || !!hashParams.get("refresh_token");
+      const isAuthLinkFlow = hasAuthLinkSession || ["recovery", "signup", "invite", "magiclink", "email_change"].includes(authLinkType || "");
+
+      if (isAuthLinkFlow) {
+        return;
+      }
+
       const wasActive = sessionStorage.getItem("session_active");
       const { data: { session } } = await supabase.auth.getSession();
       
