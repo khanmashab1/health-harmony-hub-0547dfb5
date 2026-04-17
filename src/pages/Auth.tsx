@@ -118,6 +118,25 @@ export default function Auth() {
     
     if (searchParams.get("mode") === "new-password" || (type === "recovery" && (accessToken || refreshToken || authCode))) {
       setMode("new-password");
+      // PKCE flow: exchange the ?code= for a session so updateUser() works
+      if (authCode) {
+        supabase.auth.exchangeCodeForSession(authCode).then(({ error }) => {
+          if (error) {
+            console.error("exchangeCodeForSession error:", error);
+            toast({
+              variant: "destructive",
+              title: "Reset link invalid or expired",
+              description: "Please request a new password reset email.",
+            });
+          } else {
+            // Clean the code out of the URL so refresh doesn't re-exchange
+            window.history.replaceState(null, "", `${window.location.pathname}?mode=new-password`);
+          }
+        });
+      } else if (accessToken && refreshToken) {
+        // Implicit flow fallback
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      }
     } else if (type === "signup" && accessToken) {
       // Email verification link clicked — set the session with the token first,
       // then sign out so user lands on login form with a success message
