@@ -143,8 +143,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Skip forced sign-out when user arrives via an auth link (password reset / email verification)
     const checkSessionSecurity = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const authLinkType = hashParams.get("type");
-      const hasAuthLinkSession = !!hashParams.get("access_token") || !!hashParams.get("refresh_token");
+      const searchParams = new URLSearchParams(window.location.search);
+      const authLinkType = hashParams.get("type") || searchParams.get("type");
+      const hasAuthLinkSession =
+        !!hashParams.get("access_token") ||
+        !!hashParams.get("refresh_token") ||
+        !!searchParams.get("access_token") ||
+        !!searchParams.get("refresh_token") ||
+        !!searchParams.get("code");
       const isAuthLinkFlow = hasAuthLinkSession || ["recovery", "signup", "invite", "magiclink", "email_change"].includes(authLinkType || "");
 
       if (isAuthLinkFlow) {

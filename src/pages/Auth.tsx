@@ -90,6 +90,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loginError, setLoginError] = useState(false);
+  const [recoverySessionReady, setRecoverySessionReady] = useState(false);
+  const [recoverySessionError, setRecoverySessionError] = useState<string | null>(null);
   const { signIn, signUp, user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -115,29 +117,54 @@ export default function Auth() {
     const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
     const refreshToken = hashParams.get("refresh_token") || searchParams.get("refresh_token");
     const authCode = searchParams.get("code");
+    let isMounted = true;
+
+    setRecoverySessionError(null);
+    setRecoverySessionReady(false);
     
     if (searchParams.get("mode") === "new-password" || (type === "recovery" && (accessToken || refreshToken || authCode))) {
       setMode("new-password");
       // PKCE flow: exchange the ?code= for a session so updateUser() works
       if (authCode) {
         supabase.auth.exchangeCodeForSession(authCode).then(({ error }) => {
+          if (!isMounted) return;
           if (error) {
             console.error("exchangeCodeForSession error:", error);
+            setRecoverySessionError("Please request a new password reset email.");
             toast({
               variant: "destructive",
               title: "Reset link invalid or expired",
               description: "Please request a new password reset email.",
             });
           } else {
+            setRecoverySessionReady(true);
             // Clean the code out of the URL so refresh doesn't re-exchange
             window.history.replaceState(null, "", `${window.location.pathname}?mode=new-password`);
           }
         });
       } else if (accessToken && refreshToken) {
         // Implicit flow fallback
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ error }) => {
+          if (!isMounted) return;
+          if (error) {
+            console.error("setSession error:", error);
+            setRecoverySessionError("Please request a new password reset email.");
+          } else {
+            setRecoverySessionReady(true);
+          }
+        });
+      } else if (searchParams.get("mode") === "new-password") {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!isMounted) return;
+          if (session) {
+            setRecoverySessionReady(true);
+          } else {
+            setRecoverySessionError("Reset session missing. Please open the latest reset link from your email.");
+          }
+        });
       }
     } else if (type === "signup" && accessToken) {
+      setRecoverySessionReady(true);
       // Email verification link clicked — set the session with the token first,
       // then sign out so user lands on login form with a success message
       if (refreshToken) {
@@ -155,8 +182,14 @@ export default function Auth() {
           window.history.replaceState(null, "", window.location.pathname + "?mode=login");
         });
       }
+    } else {
+      setRecoverySessionReady(true);
     }
-  }, [searchParams]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchParams, toast]);
 
   useEffect(() => {
     // Only redirect authenticated users if they're NOT in new-password mode
@@ -298,6 +331,15 @@ export default function Auth() {
   };
 
   const onNewPassword = async (data: NewPasswordFormData) => {
+    if (!recoverySessionReady) {
+      toast({
+        variant: "destructive",
+        title: "Reset session not ready",
+        description: "Please wait a moment and try again.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({
@@ -631,6 +673,15 @@ export default function Auth() {
               ) : mode === "new-password" ? (
                 <Form {...newPasswordForm}>
                   <form onSubmit={newPasswordForm.handleSubmit(onNewPassword)} className="space-y-4">
+                    {recoverySessionError ? (
+                      <Alert variant="destructive">
+                        <AlertDescription>{recoverySessionError}</AlertDescription>
+                      </Alert>
+                    ) : !recoverySessionReady ? (
+                      <Alert>
+                        <AlertDescription>Verifying your reset link…</AlertDescription>
+                      </Alert>
+                    ) : null}
                     <FormField
                       control={newPasswordForm.control}
                       name="password"
@@ -687,7 +738,7 @@ export default function Auth() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading}>
+                    <Button type="submit" variant="hero" className="w-full h-12 text-base" disabled={isLoading || !recoverySessionReady || !!recoverySessionError}>
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
