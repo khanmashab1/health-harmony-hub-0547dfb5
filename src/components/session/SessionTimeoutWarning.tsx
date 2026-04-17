@@ -1,12 +1,19 @@
+import { useOptionalAuth } from "@/hooks/useAuth";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
-import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function SessionTimeoutWarning() {
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
+  if (!auth) return null;
+  return <SessionTimeoutWarningInner />;
+}
+
+function SessionTimeoutWarningInner() {
   const { secondsLeft, stayLoggedIn } = useIdleTimeout();
+  const auth = useOptionalAuth();
+  const user = auth?.user;
 
   if (!user || secondsLeft === null) return null;
 

@@ -247,6 +247,11 @@ export function useAuth() {
   return context;
 }
 
+// Safe variant: returns null when used outside AuthProvider instead of throwing.
+export function useOptionalAuth() {
+  return useContext(AuthContext) ?? null;
+}
+
 export function useRequireAuth(allowedRoles?: UserRole[]) {
   const { user, profile, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
