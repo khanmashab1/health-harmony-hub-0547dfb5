@@ -92,7 +92,7 @@ export default function Auth() {
   const [loginError, setLoginError] = useState(false);
   const [recoverySessionReady, setRecoverySessionReady] = useState(false);
   const [recoverySessionError, setRecoverySessionError] = useState<string | null>(null);
-  const { signIn, signUp, user, profile } = useAuth();
+  const { signIn, signUp, user, profile, session, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -117,12 +117,14 @@ export default function Auth() {
     const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
     const refreshToken = hashParams.get("refresh_token") || searchParams.get("refresh_token");
     const authCode = searchParams.get("code");
+    const isNewPasswordMode = searchParams.get("mode") === "new-password";
+    const isRecoveryLink = type === "recovery" && (accessToken || refreshToken || authCode);
     let isMounted = true;
 
     setRecoverySessionError(null);
     setRecoverySessionReady(false);
     
-    if (searchParams.get("mode") === "new-password" || (type === "recovery" && (accessToken || refreshToken || authCode))) {
+    if (isNewPasswordMode || isRecoveryLink) {
       setMode("new-password");
       // PKCE flow: exchange the ?code= for a session so updateUser() works
       if (authCode) {
@@ -153,15 +155,18 @@ export default function Auth() {
             setRecoverySessionReady(true);
           }
         });
-      } else if (searchParams.get("mode") === "new-password") {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!isMounted) return;
-          if (session) {
-            setRecoverySessionReady(true);
-          } else {
-            setRecoverySessionError("Reset session missing. Please open the latest reset link from your email.");
-          }
-        });
+      } else if (isNewPasswordMode) {
+        if (loading) {
+          return () => {
+            isMounted = false;
+          };
+        }
+
+        if (session) {
+          setRecoverySessionReady(true);
+        } else {
+          setRecoverySessionError("Reset session missing. Please open the latest reset link from your email.");
+        }
       }
     } else if (type === "signup" && accessToken) {
       setRecoverySessionReady(true);
@@ -189,7 +194,7 @@ export default function Auth() {
     return () => {
       isMounted = false;
     };
-  }, [searchParams, toast]);
+  }, [loading, searchParams, session, toast]);
 
   useEffect(() => {
     // Only redirect authenticated users if they're NOT in new-password mode
@@ -342,6 +347,12 @@ export default function Auth() {
 
     setIsLoading(true);
     try {
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+
+      if (!activeSession) {
+        throw new Error("Reset session missing. Please open the latest reset link from your email.");
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
