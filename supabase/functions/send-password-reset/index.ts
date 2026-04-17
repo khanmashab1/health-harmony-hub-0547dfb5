@@ -12,6 +12,22 @@ interface ResetRequest {
   redirectTo: string;
 }
 
+function ensureNewPasswordRedirect(redirectTo?: string) {
+  const fallback = `${Deno.env.get("SUPABASE_URL")}/auth/v1/callback`;
+
+  if (!redirectTo) return fallback;
+
+  try {
+    const url = new URL(redirectTo);
+    if (url.pathname === "/auth" && url.searchParams.get("mode") !== "new-password") {
+      url.searchParams.set("mode", "new-password");
+    }
+    return url.toString();
+  } catch {
+    return redirectTo;
+  }
+}
+
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -73,11 +89,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Generate password reset link
+    const safeRedirectTo = ensureNewPasswordRedirect(redirectTo);
+
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "recovery",
       email: email,
       options: {
-        redirectTo: redirectTo || `${supabaseUrl}/auth/v1/callback`,
+        redirectTo: safeRedirectTo,
       },
     });
 
