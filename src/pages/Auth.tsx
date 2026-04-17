@@ -61,12 +61,25 @@ type AuthMode = "login" | "signup" | "reset" | "new-password";
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "new-password") return "new-password";
+
     // Check hash FIRST for recovery/signup tokens (before auth state kicks in)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const hashType = hashParams.get("type");
-    if (hashType === "recovery" && hashParams.get("access_token")) return "new-password";
+    const queryType = searchParams.get("type");
+    const hasRecoveryToken = Boolean(
+      hashParams.get("access_token") ||
+      hashParams.get("refresh_token") ||
+      searchParams.get("access_token") ||
+      searchParams.get("refresh_token") ||
+      searchParams.get("code")
+    );
+
+    if ((hashType === "recovery" || queryType === "recovery") && hasRecoveryToken) {
+      return "new-password";
+    }
     
-    const modeParam = searchParams.get("mode");
     if (modeParam === "signup") return "signup";
     if (modeParam === "reset") return "reset";
     return "login";
@@ -98,15 +111,16 @@ export default function Auth() {
   // Handle email confirmation and password recovery tokens from URL hash
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get("type");
-    const accessToken = hashParams.get("access_token");
+    const type = hashParams.get("type") || searchParams.get("type");
+    const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token") || searchParams.get("refresh_token");
+    const authCode = searchParams.get("code");
     
-    if (type === "recovery" && accessToken) {
+    if (searchParams.get("mode") === "new-password" || (type === "recovery" && (accessToken || refreshToken || authCode))) {
       setMode("new-password");
     } else if (type === "signup" && accessToken) {
       // Email verification link clicked — set the session with the token first,
       // then sign out so user lands on login form with a success message
-      const refreshToken = hashParams.get("refresh_token");
       if (refreshToken) {
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(() => {
           return supabase.auth.signOut();
@@ -123,7 +137,7 @@ export default function Auth() {
         });
       }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     // Only redirect authenticated users if they're NOT in new-password mode
@@ -242,7 +256,7 @@ export default function Auth() {
       const { error } = await supabase.functions.invoke("send-password-reset", {
         body: {
           email: data.email,
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/auth?mode=new-password`,
         },
       });
 
