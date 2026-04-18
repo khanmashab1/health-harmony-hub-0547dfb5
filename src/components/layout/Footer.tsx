@@ -7,7 +7,8 @@ import {
   Facebook,
   Twitter,
   Instagram,
-  Linkedin
+  Linkedin,
+  Pill
 } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useFooterSettings } from "@/hooks/useFooterSettings";
@@ -155,6 +156,15 @@ export function Footer() {
               <li>
                 <Link to="/ai-diet-planner" className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm">
                   AI Diet Planner
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/pharmacy"
+                  className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm inline-flex items-center gap-2"
+                >
+                  <Pill className="w-4 h-4 text-primary shrink-0" />
+                  In-House Pharmacy
                 </Link>
               </li>
             </ul>
