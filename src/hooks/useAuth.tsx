@@ -145,13 +145,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const searchParams = new URLSearchParams(window.location.search);
       const authLinkType = hashParams.get("type") || searchParams.get("type");
+      const authMode = searchParams.get("mode") || hashParams.get("mode");
       const hasAuthLinkSession =
         !!hashParams.get("access_token") ||
         !!hashParams.get("refresh_token") ||
         !!searchParams.get("access_token") ||
         !!searchParams.get("refresh_token") ||
         !!searchParams.get("code");
-      const isAuthLinkFlow = hasAuthLinkSession || ["recovery", "signup", "invite", "magiclink", "email_change"].includes(authLinkType || "");
+      const isRecoveryMode = window.location.pathname === "/auth" && authMode === "new-password";
+      const isAuthLinkFlow = isRecoveryMode || hasAuthLinkSession || ["recovery", "signup", "invite", "magiclink", "email_change"].includes(authLinkType || "");
 
       if (isAuthLinkFlow) {
         return;

@@ -138,8 +138,9 @@ export default function Auth() {
             });
           } else {
             setRecoverySessionReady(true);
-            // Clean the code out of the URL so refresh doesn't re-exchange
-            window.history.replaceState(null, "", `${window.location.pathname}?mode=new-password`);
+            // Clean the code out of the URL so refresh doesn't re-exchange,
+            // but preserve recovery context for auth/session guards.
+            window.history.replaceState(null, "", `${window.location.pathname}?mode=new-password&type=recovery`);
           }
         });
       } else if (accessToken && refreshToken) {
