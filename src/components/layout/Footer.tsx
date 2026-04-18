@@ -160,7 +160,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/pharmacy"
+                  to="/in-house-pharmacy"
                   className="text-header-foreground/70 hover:text-header-foreground transition-colors text-sm inline-flex items-center gap-2"
                 >
                   <Pill className="w-4 h-4 text-primary shrink-0" />
