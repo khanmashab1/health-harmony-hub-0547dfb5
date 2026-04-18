@@ -58,6 +58,9 @@ type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
 type AuthMode = "login" | "signup" | "reset" | "new-password";
 
+const AUTH_PAGE_URL = "https://medicareplus.app/auth";
+const PASSWORD_RESET_REDIRECT_URL = `${AUTH_PAGE_URL}?mode=new-password&type=recovery`;
+
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>(() => {
@@ -267,7 +270,7 @@ export default function Auth() {
           await supabase.auth.resend({
             type: 'signup',
             email: data.email,
-            options: { emailRedirectTo: "https://medicareplus.app/auth" },
+            options: { emailRedirectTo: AUTH_PAGE_URL },
           });
           message = "Your email is not verified. We've sent a new verification link to your inbox.";
         } catch (resendError) {
@@ -309,7 +312,7 @@ export default function Auth() {
       const { error } = await supabase.functions.invoke("send-password-reset", {
         body: {
           email: data.email,
-          redirectTo: `${window.location.origin}/auth?mode=new-password`,
+          redirectTo: PASSWORD_RESET_REDIRECT_URL,
         },
       });
 
