@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 export default function InHousePharmacy() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   return (
     <Layout>
       <SEOHead
