@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead, seoSchemas } from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 export default function InHousePharmacy() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   return (
     <Layout>
       <SEOHead
