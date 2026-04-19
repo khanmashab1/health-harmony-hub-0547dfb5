@@ -22,7 +22,9 @@ import {
   Lock,
   Building2,
   FlaskConical,
+  MessageSquare,
 } from "lucide-react";
+import { SupportChatPanel } from "@/components/shared/SupportChatPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -96,7 +98,8 @@ export default function DoctorDashboard() {
   });
 
   // Plan-based feature access
-  const { features, isFreePlan, canAccessFeature, getUpgradeMessage } = usePlanFeatures(user?.id);
+  const { features, isFreePlan, isProfessional, isEnterprise, canAccessFeature, getUpgradeMessage } = usePlanFeatures(user?.id);
+  const canUseSupportChat = isProfessional || isEnterprise;
 
   // Fetch appointments with patient profile info
   const { data: appointments, isLoading: loadingAppointments } = useQuery({
@@ -443,6 +446,12 @@ export default function DoctorDashboard() {
                   <span className="hidden sm:inline">Test Reports</span>
                   <span className="sm:hidden">Tests</span>
                 </TabsTrigger>
+                {canUseSupportChat && (
+                  <TabsTrigger value="support" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                    <MessageSquare className="w-4 h-4 mr-1 sm:mr-2" />
+                    Support
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="settings" className="rounded-lg text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
                   <Settings className="w-4 h-4 mr-1 sm:mr-2" />
                   Settings
@@ -849,6 +858,12 @@ export default function DoctorDashboard() {
               <TabsContent value="test-reports">
                 {user && <PendingTestReportsPanel doctorUserId={user.id} showAll />}
               </TabsContent>
+
+              {canUseSupportChat && user && (
+                <TabsContent value="support">
+                  <SupportChatPanel viewerRole="doctor" userId={user.id} />
+                </TabsContent>
+              )}
 
               {/* Settings */}
               <TabsContent value="settings">
