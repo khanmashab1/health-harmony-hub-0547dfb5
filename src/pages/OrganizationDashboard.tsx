@@ -17,7 +17,9 @@ import {
   Trash2,
   Eye,
   Plus,
+  MessageSquare,
 } from "lucide-react";
+import { SupportChatPanel } from "@/components/shared/SupportChatPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -288,11 +290,21 @@ export default function OrganizationDashboard() {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
               </TabsTrigger>
+              <TabsTrigger value="support" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Support
+              </TabsTrigger>
               <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="support">
+              {user && organization && (
+                <SupportChatPanel viewerRole="org_owner" userId={user.id} organizationId={organization.id} />
+              )}
+            </TabsContent>
 
             {/* Doctors Tab */}
             <TabsContent value="doctors">

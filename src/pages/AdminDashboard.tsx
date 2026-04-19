@@ -29,8 +29,10 @@ import {
   Trash2,
   Image,
   CreditCard,
-  Zap
+  Zap,
+  MessageSquare,
 } from "lucide-react";
+import { SupportChatPanel } from "@/components/shared/SupportChatPanel";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -451,8 +453,15 @@ export default function AdminDashboard() {
                   <span className="hidden sm:inline">Pharmacies</span>
                   <span className="sm:hidden">Rx</span>
                 </TabsTrigger>
+                <TabsTrigger value="support" className="rounded-lg text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  Support
+                </TabsTrigger>
               </TabsList>
 
+              <TabsContent value="support">
+                {user && <SupportChatPanel viewerRole="admin" userId={user.id} />}
+              </TabsContent>
               <TabsContent value="analytics"><AnalyticsPanel /></TabsContent>
               <TabsContent value="performance"><DoctorPerformancePanel /></TabsContent>
               <TabsContent value="slides"><HeroSlidesPanel /></TabsContent>
