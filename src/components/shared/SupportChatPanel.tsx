@@ -399,18 +399,36 @@ export function SupportChatPanel({ viewerRole, userId, organizationId }: Support
                     </CardDescription>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className={STATUS_COLORS[activeTicket.status]}>{activeTicket.status.replace("_", " ")}</Badge>
                   {viewerRole === "admin" && (
-                    <Select value={activeTicket.status} onValueChange={(v: any) => changeStatus(v)}>
-                      <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {activeTicket.status === "open" && (
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => changeStatus("in_progress")}>
+                          Mark In Progress
+                        </Button>
+                      )}
+                      {(activeTicket.status === "open" || activeTicket.status === "in_progress") && (
+                        <Button size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => changeStatus("resolved")}>
+                          Mark Resolved
+                        </Button>
+                      )}
+                      {activeTicket.status === "resolved" && (
+                        <>
+                          <Button size="sm" variant="outline" className="h-8" onClick={() => changeStatus("in_progress")}>
+                            Reopen
+                          </Button>
+                          <Button size="sm" variant="secondary" className="h-8" onClick={() => changeStatus("closed")}>
+                            Close Ticket
+                          </Button>
+                        </>
+                      )}
+                      {activeTicket.status === "closed" && (
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => changeStatus("in_progress")}>
+                          Reopen
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
