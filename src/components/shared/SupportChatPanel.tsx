@@ -530,3 +530,115 @@ export function SupportChatPanel({ viewerRole, userId, organizationId }: Support
     </div>
   );
 }
+
+// ===== Activity Timeline Component =====
+interface ActivityEvent {
+  type: "created" | "reply" | "status";
+  at: string;
+  actor: string;
+  label: string;
+  detail?: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+function ActivityTimeline({ ticket, messages }: { ticket: Ticket; messages: Message[] }) {
+  const events: ActivityEvent[] = [];
+
+  // 1. Ticket opened
+  events.push({
+    type: "created",
+    at: ticket.created_at,
+    actor: ticket.organization_id ? "Org Owner" : "Doctor",
+    label: "Ticket opened",
+    detail: `Priority: ${ticket.priority} • Category: ${ticket.category}`,
+    icon: <Plus className="w-3.5 h-3.5" />,
+    color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30",
+  });
+
+  // 2. First admin reply → moved to In Progress
+  const firstAdminReply = messages.find(m => m.sender_role === "admin");
+  if (firstAdminReply) {
+    events.push({
+      type: "status",
+      at: firstAdminReply.created_at,
+      actor: "Admin",
+      label: "Marked In Progress",
+      detail: "Admin replied for the first time",
+      icon: <PlayCircle className="w-3.5 h-3.5" />,
+      color: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300 border-yellow-500/30",
+    });
+  }
+
+  // 3. Reply count summary (per side)
+  const adminReplies = messages.filter(m => m.sender_role === "admin").length;
+  const userReplies = messages.filter(m => m.sender_role !== "admin").length;
+  if (adminReplies > 0 || userReplies > 0) {
+    events.push({
+      type: "reply",
+      at: messages[messages.length - 1]?.created_at ?? ticket.last_message_at,
+      actor: "System",
+      label: `${messages.length} message${messages.length === 1 ? "" : "s"} exchanged`,
+      detail: `${userReplies} from user • ${adminReplies} from admin`,
+      icon: <MessageCircle className="w-3.5 h-3.5" />,
+      color: "bg-muted text-muted-foreground border-border",
+    });
+  }
+
+  // 4. Current status (resolved / closed) — uses last_message_at as best-known timestamp
+  if (ticket.status === "resolved") {
+    events.push({
+      type: "status",
+      at: ticket.last_message_at,
+      actor: "Admin",
+      label: "Marked Resolved",
+      detail: "Admin closed the query as resolved",
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+      color: "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30",
+    });
+  } else if (ticket.status === "closed") {
+    events.push({
+      type: "status",
+      at: ticket.last_message_at,
+      actor: "Admin",
+      label: "Ticket closed",
+      detail: "No further replies allowed",
+      icon: <XCircle className="w-3.5 h-3.5" />,
+      color: "bg-muted text-muted-foreground border-border",
+    });
+  }
+
+  // Sort by time
+  events.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+
+  return (
+    <div className="rounded-lg border bg-card/50 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        <Clock className="w-3.5 h-3.5" /> Activity Log
+      </div>
+      <div className="relative pl-6 space-y-3">
+        <div className="absolute left-2 top-1 bottom-1 w-px bg-border" />
+        {events.map((e, idx) => (
+          <div key={idx} className="relative">
+            <div className={`absolute -left-[18px] top-0.5 w-4 h-4 rounded-full border flex items-center justify-center ${e.color}`}>
+              {e.icon}
+            </div>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium">Activity #{idx + 1}</span>
+                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${e.color}`}>{e.label}</Badge>
+                </div>
+                {e.detail && <p className="text-xs text-muted-foreground mt-0.5">{e.detail}</p>}
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] font-medium">{e.actor}</div>
+                <div className="text-[10px] text-muted-foreground">{format(new Date(e.at), "PP HH:mm")}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
