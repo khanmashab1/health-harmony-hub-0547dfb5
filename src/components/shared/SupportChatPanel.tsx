@@ -438,44 +438,53 @@ export function SupportChatPanel({ viewerRole, userId, organizationId }: Support
                 {messagesLoading ? (
                   <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
                 ) : (
-                  <div className="space-y-3">
-                    {messages.map(m => {
-                      const fromMe = m.sender_user_id === userId;
-                      const isAdmin = m.sender_role === "admin";
-                      return (
-                        <motion.div
-                          key={m.id}
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`flex ${fromMe ? "justify-end" : "justify-start"}`}
-                        >
-                          <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                            fromMe
-                              ? "bg-primary text-primary-foreground rounded-br-sm"
-                              : isAdmin
-                                ? "bg-accent text-accent-foreground rounded-bl-sm border"
-                                : "bg-muted text-foreground rounded-bl-sm"
-                          }`}>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] uppercase tracking-wide font-semibold opacity-70">
-                                {m.sender_role === "admin" ? "Admin" : m.sender_role === "org_owner" ? "Org Owner" : "Doctor"}
-                              </span>
-                              <span className="text-[10px] opacity-60">{format(new Date(m.created_at), "MMM d HH:mm")}</span>
+                  <div className="space-y-4">
+                    {/* ===== Activity Timeline ===== */}
+                    <ActivityTimeline ticket={activeTicket} messages={messages} />
+
+                    {/* ===== Messages ===== */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <MessageCircle className="w-3.5 h-3.5" /> Conversation
+                      </div>
+                      {messages.map(m => {
+                        const fromMe = m.sender_user_id === userId;
+                        const isAdmin = m.sender_role === "admin";
+                        return (
+                          <motion.div
+                            key={m.id}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`flex ${fromMe ? "justify-end" : "justify-start"}`}
+                          >
+                            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                              fromMe
+                                ? "bg-primary text-primary-foreground rounded-br-sm"
+                                : isAdmin
+                                  ? "bg-accent text-accent-foreground rounded-bl-sm border"
+                                  : "bg-muted text-foreground rounded-bl-sm"
+                            }`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] uppercase tracking-wide font-semibold opacity-70">
+                                  {m.sender_role === "admin" ? "Admin" : m.sender_role === "org_owner" ? "Org Owner" : "Doctor"}
+                                </span>
+                                <span className="text-[10px] opacity-60">{format(new Date(m.created_at), "MMM d HH:mm")}</span>
+                              </div>
+                              {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
+                              {m.attachment_path && m.attachment_name && (
+                                <button
+                                  onClick={() => downloadAttachment(m.attachment_path!, m.attachment_name!)}
+                                  className={`mt-2 flex items-center gap-2 text-xs underline ${fromMe ? "text-primary-foreground/90" : "text-foreground/80"}`}
+                                >
+                                  <FileText className="w-3.5 h-3.5" />{m.attachment_name}
+                                </button>
+                              )}
                             </div>
-                            {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
-                            {m.attachment_path && m.attachment_name && (
-                              <button
-                                onClick={() => downloadAttachment(m.attachment_path!, m.attachment_name!)}
-                                className={`mt-2 flex items-center gap-2 text-xs underline ${fromMe ? "text-primary-foreground/90" : "text-foreground/80"}`}
-                              >
-                                <FileText className="w-3.5 h-3.5" />{m.attachment_name}
-                              </button>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                    <div ref={messagesEndRef} />
+                          </motion.div>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
+                    </div>
                   </div>
                 )}
               </ScrollArea>
