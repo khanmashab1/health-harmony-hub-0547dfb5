@@ -409,7 +409,7 @@ export function SupportChatPanel({ viewerRole, userId, organizationId }: Support
                         </Button>
                       )}
                       {(activeTicket.status === "open" || activeTicket.status === "in_progress") && (
-                        <Button size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => changeStatus("resolved")}>
+                        <Button size="sm" className="h-8" onClick={() => changeStatus("resolved")}>
                           Mark Resolved
                         </Button>
                       )}
