@@ -16,7 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { MessageSquare, Plus, Send, Paperclip, ArrowLeft, FileText, Loader2 } from "lucide-react";
+import { MessageSquare, Plus, Send, Paperclip, ArrowLeft, FileText, Loader2, Clock, CheckCircle2, PlayCircle, XCircle, RotateCcw, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 
